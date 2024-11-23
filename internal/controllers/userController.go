@@ -8,6 +8,13 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+type RegisterUserInput struct {
+	Name     string `json:"name" binding:"required"`
+	Email    string `json:"email" binding:"required,email"`
+	Role     string `json:"role" binding:"required"`
+	Password string `json:"password" binding:"required"`
+}
+
 type UserController struct {
 	engine *gin.Engine
 	db     *database.DbController
@@ -24,26 +31,30 @@ func (c *UserController) ApplyRoutes() {
 }
 
 func (c *UserController) registerUser(ctx *gin.Context) {
-	var params map[string]interface{}
+	var input RegisterUserInput
 
-	if err := ctx.BindJSON(params); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"error": err,
-		})
+	err := ctx.ShouldBindJSON(&input)
+
+	if checkErrorAndWrite(ctx, err) {
+		return
 	}
 
-	name := params["name"].(string)
-	email := params["email"].(string)
-	role := params["role"].(models.UserRole)
-	password := params["password"].(string)
+	user, err := c.db.RegisterUser(input.Name, input.Email, models.UserRole(input.Role), input.Password)
 
-	user, err := c.db.RegisterUser(name, email, role, password)
+	if checkErrorAndWrite(ctx, err) {
+		return
+	}
 
+	ctx.JSON(http.StatusCreated, user)
+}
+
+func checkErrorAndWrite(ctx *gin.Context, err error) bool {
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"error": err,
 		})
+		return true
 	}
 
-	ctx.JSON(http.StatusCreated, user)
+	return false
 }

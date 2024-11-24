@@ -2,6 +2,7 @@ package database
 
 import (
 	"database/sql"
+	"fmt"
 
 	"github.com/Core-Mouse/cm-backend/internal/helpers"
 	"github.com/Core-Mouse/cm-backend/internal/models"
@@ -35,4 +36,34 @@ func (c *DbController) RegisterUser(name string, email string, role models.UserR
 	}
 
 	return models.NewUser(id, name, email, role, passwordHash), nil
+}
+
+func (c *DbController) LoginUser(email string, password string) (*models.User, error) {
+	var (
+		id            int
+		name          string
+		remail        string
+		role          string
+		rpasswordHash string
+	)
+
+	passwordHash := helpers.Sha256(password)
+
+	row, err := c.db.Query("SELECT * FROM users WHERE Email = $1 AND PasswordHash = $2", email, passwordHash)
+
+	if err != nil {
+		return nil, err
+	}
+
+	defer row.Close()
+
+	if !row.Next() {
+		return nil, fmt.Errorf("user not found")
+	}
+
+	if err := row.Scan(&id, &name, &remail, &role, &rpasswordHash); err != nil {
+		return nil, err
+	}
+
+	return models.NewUser(id, name, remail, models.UserRole(role), rpasswordHash), nil
 }

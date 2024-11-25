@@ -24,18 +24,19 @@ func NewDbController(driver string, conn string) (*DbController, error) {
 	}, nil
 }
 
-func (c *DbController) RegisterUser(name string, email string, role models.UserRole, password string) (*models.User, error) {
+func (c *DbController) RegisterUser(name string, email string, password string) (*models.User, error) {
 	var id int
+	var role string
 
 	passwordHash := helpers.Sha256(password)
 
-	err := c.db.QueryRow("INSERT INTO users (Name, Email, Role, PasswordHash) VALUES ($1, $2, $3, $4) returning id", name, email, role, passwordHash).Scan(&id)
+	err := c.db.QueryRow("INSERT INTO users (Name, Email, PasswordHash) VALUES ($1, $2, $3) returning id, Role", name, email, passwordHash).Scan(&id, &role)
 
 	if err != nil {
 		return nil, err
 	}
 
-	return models.NewUser(id, name, email, role, passwordHash), nil
+	return models.NewUser(id, name, email, models.UserRole(role), passwordHash), nil
 }
 
 func (c *DbController) LoginUser(email string, password string) (*models.User, error) {

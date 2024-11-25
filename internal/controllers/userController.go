@@ -4,7 +4,6 @@ import (
 	"net/http"
 
 	"github.com/Core-Mouse/cm-backend/internal/database"
-	"github.com/Core-Mouse/cm-backend/internal/models"
 	"github.com/gin-gonic/gin"
 )
 
@@ -33,7 +32,7 @@ func (c *UserController) registerUser(ctx *gin.Context) {
 		return
 	}
 
-	user, err := c.db.RegisterUser(input.Name, input.Email, models.UserRole(input.Role), input.Password)
+	user, err := c.db.RegisterUser(input.Name, input.Email, input.Password)
 
 	if checkErrorAndWrite(ctx, err) {
 		return

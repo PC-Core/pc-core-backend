@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/Core-Mouse/cm-backend/internal/database"
+	"github.com/Core-Mouse/cm-backend/internal/models/inputs"
 	"github.com/gin-gonic/gin"
 )
 
@@ -24,7 +25,7 @@ func (c *UserController) ApplyRoutes() {
 }
 
 func (c *UserController) registerUser(ctx *gin.Context) {
-	var input RegisterUserInput
+	var input inputs.RegisterUserInput
 
 	err := ctx.ShouldBindJSON(&input)
 
@@ -42,7 +43,7 @@ func (c *UserController) registerUser(ctx *gin.Context) {
 }
 
 func (c *UserController) loginUser(ctx *gin.Context) {
-	var input LoginUserInput
+	var input inputs.LoginUserInput
 
 	err := ctx.ShouldBindQuery(&input)
 

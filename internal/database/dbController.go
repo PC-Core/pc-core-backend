@@ -68,3 +68,17 @@ func (c *DbController) LoginUser(email string, password string) (*models.User, e
 
 	return models.NewUser(id, name, remail, models.UserRole(role), rpasswordHash), nil
 }
+
+func (c *DbController) AuthentificateWithRole(email string, password string, required_role models.UserRole) error {
+	user, err := c.LoginUser(email, password)
+
+	if err != nil {
+		return err
+	}
+
+	if user.Role != required_role {
+		return fmt.Errorf("wrong role")
+	}
+
+	return nil
+}

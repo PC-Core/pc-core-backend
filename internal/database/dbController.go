@@ -82,3 +82,21 @@ func (c *DbController) AuthentificateWithRole(email string, password string, req
 
 	return nil
 }
+
+func (c *DbController) AddLaptop(name string, cpu string, ram int16, gpu string, price string, discount int16) (*models.Laptop, error) {
+	var id int
+
+	err := c.db.QueryRow("INSERT INTO laptops (Name, Cpu, Ram, Gpu, Price, Discount) VALUES ($1, $2, $3, $4, $5, $6) returning id", name, cpu, ram, gpu, price, discount).Scan(&id)
+
+	if err != nil {
+		return nil, err
+	}
+
+	bfPrice, err := helpers.StringToBigFloat(price)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return models.NewLaptop(id, name, cpu, ram, gpu, *bfPrice, discount), nil
+}

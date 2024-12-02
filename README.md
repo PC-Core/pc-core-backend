@@ -49,18 +49,31 @@
     - Method: POST
     - Purpose: Add a new laptop
     - Params: 
-        - Name
-            - Type: String
-        - Cpu
-            - Type: String
-        - Ram
-            - Type: int16
-        - Gpu
-            - Type: String
-        - Price
-            - Type: String
-            - Notes: the price should be a numeric string (e.g., "199.99")
-        - Discount
-            - Type: int16
-            - Notes: the value should be between 0 and 100 (inclusive)
+        - Laptop data:
+            - Name
+                - Type: String
+            - Cpu
+                - Type: String
+            - Ram
+                - Type: int16
+            - Gpu
+                - Type: String
+            - Price
+                - Type: String
+                - Notes: the price should be a numeric string (e.g., "199.99")
+            - Discount
+                - Type: int16
+                - Notes: the value should be between 0 and 100 (inclusive)
+        - Parameter passing: body
+        - Parameter format: JSON
 
+        - Authentification data:
+            - Email
+                - Type: String
+                - Notes: Accepts only valid email addresses
+            - Password
+                - Type: String
+        - Parameter passing: Query String
+        - Format: Query String
+    - Required Role: Admin
+    - Returns: `models.Laptop` or Error

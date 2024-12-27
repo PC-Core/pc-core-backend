@@ -100,3 +100,14 @@ func (c *DbController) AddLaptop(name string, cpu string, ram int16, gpu string,
 
 	return models.NewLaptop(id, name, cpu, ram, gpu, *bfPrice, discount), nil
 }
+
+func (c *DbController) RemoveLaptop(id int) (error) {
+	_, err := c.db.Exec("DELETE FROM laptops WHERE id = $1", id)
+
+	if err != nil {
+		return err;
+	}
+
+	return nil
+}
+

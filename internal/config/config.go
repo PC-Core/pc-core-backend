@@ -7,9 +7,10 @@ import (
 )
 
 type Config struct {
-	Addr     string `yaml:"addr"`
-	Port     int    `yaml:"port"`
-	DbDriver string `yaml:"dbdriver"`
+	Addr      string   `yaml:"addr"`
+	Port      int      `yaml:"port"`
+	DbDriver  string   `yaml:"dbdriver"`
+	AllowCors []string `yaml:"allowcors"`
 }
 
 func ParseConfig(path string) (*Config, error) {

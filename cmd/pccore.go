@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"os"
 	"strconv"
 
@@ -14,8 +13,6 @@ import (
 
 func main() {
 	gin := gin.Default()
-
-	fmt.Println(os.Getenv("POSTGRES_IBYTE_CONN"))
 
 	config, cerr := config.ParseConfig("../cfg.yml")
 

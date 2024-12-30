@@ -35,7 +35,7 @@ func (c *LaptopController) addLaptop(ctx *gin.Context) {
 		return
 	}
 
-	laptop, err := c.db.AddLaptop(input.Name, input.Cpu, input.Ram, input.Gpu, input.Price, input.Discount)
+	product, chars, err := c.db.AddLaptop(input.Name, input.Price, 0, input.Stock, input.Cpu, input.Ram, input.Gpu)
 
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
@@ -44,5 +44,8 @@ func (c *LaptopController) addLaptop(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusCreated, laptop)
+	ctx.JSON(http.StatusCreated, gin.H{
+		"product": product,
+		"chars":   chars,
+	})
 }

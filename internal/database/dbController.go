@@ -2,16 +2,30 @@ package database
 
 import (
 	"database/sql"
-	"fmt"
-
-	"github.com/Core-Mouse/cm-backend/internal/helpers"
-	"github.com/Core-Mouse/cm-backend/internal/models"
 )
 
+const (
+	LaptopCharsTable = "LaptopChars"
+)
+
+// An interface for Product Characterics
+type ProductChars any
+
+// Database controller
 type DbController struct {
 	db *sql.DB
 }
 
+// Creates a new Database Controller
+//
+// Params:
+//
+//	`driver` - the name of the database driver
+//	`conn` - the connection string to the database
+//
+// Returns:
+//
+//	`*DbController` or `error`
 func NewDbController(driver string, conn string) (*DbController, error) {
 	db, err := sql.Open(driver, conn)
 
@@ -24,90 +38,30 @@ func NewDbController(driver string, conn string) (*DbController, error) {
 	}, nil
 }
 
-func (c *DbController) RegisterUser(name string, email string, password string) (*models.User, error) {
-	var id int
-	var role string
+// func (c *DbController) AddLaptop(name string, cpu string, ram int16, gpu string, price string, discount int16) (*models.LaptopChars, error) {
+// 	var id int
 
-	passwordHash := helpers.Sha256(password)
+// 	err := c.db.QueryRow("INSERT INTO laptops (Name, Cpu, Ram, Gpu, Price, Discount) VALUES ($1, $2, $3, $4, $5, $6) returning id", name, cpu, ram, gpu, price, discount).Scan(&id)
 
-	err := c.db.QueryRow("INSERT INTO users (Name, Email, PasswordHash) VALUES ($1, $2, $3) returning id, Role", name, email, passwordHash).Scan(&id, &role)
+// 	if err != nil {
+// 		return nil, err
+// 	}
 
-	if err != nil {
-		return nil, err
-	}
+// 	bfPrice, err := helpers.StringToBigFloat(price)
 
-	return models.NewUser(id, name, email, models.UserRole(role), passwordHash), nil
-}
+// 	if err != nil {
+// 		return nil, err
+// 	}
 
-func (c *DbController) LoginUser(email string, password string) (*models.User, error) {
-	var (
-		id            int
-		name          string
-		remail        string
-		role          string
-		rpasswordHash string
-	)
+// 	return models.NewLaptop(id, name, cpu, ram, gpu, *bfPrice, discount), nil
+// }
 
-	passwordHash := helpers.Sha256(password)
+// func (c *DbController) RemoveLaptop(id int) (error) {
+// 	_, err := c.db.Exec("DELETE FROM laptops WHERE id = $1", id)
 
-	row, err := c.db.Query("SELECT * FROM users WHERE Email = $1 AND PasswordHash = $2", email, passwordHash)
+// 	if err != nil {
+// 		return err;
+// 	}
 
-	if err != nil {
-		return nil, err
-	}
-
-	defer row.Close()
-
-	if !row.Next() {
-		return nil, fmt.Errorf("user not found")
-	}
-
-	if err := row.Scan(&id, &name, &remail, &role, &rpasswordHash); err != nil {
-		return nil, err
-	}
-
-	return models.NewUser(id, name, remail, models.UserRole(role), rpasswordHash), nil
-}
-
-func (c *DbController) AuthentificateWithRole(email string, password string, required_role models.UserRole) error {
-	user, err := c.LoginUser(email, password)
-
-	if err != nil {
-		return err
-	}
-
-	if user.Role != required_role {
-		return fmt.Errorf("wrong role")
-	}
-
-	return nil
-}
-
-func (c *DbController) AddLaptop(name string, cpu string, ram int16, gpu string, price string, discount int16) (*models.Laptop, error) {
-	var id int
-
-	err := c.db.QueryRow("INSERT INTO laptops (Name, Cpu, Ram, Gpu, Price, Discount) VALUES ($1, $2, $3, $4, $5, $6) returning id", name, cpu, ram, gpu, price, discount).Scan(&id)
-
-	if err != nil {
-		return nil, err
-	}
-
-	bfPrice, err := helpers.StringToBigFloat(price)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return models.NewLaptop(id, name, cpu, ram, gpu, *bfPrice, discount), nil
-}
-
-func (c *DbController) RemoveLaptop(id int) (error) {
-	_, err := c.db.Exec("DELETE FROM laptops WHERE id = $1", id)
-
-	if err != nil {
-		return err;
-	}
-
-	return nil
-}
-
+// 	return nil
+// }

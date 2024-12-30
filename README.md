@@ -59,11 +59,9 @@
             - Gpu
                 - Type: String
             - Price
-                - Type: String
-                - Notes: the price should be a numeric string (e.g., "199.99")
-            - Discount
-                - Type: int16
-                - Notes: the value should be between 0 and 100 (inclusive)
+                - Type: Float64
+            - Stock
+                - Type: Uint64
         - Parameter passing: body
         - Parameter format: JSON
 
@@ -76,4 +74,4 @@
         - Parameter passing: Query String
         - Format: Query String
     - Required Role: Admin
-    - Returns: `models.Laptop` or Error
+    - Returns: `models.Product` and `models.LaptopChars` or Error

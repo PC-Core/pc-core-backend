@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/Core-Mouse/cm-backend/internal/database"
 	"github.com/Core-Mouse/cm-backend/internal/middlewares"
@@ -23,6 +24,7 @@ func NewLaptopController(engine *gin.Engine, db *database.DbController) *LaptopC
 
 func (c *LaptopController) ApplyRoutes() {
 	c.engine.POST("/laptops/add", middlewares.RoleCheck(models.Admin, c.db), c.addLaptop)
+	c.engine.GET("/laptops/chars/:id", c.getChars)
 }
 
 func (c *LaptopController) addLaptop(ctx *gin.Context) {
@@ -47,5 +49,25 @@ func (c *LaptopController) addLaptop(ctx *gin.Context) {
 	ctx.JSON(http.StatusCreated, gin.H{
 		"product": product,
 		"chars":   chars,
+	})
+}
+
+func (c *LaptopController) getChars(ctx *gin.Context) {
+	ids := ctx.Param("id")
+
+	id, err := strconv.ParseUint(ids, 10, 64)
+
+	if CheckErrorAndWrite(ctx, err) {
+		return
+	}
+
+	chars, err := c.db.GetProductCharsByProductID(id)
+
+	if CheckErrorAndWrite(ctx, err) {
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"chars": chars,
 	})
 }

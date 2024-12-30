@@ -29,13 +29,13 @@ func (c *UserController) registerUser(ctx *gin.Context) {
 
 	err := ctx.ShouldBindJSON(&input)
 
-	if checkErrorAndWrite(ctx, err) {
+	if CheckErrorAndWrite(ctx, err) {
 		return
 	}
 
 	user, err := c.db.RegisterUser(input.Name, input.Email, input.Password)
 
-	if checkErrorAndWrite(ctx, err) {
+	if CheckErrorAndWrite(ctx, err) {
 		return
 	}
 
@@ -47,26 +47,15 @@ func (c *UserController) loginUser(ctx *gin.Context) {
 
 	err := ctx.ShouldBindQuery(&input)
 
-	if checkErrorAndWrite(ctx, err) {
+	if CheckErrorAndWrite(ctx, err) {
 		return
 	}
 
 	user, err := c.db.LoginUser(input.Email, input.Password)
 
-	if checkErrorAndWrite(ctx, err) {
+	if CheckErrorAndWrite(ctx, err) {
 		return
 	}
 
 	ctx.JSON(http.StatusOK, user)
-}
-
-func checkErrorAndWrite(ctx *gin.Context, err error) bool {
-	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"error": err.Error(),
-		})
-		return true
-	}
-
-	return false
 }

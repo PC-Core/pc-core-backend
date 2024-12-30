@@ -1,11 +1,14 @@
 package database
 
 import (
-	"database/sql"
 	"fmt"
 
 	"github.com/Core-Mouse/cm-backend/internal/models"
 )
+
+type RowLike interface {
+	Scan(...any) error
+}
 
 func (c *DbController) GetProducts(start uint64, count uint64) ([]models.Product, error) {
 	rows, err := c.db.Query("SELECT * FROM Products OFFSET $1 LIMIT $2", start, count)
@@ -38,7 +41,7 @@ func (c *DbController) GetProducts(start uint64, count uint64) ([]models.Product
 	return products, nil
 }
 
-func (c *DbController) ScanProduct(rows *sql.Rows) (*models.Product, error) {
+func (c *DbController) ScanProduct(rows RowLike) (*models.Product, error) {
 	var (
 		rid           uint64
 		name          string
@@ -57,15 +60,9 @@ func (c *DbController) ScanProduct(rows *sql.Rows) (*models.Product, error) {
 }
 
 func (c *DbController) GetProductById(id uint64) (*models.Product, error) {
-	rows, err := c.db.Query("SELECT * FROM Products WHERE id = $1", id)
+	row := c.db.QueryRow("SELECT * FROM Products WHERE id = $1", id)
 
-	if err != nil {
-		return nil, err
-	}
-
-	defer rows.Close()
-
-	p, err := c.ScanProduct(rows)
+	p, err := c.ScanProduct(row)
 
 	if err != nil {
 		return nil, err

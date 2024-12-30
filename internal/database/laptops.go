@@ -14,15 +14,9 @@ func (c *DbController) GetLaptopChars(charId uint64) (*models.LaptopChars, error
 		gpu string
 	)
 
-	rows, err := c.db.Query(fmt.Sprintf("SELECT * FROM %s WHERE id = $1", LaptopCharsTable), charId)
+	row := c.db.QueryRow(fmt.Sprintf("SELECT * FROM %s WHERE id = $1", LaptopCharsTable), charId)
 
-	if err != nil {
-		return nil, err
-	}
-
-	defer rows.Close()
-
-	err = rows.Scan(&id, &cpu, &ram, &gpu)
+	err := row.Scan(&id, &cpu, &ram, &gpu)
 
 	if err != nil {
 		return nil, err

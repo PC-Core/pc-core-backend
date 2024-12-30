@@ -31,9 +31,11 @@ func main() {
 
 	uc := controllers.NewUserController(gin, db)
 	lc := controllers.NewLaptopController(gin, db)
+	pc := controllers.NewProductController(gin, db)
 
 	uc.ApplyRoutes()
 	lc.ApplyRoutes()
+	pc.ApplyRoutes()
 
 	gin.Run(config.Addr + ":" + strconv.Itoa(config.Port))
 }

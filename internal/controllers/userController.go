@@ -24,6 +24,15 @@ func (c *UserController) ApplyRoutes() {
 	c.engine.GET("/users/login", c.loginUser)
 }
 
+// Register a new User
+// @Summary      Register a new User
+// @Tags         users
+// @Accept       json
+// @Produce      json
+// @Param 		 user	body inputs.RegisterUserInput	true	"User data to register"
+// @Success      200  {object}  models.User
+// @Failure      400  {object}  map[string]interface{}
+// @Router       /products/add [post]
 func (c *UserController) registerUser(ctx *gin.Context) {
 	var input inputs.RegisterUserInput
 
@@ -42,6 +51,15 @@ func (c *UserController) registerUser(ctx *gin.Context) {
 	ctx.JSON(http.StatusCreated, user)
 }
 
+// Login
+// @Summary      Login
+// @Tags         users
+// @Accept       json
+// @Produce      json
+// @Param 		 user	body inputs.LoginUserInput	true	"User data to login"
+// @Success      200  {object}  models.User
+// @Failure      400  {object}  map[string]interface{}
+// @Router       /products/add [post]
 func (c *UserController) loginUser(ctx *gin.Context) {
 	var input inputs.LoginUserInput
 

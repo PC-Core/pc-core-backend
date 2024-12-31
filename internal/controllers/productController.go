@@ -25,6 +25,15 @@ func (c *ProductController) ApplyRoutes() {
 	c.engine.GET("/products/:id", c.getProductById)
 }
 
+// Get products from page N in quantity M
+// @Summary      Get products from page N in quantity M
+// @Tags         products
+// @Accept       json
+// @Produce      json
+// @Param 		 product body	inputs.GetProductsInput	true	"Page and count"
+// @Success      200  {array}  models.Product
+// @Failure      400  {object}  map[string]interface{}
+// @Router       /products/ [get]
 func (c *ProductController) getProducts(ctx *gin.Context) {
 	var input inputs.GetProductsInput
 
@@ -47,6 +56,15 @@ func (c *ProductController) getProducts(ctx *gin.Context) {
 	})
 }
 
+// Get a single product by ID
+// @Summary      Get a single product by ID
+// @Tags         products
+// @Accept       json
+// @Produce      json
+// @Param 		 id		path	uint64	true	"Product ID"
+// @Success      200  {object}  models.Product
+// @Failure      400  {object}  map[string]interface{}
+// @Router       /products/{id} [get]
 func (c *ProductController) getProductById(ctx *gin.Context) {
 	ids := ctx.Param("id")
 

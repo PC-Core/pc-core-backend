@@ -1,0 +1,235 @@
+definitions:
+  inputs.AddLaptopInput:
+    properties:
+      cpu:
+        type: string
+      gpu:
+        type: string
+      name:
+        type: string
+      price:
+        type: number
+      ram:
+        type: integer
+      stock:
+        type: integer
+    type: object
+  inputs.GetProductsInput:
+    properties:
+      count:
+        type: integer
+      page:
+        type: integer
+    type: object
+  inputs.LoginUserInput:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  inputs.RegisterUserInput:
+    properties:
+      email:
+        type: string
+      name:
+        type: string
+      password:
+        type: string
+    required:
+    - email
+    - name
+    - password
+    type: object
+  models.LaptopChars:
+    properties:
+      cpu:
+        type: string
+      gpu:
+        type: string
+      id:
+        type: integer
+      ram:
+        type: integer
+    type: object
+  models.Product:
+    properties:
+      id:
+        type: integer
+      name:
+        type: string
+      price:
+        type: number
+      selled:
+        type: integer
+      stock:
+        type: integer
+    type: object
+  models.User:
+    properties:
+      email:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      user_role:
+        $ref: '#/definitions/models.UserRole'
+    type: object
+  models.UserRole:
+    enum:
+    - Default
+    type: string
+    x-enum-varnames:
+    - Default
+info:
+  contact: {}
+paths:
+  /laptops/add:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Laptop data
+        in: body
+        name: laptop
+        required: true
+        schema:
+          $ref: '#/definitions/inputs.AddLaptopInput'
+      - in: query
+        name: email
+        required: true
+        type: string
+      - in: query
+        name: password
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "403":
+          description: Forbidden
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Add a new laptop
+      tags:
+      - laptops
+  /laptops/chars/{id}:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: Laptop id
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.LaptopChars'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Get laptop chars
+      tags:
+      - laptops
+  /products/:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: Page and count
+        in: body
+        name: product
+        required: true
+        schema:
+          $ref: '#/definitions/inputs.GetProductsInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Product'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Get products from page N in quantity M
+      tags:
+      - products
+  /products/{id}:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: Product ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Product'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Get a single product by ID
+      tags:
+      - products
+  /products/add:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: User data to login
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/inputs.LoginUserInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.User'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Login
+      tags:
+      - users
+swagger: "2.0"

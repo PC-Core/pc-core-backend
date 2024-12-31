@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"strconv"
 
+	_ "github.com/Core-Mouse/cm-backend/docs"
 	"github.com/Core-Mouse/cm-backend/internal/database"
 	"github.com/Core-Mouse/cm-backend/internal/middlewares"
 	"github.com/Core-Mouse/cm-backend/internal/models"
@@ -27,6 +28,17 @@ func (c *LaptopController) ApplyRoutes() {
 	c.engine.GET("/laptops/chars/:id", c.getChars)
 }
 
+// Add laptop
+// @Summary      Add a new laptop
+// @Tags         laptops
+// @Accept       json
+// @Produce      json
+// @Param 		 laptop body	inputs.AddLaptopInput	true	"Laptop data"
+// @Param		 user  query	inputs.LoginUserInput	true	"User with Admin Role"
+// @Success      201  {object}  map[string]interface{}
+// @Failure      400  {object}  map[string]interface{}
+// @Failure      403  {object}  map[string]interface{}
+// @Router       /laptops/add [post]
 func (c *LaptopController) addLaptop(ctx *gin.Context) {
 	var input inputs.AddLaptopInput
 
@@ -39,10 +51,7 @@ func (c *LaptopController) addLaptop(ctx *gin.Context) {
 
 	product, chars, err := c.db.AddLaptop(input.Name, input.Price, 0, input.Stock, input.Cpu, input.Ram, input.Gpu)
 
-	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"error": err.Error(),
-		})
+	if CheckErrorAndWrite(ctx, err) {
 		return
 	}
 
@@ -52,6 +61,17 @@ func (c *LaptopController) addLaptop(ctx *gin.Context) {
 	})
 }
 
+// Get laptop 	characteristics
+// @Summary 	Get laptop chars
+// @Tags 		laptops
+// @Accept 		json
+// @Produce 	json
+// @Param		id	path	 int	true		"Laptop id"
+// @Success 	200	{object} models.LaptopChars
+// @Failure 	400 {object} map[string]interface{}
+// @Failure 	400 {object} map[string]interface{}
+// @Failure		400 {object} map[string]interface{}
+// @Router		/laptops/chars/{id} [get]
 func (c *LaptopController) getChars(ctx *gin.Context) {
 	ids := ctx.Param("id")
 

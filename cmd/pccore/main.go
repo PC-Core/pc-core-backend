@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/Core-Mouse/cm-backend/docs"
 	"github.com/Core-Mouse/cm-backend/internal/config"
 	"github.com/Core-Mouse/cm-backend/internal/controllers"
 	"github.com/Core-Mouse/cm-backend/internal/database"
@@ -13,16 +14,25 @@ import (
 	_ "github.com/lib/pq"
 )
 
-func main() {
-	gin := gin.Default()
+func configureSwagger(gin *gin.Engine, path string) {
+	docs.SwaggerInfo.Title = "PC Core Backend"
+	docs.SwaggerInfo.Host = path
+	docs.SwaggerInfo.Version = "0.0.1"
 
-	config, err := config.ParseConfig("../cfg.yml")
+	swagger := controllers.NewSwaggerController(gin)
+	swagger.ApplyRoutes()
+}
+
+func main() {
+	r := gin.Default()
+
+	config, err := config.ParseConfig("../../cfg.yml")
 
 	if err != nil {
 		panic(err)
 	}
 
-	gin.Use(cors.New(cors.Config{
+	r.Use(cors.New(cors.Config{
 		AllowOrigins:     config.AllowCors,
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
@@ -36,13 +46,17 @@ func main() {
 		panic(err)
 	}
 
-	uc := controllers.NewUserController(gin, db)
-	lc := controllers.NewLaptopController(gin, db)
-	pc := controllers.NewProductController(gin, db)
+	if gin.Mode() == gin.DebugMode {
+		configureSwagger(r, config.Addr)
+	}
+
+	uc := controllers.NewUserController(r, db)
+	lc := controllers.NewLaptopController(r, db)
+	pc := controllers.NewProductController(r, db)
 
 	uc.ApplyRoutes()
 	lc.ApplyRoutes()
 	pc.ApplyRoutes()
 
-	gin.Run(config.Addr + ":" + strconv.Itoa(config.Port))
+	r.Run(config.Addr + ":" + strconv.Itoa(config.Port))
 }

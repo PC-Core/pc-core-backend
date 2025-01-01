@@ -30,7 +30,7 @@ func (c *ProductController) ApplyRoutes() {
 // @Tags         products
 // @Accept       json
 // @Produce      json
-// @Param 		 product body	inputs.GetProductsInput	true	"Page and count"
+// @Param 		 product query	inputs.GetProductsInput	true	"Page and count"
 // @Success      200  {array}  models.Product
 // @Failure      400  {object}  map[string]interface{}
 // @Router       /products/ [get]

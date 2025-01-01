@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS LaptopChars(
     gpu text NOT NULL
 );
 
-CREATE TYPE UserRole AS ENUM ('Default', 'Admin')
+CREATE TYPE UserRole AS ENUM ('Default', 'Admin');
 
 CREATE TABLE Users (
 	id integer GENERATED ALWAYS AS IDENTITY PRIMARY KEY,

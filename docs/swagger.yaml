@@ -14,13 +14,6 @@ definitions:
       stock:
         type: integer
     type: object
-  inputs.GetProductsInput:
-    properties:
-      count:
-        type: integer
-      page:
-        type: integer
-    type: object
   inputs.LoginUserInput:
     properties:
       email:
@@ -43,6 +36,19 @@ definitions:
     - email
     - name
     - password
+    type: object
+  models.Category:
+    properties:
+      description:
+        type: string
+      icon:
+        type: string
+      id:
+        type: integer
+      slug:
+        type: string
+      title:
+        type: string
     type: object
   models.LaptopChars:
     properties:
@@ -88,6 +94,27 @@ definitions:
 info:
   contact: {}
 paths:
+  /categories/:
+    get:
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Category'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Get all categories
+      tags:
+      - categories
   /laptops/add:
     post:
       consumes:
@@ -158,12 +185,12 @@ paths:
       consumes:
       - application/json
       parameters:
-      - description: Page and count
-        in: body
-        name: product
-        required: true
-        schema:
-          $ref: '#/definitions/inputs.GetProductsInput'
+      - in: query
+        name: count
+        type: integer
+      - in: query
+        name: page
+        type: integer
       produces:
       - application/json
       responses:

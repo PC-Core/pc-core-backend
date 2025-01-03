@@ -13,7 +13,7 @@ type User struct {
 	Name       string   `json:"name"`
 	Email      string   `json:"email"`
 	Role       UserRole `json:"user_role"`
-	passwdHash string
+	passwdHash string   `json:"-"`
 }
 
 func NewUser(id int, name string, email string, role UserRole, passwdHash string) *User {

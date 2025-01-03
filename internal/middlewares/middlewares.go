@@ -1,26 +1,66 @@
 package middlewares
 
 import (
+	"fmt"
 	"net/http"
 
+	"github.com/Core-Mouse/cm-backend/internal/auth"
 	"github.com/Core-Mouse/cm-backend/internal/database"
+	"github.com/Core-Mouse/cm-backend/internal/helpers"
 	"github.com/Core-Mouse/cm-backend/internal/models"
-	"github.com/Core-Mouse/cm-backend/internal/models/inputs"
 	"github.com/gin-gonic/gin"
 )
 
-func RoleCheck(required models.UserRole, db *database.DbController) gin.HandlerFunc {
-	return func(ctx *gin.Context) {
-		var input inputs.LoginUserInput;
+const (
+	UserDataKey = "user_data"
+)
 
-		if err := ctx.ShouldBindQuery(&input); err != nil {
-			ctx.JSON(http.StatusForbidden, gin.H{"error": "Wrong user auth data sent"})
+type AuthMiddleware func(auth auth.Auth) gin.HandlerFunc
+
+func JWTAuthorize(auth auth.Auth) gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		token, err := helpers.GetAutorizationToken(ctx, helpers.BearerPrefix)
+
+		if err != nil {
+			ctx.JSON(http.StatusUnauthorized, gin.H{"error": err})
 			ctx.Abort()
 			return
 		}
 
-		if err := db.AuthentificateWithRole(input.Email, input.Password, required); err != nil {
-			ctx.JSON(http.StatusForbidden, gin.H{"error": "You do not have the required role"})
+		data, err := auth.Authorize(token)
+
+		if err != nil {
+			ctx.JSON(http.StatusForbidden, gin.H{"error": "Wrong accept token provided"})
+			ctx.Abort()
+			return
+		}
+
+		ctx.Set(UserDataKey, data)
+
+		ctx.Next()
+	}
+}
+
+func RoleCheck(required models.UserRole, db *database.DbController, caster helpers.RoleCastFunc) gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		data, exists := ctx.Get(UserDataKey)
+
+		if !exists {
+			ctx.JSON(http.StatusUnauthorized, gin.H{"error": "No user data present"})
+			ctx.Abort()
+			return
+		}
+
+		role, err := caster(data)
+
+		if err != nil {
+			ctx.JSON(http.StatusUnauthorized, gin.H{"error": err})
+			ctx.Abort()
+			return
+		}
+
+		if role != required {
+			ctx.JSON(http.StatusForbidden, gin.H{"error": fmt.Sprintf("You do not have the required role. Current Role is: %s", role)})
 			ctx.Abort()
 			return
 		}

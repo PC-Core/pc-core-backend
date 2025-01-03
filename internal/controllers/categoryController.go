@@ -36,7 +36,7 @@ func (c *CategoryController) ApplyRoutes() {
 func (c *CategoryController) getAll(ctx *gin.Context) {
 	cats, err := c.db.GetCategories()
 
-	if CheckErrorAndWrite(ctx, err) {
+	if CheckErrorAndWriteBadRequest(ctx, err) {
 		return
 	}
 

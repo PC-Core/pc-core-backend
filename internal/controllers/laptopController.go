@@ -6,6 +6,7 @@ import (
 
 	_ "github.com/Core-Mouse/cm-backend/docs"
 	"github.com/Core-Mouse/cm-backend/internal/database"
+	"github.com/Core-Mouse/cm-backend/internal/helpers"
 	"github.com/Core-Mouse/cm-backend/internal/middlewares"
 	"github.com/Core-Mouse/cm-backend/internal/models"
 	"github.com/Core-Mouse/cm-backend/internal/models/inputs"
@@ -13,18 +14,20 @@ import (
 )
 
 type LaptopController struct {
-	engine *gin.Engine
-	db     *database.DbController
+	engine          *gin.Engine
+	db              *database.DbController
+	auth_middleware gin.HandlerFunc
+	caster          helpers.RoleCastFunc
 }
 
-func NewLaptopController(engine *gin.Engine, db *database.DbController) *LaptopController {
+func NewLaptopController(engine *gin.Engine, db *database.DbController, auth_middleware gin.HandlerFunc, caster helpers.RoleCastFunc) *LaptopController {
 	return &LaptopController{
-		engine, db,
+		engine, db, auth_middleware, caster,
 	}
 }
 
 func (c *LaptopController) ApplyRoutes() {
-	c.engine.POST("/laptops/add", middlewares.RoleCheck(models.Admin, c.db), c.addLaptop)
+	c.engine.POST("/laptops/add", c.auth_middleware, middlewares.RoleCheck(models.Admin, c.db, c.caster), c.addLaptop)
 	c.engine.GET("/laptops/chars/:id", c.getChars)
 }
 
@@ -33,8 +36,8 @@ func (c *LaptopController) ApplyRoutes() {
 // @Tags         laptops
 // @Accept       json
 // @Produce      json
-// @Param 		 laptop body	inputs.AddLaptopInput	true	"Laptop data"
-// @Param		 user  query	inputs.LoginUserInput	true	"User with Admin Role"
+// @Param 		 laptop 		body	inputs.AddLaptopInput	true	"Laptop data"
+// @Param		 Authorization  header	string					true	"access token for user with Admin role"
 // @Success      201  {object}  map[string]interface{}
 // @Failure      400  {object}  map[string]interface{}
 // @Failure      403  {object}  map[string]interface{}
@@ -51,7 +54,7 @@ func (c *LaptopController) addLaptop(ctx *gin.Context) {
 
 	product, chars, err := c.db.AddLaptop(input.Name, input.Price, 0, input.Stock, input.Cpu, input.Ram, input.Gpu)
 
-	if CheckErrorAndWrite(ctx, err) {
+	if CheckErrorAndWriteBadRequest(ctx, err) {
 		return
 	}
 
@@ -77,13 +80,13 @@ func (c *LaptopController) getChars(ctx *gin.Context) {
 
 	id, err := strconv.ParseUint(ids, 10, 64)
 
-	if CheckErrorAndWrite(ctx, err) {
+	if CheckErrorAndWriteBadRequest(ctx, err) {
 		return
 	}
 
 	chars, err := c.db.GetProductCharsByProductID(id)
 
-	if CheckErrorAndWrite(ctx, err) {
+	if CheckErrorAndWriteBadRequest(ctx, err) {
 		return
 	}
 

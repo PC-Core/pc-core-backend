@@ -65,3 +65,21 @@ func (c *DbController) AuthentificateWithRole(email string, password string, req
 
 	return nil
 }
+
+func (c *DbController) GetUserByID(id int) (*models.User, error) {
+	res := c.db.QueryRow("SELECT id, name, email, role FROM Users WHERE id = $1", id)
+
+	if err := res.Err(); err != nil {
+		return nil, err
+	}
+
+	var user models.User
+
+	err := res.Scan(&user.ID, &user.Name, &user.Email, &user.Role)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &user, nil
+}

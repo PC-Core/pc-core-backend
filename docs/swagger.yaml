@@ -1,4 +1,9 @@
 definitions:
+  controllers.SingleAccessToken:
+    properties:
+      access_token:
+        type: string
+    type: object
   inputs.AddLaptopInput:
     properties:
       cpu:
@@ -91,9 +96,46 @@ definitions:
     type: string
     x-enum-varnames:
     - Default
+  outputs.JWTPair:
+    properties:
+      access_token:
+        type: string
+      refresh_token:
+        type: string
+    type: object
 info:
   contact: {}
 paths:
+  /auth/jwt/update:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: User's refresh token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/controllers.SingleAccessToken'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Update Access JWT token
+      tags:
+      - jwt
   /categories/:
     get:
       consumes:
@@ -126,12 +168,9 @@ paths:
         required: true
         schema:
           $ref: '#/definitions/inputs.AddLaptopInput'
-      - in: query
-        name: email
-        required: true
-        type: string
-      - in: query
-        name: password
+      - description: access token for user with Admin role
+        in: header
+        name: Authorization
         required: true
         type: string
       produces:
@@ -233,8 +272,8 @@ paths:
       summary: Get a single product by ID
       tags:
       - products
-  /products/add:
-    post:
+  /users/login:
+    get:
       consumes:
       - application/json
       parameters:
@@ -250,13 +289,39 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/models.User'
+            $ref: '#/definitions/outputs.JWTPair'
         "400":
           description: Bad Request
           schema:
             additionalProperties: true
             type: object
       summary: Login
+      tags:
+      - users
+  /users/register:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: User data to register
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/inputs.RegisterUserInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.User'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Register a new User
       tags:
       - users
 swagger: "2.0"

@@ -39,7 +39,7 @@ func (c *ProductController) getProducts(ctx *gin.Context) {
 
 	err := ctx.ShouldBindQuery(&input)
 
-	if CheckErrorAndWrite(ctx, err) {
+	if CheckErrorAndWriteBadRequest(ctx, err) {
 		return
 	}
 
@@ -47,7 +47,7 @@ func (c *ProductController) getProducts(ctx *gin.Context) {
 
 	products, err := c.db.GetProducts(start, input.Count)
 
-	if CheckErrorAndWrite(ctx, err) {
+	if CheckErrorAndWriteBadRequest(ctx, err) {
 		return
 	}
 
@@ -70,13 +70,13 @@ func (c *ProductController) getProductById(ctx *gin.Context) {
 
 	id, err := strconv.ParseUint(ids, 10, 64)
 
-	if CheckErrorAndWrite(ctx, err) {
+	if CheckErrorAndWriteBadRequest(ctx, err) {
 		return
 	}
 
 	product, err := c.db.GetProductById(id)
 
-	if CheckErrorAndWrite(ctx, err) {
+	if CheckErrorAndWriteBadRequest(ctx, err) {
 		return
 	}
 

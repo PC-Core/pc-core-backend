@@ -32,6 +32,10 @@ func NewJWTAccessClaimsFromUser(data *models.User) *JWTAccessAuthClaims {
 	}
 }
 
+func (c *JWTAccessAuthClaims) IntoPublicUser() *models.PublicUser {
+	return models.NewPublicUser(c.ID, c.Name, c.Email, c.Role)
+}
+
 func (t *JWTAccessAuthClaims) GetType() TokenType {
 	return t.Type
 }

@@ -78,12 +78,14 @@ func main() {
 	pc := controllers.NewProductController(r, db)
 	ct := controllers.NewCategoryController(r, db)
 	jc := controllers.NewJWTController(r, db, auth)
+	cc := controllers.NewCartController(r, db, helpers.JWTPublicUserCaster(auth), middlewares.JWTAuthorize(auth))
 
 	uc.ApplyRoutes()
 	lc.ApplyRoutes()
 	pc.ApplyRoutes()
 	ct.ApplyRoutes()
 	jc.ApplyRoutes()
+	cc.ApplyRoutes()
 
 	r.Run(config.Addr + ":" + strconv.Itoa(config.Port))
 }

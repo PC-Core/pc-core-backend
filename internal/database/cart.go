@@ -60,21 +60,23 @@ func (c *DbController) GetCartByUserID(userID uint64) (*models.Cart, error) {
 	return cart, nil
 }
 
-func (c *DbController) SingleExecOrError(req string, params ...any) error {
-	_, err := c.db.Exec(req, params)
-	return err
+// func (c *DbController) SingleExecOrError(req string, params ...any) error {
+
+// }
+
+func (c *DbController) AddToCart(product_id, user_id, quantity uint64) (uint64, error) {
+	_, err := c.db.Exec("INSERT INTO Cart (user_id, product_id, quantity) VALUES ($1, $2, $3) ON CONFLICT (user_id, product_id) DO UPDATE SET quantity = Cart.quantity + $3;", user_id, product_id, quantity)
+	return product_id, err
 }
 
-func (c *DbController) AddToCart(product_id, user_id, quantity uint64) error {
-	return c.SingleExecOrError("INSERT INTO Cart (user_id, product_id, quantity) VALUES ($1, $2, $3) ON CONFLICT (user_id, product_id) DO UPDATE SET quantity = Cart.quantity + $3;", user_id, product_id, quantity)
+func (c *DbController) RemoveFromCart(product_id, user_id uint64) (uint64, error) {
+	_, err := c.db.Exec("DELETE FROM Cart WHERE user_id = $1 AND product_id = $2", user_id, product_id)
+	return product_id, err
 }
 
-func (c *DbController) RemoveFromCart(product_id, user_id uint64) error {
-	return c.SingleExecOrError("DELETE FROM Cart WHERE user_id = $1 AND product_id = $2", user_id, product_id)
-}
-
-func (c *DbController) ChangeQuantity(product_id, user_id uint64, val int64) error {
-	return c.SingleExecOrError("UPDATE Cart SET quantity = GREATEST(quantity + $1, 1) WHERE product_id = $2 AND user_id = $3", val, product_id, user_id)
+func (c *DbController) ChangeQuantity(product_id, user_id uint64, val int64) (uint64, error) {
+	_, err := c.db.Exec("UPDATE Cart SET quantity = GREATEST(quantity + $1, 1) WHERE product_id = $2 AND user_id = $3", val, product_id, user_id)
+	return product_id, err
 }
 
 // func (c *DbController) parseCart(itemRows *sql.Rows) (*models.Cart, error) {

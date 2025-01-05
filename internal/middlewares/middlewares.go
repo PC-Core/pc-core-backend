@@ -11,10 +11,6 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-const (
-	UserDataKey = "user_data"
-)
-
 type AuthMiddleware func(auth auth.Auth) gin.HandlerFunc
 
 func JWTAuthorize(auth auth.Auth) gin.HandlerFunc {
@@ -35,7 +31,7 @@ func JWTAuthorize(auth auth.Auth) gin.HandlerFunc {
 			return
 		}
 
-		ctx.Set(UserDataKey, data)
+		ctx.Set(helpers.UserDataKey, data)
 
 		ctx.Next()
 	}
@@ -43,7 +39,7 @@ func JWTAuthorize(auth auth.Auth) gin.HandlerFunc {
 
 func RoleCheck(required models.UserRole, db *database.DbController, caster helpers.RoleCastFunc) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		data, exists := ctx.Get(UserDataKey)
+		data, exists := ctx.Get(helpers.UserDataKey)
 
 		if !exists {
 			ctx.JSON(http.StatusUnauthorized, gin.H{"error": "No user data present"})

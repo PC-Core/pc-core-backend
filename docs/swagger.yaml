@@ -19,6 +19,13 @@ definitions:
       stock:
         type: integer
     type: object
+  inputs.AddToCartInput:
+    properties:
+      product_id:
+        type: integer
+      quantity:
+        type: integer
+    type: object
   inputs.LoginUserInput:
     properties:
       email:
@@ -41,6 +48,33 @@ definitions:
     - email
     - name
     - password
+    type: object
+  inputs.RemoveFromCartInput:
+    properties:
+      product_id:
+        type: integer
+    type: object
+  models.Cart:
+    properties:
+      id:
+        type: integer
+      items:
+        items:
+          $ref: '#/definitions/models.CartItem'
+        type: array
+      user_id:
+        type: integer
+    type: object
+  models.CartItem:
+    properties:
+      added_at:
+        type: string
+      id:
+        type: integer
+      product:
+        $ref: '#/definitions/models.Product'
+      quantity:
+        type: integer
     type: object
   models.Category:
     properties:
@@ -136,6 +170,161 @@ paths:
       summary: Update Access JWT token
       tags:
       - jwt
+  /cart/:
+    delete:
+      consumes:
+      - application/json
+      parameters:
+      - description: access token for authorization
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: info about a product to remove
+        in: body
+        name: obj
+        required: true
+        schema:
+          $ref: '#/definitions/inputs.RemoveFromCartInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: integer
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+        "403":
+          description: Forbidden
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Remove the product from the cart
+      tags:
+      - cart
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: access token for authorization
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Cart'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+        "403":
+          description: Forbidden
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Get user's cart
+      tags:
+      - cart
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: access token for authorization
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: info about a product to add
+        in: body
+        name: obj
+        required: true
+        schema:
+          $ref: '#/definitions/inputs.AddToCartInput'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            type: integer
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+        "403":
+          description: Forbidden
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Add product to a cart
+      tags:
+      - cart
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: access token for authorization
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: info about a product to add
+        in: body
+        name: obj
+        required: true
+        schema:
+          $ref: '#/definitions/inputs.AddToCartInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: integer
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+        "403":
+          description: Forbidden
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Update product's quantity
+      tags:
+      - cart
   /categories/:
     get:
       consumes:

@@ -17,7 +17,7 @@ type JWTAccessAuthClaims struct {
 	jwt.RegisteredClaims
 }
 
-func NewJWTAccessClaimsFromUser(data *models.User) *JWTAccessAuthClaims {
+func NewJWTAccessClaimsFromUser(data *models.PublicUser) *JWTAccessAuthClaims {
 	return &JWTAccessAuthClaims{
 		ID:    data.ID,
 		Name:  data.Name,

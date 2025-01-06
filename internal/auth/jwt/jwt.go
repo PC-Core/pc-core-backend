@@ -29,7 +29,7 @@ func (a *JWTAuth) CreateRefreshToken(id int) (string, error) {
 	return jwt, err
 }
 
-func (a *JWTAuth) CreateAccessToken(data *models.User) (string, error) {
+func (a *JWTAuth) CreateAccessToken(data *models.PublicUser) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, NewJWTAccessClaimsFromUser(data))
 	jwt, err := token.SignedString(a.key)
 
@@ -40,7 +40,7 @@ func (a *JWTAuth) CreateAccessToken(data *models.User) (string, error) {
 	return jwt, err
 }
 
-func (a *JWTAuth) Authentificate(data *models.User) (interface{}, error) {
+func (a *JWTAuth) Authentificate(data *models.PublicUser) (interface{}, error) {
 	access, err := a.CreateAccessToken(data)
 
 	if err != nil {

@@ -2,8 +2,10 @@ package database
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/Core-Mouse/cm-backend/internal/models"
+	"github.com/lib/pq"
 )
 
 type RowLike interface {
@@ -86,3 +88,79 @@ func (c *DbController) GetProductCharsByProductID(productId uint64) (ProductChar
 		return nil, fmt.Errorf("unknown chars table name: %s", p.CharTableName)
 	}
 }
+
+func (c *DbController) LoadProductsRangeAsCartItem(rng []uint64) ([]models.CartItem, error) {
+	cartItems := make([]models.CartItem, 0)
+
+	query := `
+		SELECT id, name, price, selled, stock, chars_table_name, chars_id, COUNT(*) AS quantity
+		FROM Products
+		WHERE id = ANY($1::bigint[])
+		GROUP BY id, name, price, selled, stock, chars_table_name, chars_id
+	`
+
+	rows, err := c.db.Query(query, pq.Array(rng))
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var (
+			id            uint64
+			name          string
+			price         float64
+			selled        uint64
+			stock         uint64
+			chartablename string
+			charid        uint64
+			quantity      uint
+		)
+
+		err := rows.Scan(&id, &name, &price, &selled, &stock, &chartablename, &charid, &quantity)
+		if err != nil {
+			return nil, err
+		}
+
+		product := models.NewProduct(id, name, price, selled, stock, chartablename, charid)
+		cartItem := models.NewCartItem(0, *product, quantity, time.Now())
+
+		cartItems = append(cartItems, *cartItem)
+	}
+
+	return cartItems, nil
+}
+
+// func (c *DbController) LoadProductsRangeAsCartItem(rng []uint64) ([]models.CartItem, error) {
+// 	products := make([]models.CartItem, 0)
+
+// 	rows, err := c.db.Query("SELECT * FROM Products WHERE id = ANY($1::integer[])", pq.Array(rng))
+
+// 	if err != nil {
+// 		return nil, err
+// 	}
+
+// 	defer rows.Close()
+
+// 	for rows.Next() {
+// 		var (
+// 			id            uint64
+// 			name          string
+// 			price         float64
+// 			selled        uint64
+// 			stock         uint64
+// 			chartablename string
+// 			charid        uint64
+// 		)
+
+// 		err := rows.Scan(&id, &name, &price, &selled, &stock, &chartablename, &charid)
+
+// 		if err != nil {
+// 			return nil, err
+// 		}
+
+// 		products = append(products, *models.NewCartItem(0, *models.NewProduct(id, name, price, selled, stock, chartablename, charid), 0, time.Now()))
+// 	}
+
+// 	return products, nil
+// }

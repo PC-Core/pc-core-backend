@@ -8,19 +8,21 @@ import (
 	"github.com/Core-Mouse/cm-backend/internal/helpers"
 	"github.com/Core-Mouse/cm-backend/internal/models"
 	"github.com/Core-Mouse/cm-backend/internal/models/inputs"
+	"github.com/Core-Mouse/cm-backend/internal/redis"
 	"github.com/gin-gonic/gin"
 )
 
 type CartController struct {
 	engine          *gin.Engine
 	db              *database.DbController
+	rctrl           *redis.RedisController
 	pucaster        helpers.PublicUserCaster
 	auth_middleware gin.HandlerFunc
 }
 
-func NewCartController(engine *gin.Engine, db *database.DbController, pucaster helpers.PublicUserCaster, auth_middleware gin.HandlerFunc) *CartController {
+func NewCartController(engine *gin.Engine, db *database.DbController, rctrl *redis.RedisController, pucaster helpers.PublicUserCaster, auth_middleware gin.HandlerFunc) *CartController {
 	return &CartController{
-		engine, db, pucaster, auth_middleware,
+		engine, db, rctrl, pucaster, auth_middleware,
 	}
 }
 
@@ -54,6 +56,40 @@ func (c *CartController) ApplyRoutes() {
 	}
 }
 
+func (c *CartController) getTempCart(pu *models.PublicUser) (*models.Cart, error) {
+	arr, err := c.rctrl.GetCart(uint64(pu.ID))
+
+	if err != nil {
+		return nil, err
+	}
+
+	products, err := c.db.LoadProductsRangeAsCartItem(arr)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return models.NewCart(0, uint64(pu.ID), products), nil
+}
+
+func (c *CartController) getDefaultCart(pu *models.PublicUser) (*models.Cart, error) {
+	return c.db.GetCartByUserID(uint64(pu.ID))
+}
+
+func (c *CartController) addToTempCart(pu *models.PublicUser, input inputs.AddToCartInput) (uint64, error) {
+	id, err := c.rctrl.AddToCart(uint64(pu.ID), input.ProductID, uint64(input.Quantity))
+
+	if err != nil {
+		return 0, err
+	}
+
+	return id, nil
+}
+
+func (c *CartController) addToDefaultCart(pu *models.PublicUser, input inputs.AddToCartInput) (uint64, error) {
+	return c.db.AddToCart(input.ProductID, uint64(pu.ID), uint64(input.Quantity))
+}
+
 // Get user's cart
 // @Summary      Get user's cart
 // @Tags         cart
@@ -72,7 +108,14 @@ func (c *CartController) getCart(ctx *gin.Context) {
 		return
 	}
 
-	cart, err := c.db.GetCartByUserID(uint64(pu.ID))
+	var cart *models.Cart
+
+	switch pu.Role {
+	case models.Temporary:
+		cart, err = c.getTempCart(pu)
+	default:
+		cart, err = c.getDefaultCart(pu)
+	}
 
 	if CheckErrorAndWriteBadRequest(ctx, err) {
 		return
@@ -108,7 +151,14 @@ func (c *CartController) addToCart(ctx *gin.Context) {
 		return
 	}
 
-	product_id, err := c.db.AddToCart(input.ProductID, uint64(pu.ID), uint64(input.Quantity))
+	var product_id uint64
+
+	switch pu.Role {
+	case models.Temporary:
+		product_id, err = c.addToTempCart(pu, input)
+	default:
+		product_id, err = c.addToDefaultCart(pu, input)
+	}
 
 	if CheckErrorAndWriteBadRequest(ctx, err) {
 		return

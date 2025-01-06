@@ -7,24 +7,27 @@ import (
 	"github.com/Core-Mouse/cm-backend/internal/database"
 	"github.com/Core-Mouse/cm-backend/internal/models"
 	"github.com/Core-Mouse/cm-backend/internal/models/inputs"
+	"github.com/Core-Mouse/cm-backend/internal/redis"
 	"github.com/gin-gonic/gin"
 )
 
 type UserController struct {
 	engine *gin.Engine
 	db     *database.DbController
+	rctrl  *redis.RedisController
 	auth   auth.Auth
 }
 
-func NewUserController(engine *gin.Engine, db *database.DbController, auth auth.Auth) *UserController {
+func NewUserController(engine *gin.Engine, db *database.DbController, rctrl *redis.RedisController, auth auth.Auth) *UserController {
 	return &UserController{
-		engine, db, auth,
+		engine, db, rctrl, auth,
 	}
 }
 
 func (c *UserController) ApplyRoutes() {
 	c.engine.POST("/users/register", c.registerUser)
 	c.engine.GET("/users/login", c.loginUser)
+	c.engine.POST("/users/temp/new", c.createTempUser)
 }
 
 // Register a new User
@@ -85,4 +88,14 @@ func (c *UserController) loginUser(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusOK, res)
+}
+
+func (c *UserController) createTempUser(ctx *gin.Context) {
+	res, err := c.rctrl.CreateTempUser(c.auth)
+
+	if CheckErrorAndWriteBadRequest(ctx, err) {
+		return
+	}
+
+	ctx.JSON(http.StatusCreated, res)
 }

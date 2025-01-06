@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"strconv"
 	"time"
@@ -50,6 +51,8 @@ func main() {
 	r := gin.Default()
 
 	config, err := config.ParseConfig("../../cfg.yml")
+
+	fmt.Println(config.RedisConn.Addr)
 
 	if err != nil {
 		panic(err)

@@ -5,6 +5,7 @@ import (
 
 	"github.com/Core-Mouse/cm-backend/internal/auth"
 	"github.com/Core-Mouse/cm-backend/internal/database"
+	"github.com/Core-Mouse/cm-backend/internal/models"
 	"github.com/Core-Mouse/cm-backend/internal/models/inputs"
 	"github.com/gin-gonic/gin"
 )
@@ -77,7 +78,7 @@ func (c *UserController) loginUser(ctx *gin.Context) {
 		return
 	}
 
-	res, err := c.auth.Authentificate(user)
+	res, err := c.auth.Authentificate(models.NewPublicUserFromUser(user))
 
 	if CheckErrorAndWriteBadRequest(ctx, err) {
 		return

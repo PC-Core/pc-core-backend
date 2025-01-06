@@ -3,9 +3,10 @@ package models
 type UserRole string
 
 const (
-	Default UserRole = "Default"
+	Temporary UserRole = "Temporary"
+	Default   UserRole = "Default"
 
-	Admin = "Admin"
+	Admin UserRole = "Admin"
 )
 
 type User struct {

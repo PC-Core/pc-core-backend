@@ -7,6 +7,7 @@ import (
 	"github.com/Core-Mouse/cm-backend/internal/auth/jwt"
 	"github.com/Core-Mouse/cm-backend/internal/database"
 	"github.com/Core-Mouse/cm-backend/internal/helpers"
+	"github.com/Core-Mouse/cm-backend/internal/models"
 	"github.com/gin-gonic/gin"
 )
 
@@ -53,7 +54,9 @@ func (c *JWTController) updateAccessToken(ctx *gin.Context) {
 		return
 	}
 
-	new_token, err := c.jwt_auth.CreateAccessToken(user)
+	pubuser := models.NewPublicUserFromUser(user)
+
+	new_token, err := c.jwt_auth.CreateAccessToken(pubuser)
 
 	if CheckErrorAndWriteBadRequest(ctx, err) {
 		return

@@ -11,6 +11,7 @@ type Config struct {
 	Port      int      `yaml:"port"`
 	DbDriver  string   `yaml:"dbdriver"`
 	AllowCors []string `yaml:"allowcors"`
+	RedisConn `yaml:"redisConn"`
 }
 
 func ParseConfig(path string) (*Config, error) {

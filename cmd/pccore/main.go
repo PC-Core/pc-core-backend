@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"strconv"
 	"time"
@@ -12,9 +13,17 @@ import (
 	"github.com/Core-Mouse/cm-backend/internal/database"
 	"github.com/Core-Mouse/cm-backend/internal/helpers"
 	"github.com/Core-Mouse/cm-backend/internal/middlewares"
+	inredis "github.com/Core-Mouse/cm-backend/internal/redis"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	_ "github.com/lib/pq"
+	"github.com/redis/go-redis/v9"
+)
+
+const (
+	ENV_POSTGRES       = "POSTGRES_IBYTE_CONN"
+	ENV_JWT_KEY        = "PCCORE_JWT_KEY"
+	ENV_REDIS_PASSWORD = "PCCORE_REDIS_PASSWORD"
 )
 
 func configureSwagger(gin *gin.Engine, path string) {
@@ -46,6 +55,13 @@ func loadJWTAuth(path string) (*jwt.JWTAuth, error) {
 	return jwt.NewJWTAuth(key), nil
 }
 
+func setupRedis(cfg *config.Config) *redis.Client {
+	return redis.NewClient(&redis.Options{
+		Addr:     fmt.Sprintf("%s:%d", cfg.RedisConn.Addr, cfg.RedisConn.Port),
+		Password: os.Getenv(ENV_REDIS_PASSWORD),
+	})
+}
+
 func main() {
 	r := gin.Default()
 
@@ -57,7 +73,7 @@ func main() {
 
 	setupCors(r, config)
 
-	db, err := database.NewDbController(config.DbDriver, os.Getenv("POSTGRES_IBYTE_CONN"))
+	db, err := database.NewDbController(config.DbDriver, ENV_POSTGRES)
 
 	if err != nil {
 		panic(err)
@@ -67,18 +83,20 @@ func main() {
 		configureSwagger(r, config.Addr)
 	}
 
-	auth, err := loadJWTAuth(os.Getenv("PCCORE_JWT_KEY"))
+	auth, err := loadJWTAuth(ENV_JWT_KEY)
 
 	if err != nil {
 		panic(err)
 	}
 
-	uc := controllers.NewUserController(r, db, auth)
+	redis := inredis.NewRedisController(setupRedis(config))
+
+	uc := controllers.NewUserController(r, db, redis, auth)
 	lc := controllers.NewLaptopController(r, db, middlewares.JWTAuthorize(auth), helpers.JWTRoleCast)
 	pc := controllers.NewProductController(r, db)
 	ct := controllers.NewCategoryController(r, db)
 	jc := controllers.NewJWTController(r, db, auth)
-	cc := controllers.NewCartController(r, db, helpers.JWTPublicUserCaster(auth), middlewares.JWTAuthorize(auth))
+	cc := controllers.NewCartController(r, db, redis, helpers.JWTPublicUserCaster(auth), middlewares.JWTAuthorize(auth))
 
 	uc.ApplyRoutes()
 	lc.ApplyRoutes()

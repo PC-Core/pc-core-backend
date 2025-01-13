@@ -89,22 +89,26 @@ func (c *DbController) GetProductCharsByProductID(productId uint64) (ProductChar
 	}
 }
 
-func (c *DbController) LoadProductsRangeAsCartItem(rng []uint64) ([]models.CartItem, error) {
-	cartItems := make([]models.CartItem, 0)
+func (c *DbController) LoadProductsRangeAsCartItem(tempCart []models.TempCartItem) ([]models.CartItem, error) {
+	productIDs := make([]uint64, len(tempCart))
+	quantityMap := make(map[uint64]uint)
+	for i, item := range tempCart {
+		productIDs[i] = item.ProductID
+		quantityMap[item.ProductID] = item.Quantity
+	}
 
 	query := `
-		SELECT id, name, price, selled, stock, chars_table_name, chars_id, COUNT(*) AS quantity
+		SELECT id, name, price, selled, stock, chars_table_name, chars_id
 		FROM Products
 		WHERE id = ANY($1::bigint[])
-		GROUP BY id, name, price, selled, stock, chars_table_name, chars_id
 	`
-
-	rows, err := c.db.Query(query, pq.Array(rng))
+	rows, err := c.db.Query(query, pq.Array(productIDs))
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
+	cartItems := make([]models.CartItem, 0)
 	for rows.Next() {
 		var (
 			id            uint64
@@ -114,12 +118,16 @@ func (c *DbController) LoadProductsRangeAsCartItem(rng []uint64) ([]models.CartI
 			stock         uint64
 			chartablename string
 			charid        uint64
-			quantity      uint
 		)
 
-		err := rows.Scan(&id, &name, &price, &selled, &stock, &chartablename, &charid, &quantity)
+		err := rows.Scan(&id, &name, &price, &selled, &stock, &chartablename, &charid)
 		if err != nil {
 			return nil, err
+		}
+
+		quantity, exists := quantityMap[id]
+		if !exists {
+			return nil, fmt.Errorf("product ID %d not found in quantity map", id)
 		}
 
 		product := models.NewProduct(id, name, price, selled, stock, chartablename, charid)
@@ -130,6 +138,46 @@ func (c *DbController) LoadProductsRangeAsCartItem(rng []uint64) ([]models.CartI
 
 	return cartItems, nil
 }
+
+// func (c *DbController) LoadProductsRangeAsCartItem(rng []models.TempCartItem) ([]models.CartItem, error) {
+// 	cartItems := make([]models.CartItem, 0)
+
+// 	query := `
+// 		SELECT * FROM Products
+// 		WHERE id = ANY($1::bigint[])
+// 		GROUP BY id, name, price, selled, stock, chars_table_name, chars_id
+// 	`
+
+// 	rows, err := c.db.Query(query, pq.Array(rng))
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	defer rows.Close()
+
+// 	for rows.Next() {
+// 		var (
+// 			id            uint64
+// 			name          string
+// 			price         float64
+// 			selled        uint64
+// 			stock         uint64
+// 			chartablename string
+// 			charid        uint64
+// 		)
+
+// 		err := rows.Scan(&id, &name, &price, &selled, &stock, &chartablename, &charid)
+// 		if err != nil {
+// 			return nil, err
+// 		}
+
+// 		product := models.NewProduct(id, name, price, selled, stock, chartablename, charid)
+// 		cartItem := models.NewCartItem(0, *product, quantity, time.Now())
+
+// 		cartItems = append(cartItems, *cartItem)
+// 	}
+
+// 	return cartItems, nil
+// }
 
 // func (c *DbController) LoadProductsRangeAsCartItem(rng []uint64) ([]models.CartItem, error) {
 // 	products := make([]models.CartItem, 0)

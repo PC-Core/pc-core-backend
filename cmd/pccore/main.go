@@ -73,7 +73,7 @@ func main() {
 
 	setupCors(r, config)
 
-	db, err := database.NewDbController(config.DbDriver, "postgres://postgres:1234@localhost:5432/pccore?sslmode=disable")
+	db, err := database.NewDbController(config.DbDriver, ENV_POSTGRES)
 
 	if err != nil {
 		panic(err)
@@ -83,7 +83,7 @@ func main() {
 		configureSwagger(r, config.Addr)
 	}
 
-	auth, err := loadJWTAuth("/home/okinai/pccore_secret.key")
+	auth, err := loadJWTAuth(ENV_JWT_KEY)
 
 	if err != nil {
 		panic(err)

@@ -77,7 +77,7 @@ func (c *CartController) getDefaultCart(pu *models.PublicUser) (*models.Cart, er
 }
 
 func (c *CartController) addToTempCart(pu *models.PublicUser, input inputs.AddToCartInput) (uint64, error) {
-	id, err := c.rctrl.AddToCart(uint64(pu.ID), input.ProductID, uint64(input.Quantity))
+	id, err := c.rctrl.AddToCart(uint64(pu.ID), input.ProductID, uint(input.Quantity))
 
 	if err != nil {
 		return 0, err

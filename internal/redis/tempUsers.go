@@ -67,7 +67,7 @@ func (c *RedisController) CreateTempUser(auth auth.Auth) (interface{}, error) {
 	return auth.Authentificate(tu)
 }
 
-func (c *RedisController) GetCart(user_id uint64) ([]uint64, error) {
+func (c *RedisController) GetCart(user_id uint64) ([]models.TempCartItem, error) {
 	cartobj := c.client.Get(context.Background(), fmt.Sprintf("cart:%d", user_id))
 
 	err := cartobj.Err()
@@ -80,7 +80,7 @@ func (c *RedisController) GetCart(user_id uint64) ([]uint64, error) {
 		return nil, err
 	}
 
-	cart := make([]uint64, 0)
+	cart := make([]models.TempCartItem, 0)
 
 	err = json.Unmarshal([]byte(cartobj.Val()), &cart)
 
@@ -91,8 +91,10 @@ func (c *RedisController) GetCart(user_id uint64) ([]uint64, error) {
 	return cart, nil
 }
 
-func (c *RedisController) CreateCartAndPut(user_id uint64, product_id uint64, quantity uint64) (uint64, error) {
-	cart := []uint64{product_id}
+func (c *RedisController) CreateCartAndPut(user_id uint64, product_id uint64, quantity uint) (uint64, error) {
+	cart := []models.TempCartItem{
+		*models.NewTempCartItem(product_id, quantity),
+	}
 
 	json_cart, err := json.Marshal(cart)
 
@@ -109,7 +111,7 @@ func (c *RedisController) CreateCartAndPut(user_id uint64, product_id uint64, qu
 	return product_id, nil
 }
 
-func (c *RedisController) AddToCart(user_id uint64, product_id uint64, quantity uint64) (uint64, error) {
+func (c *RedisController) AddToCart(user_id uint64, product_id uint64, quantity uint) (uint64, error) {
 	record := fmt.Sprintf("cart:%d", user_id)
 
 	tu := c.client.Get(context.Background(), record)
@@ -124,7 +126,7 @@ func (c *RedisController) AddToCart(user_id uint64, product_id uint64, quantity 
 		return IntErrorCode, err
 	}
 
-	var cart []uint64
+	var cart []models.TempCartItem
 
 	err = json.Unmarshal([]byte(tu.Val()), &cart)
 
@@ -138,8 +140,8 @@ func (c *RedisController) AddToCart(user_id uint64, product_id uint64, quantity 
 		return IntErrorCode, nil
 	}
 
-	for i := 0; i < int(quantity); i++ {
-		cart = append(cart, product_id)
+	if !c.checkCartForCollisionsAndAppend(cart, product_id, quantity) {
+		cart = append(cart, *models.NewTempCartItem(product_id, quantity))
 	}
 
 	newcart, err := json.Marshal(cart)
@@ -155,4 +157,18 @@ func (c *RedisController) AddToCart(user_id uint64, product_id uint64, quantity 
 	}
 
 	return product_id, nil
+}
+
+func (c *RedisController) appendToCart(item *models.TempCartItem, quantity uint) bool {
+	item.Quantity += quantity
+	return true
+}
+
+func (c *RedisController) checkCartForCollisionsAndAppend(cart []models.TempCartItem, product_id uint64, quantity uint) bool {
+	for i := range cart {
+		if cart[i].ProductID == product_id {
+			return c.appendToCart(&cart[i], quantity)
+		}
+	}
+	return false
 }

@@ -136,7 +136,7 @@ func (c *DbController) LoadProductsRangeAsCartItem(tempCart []models.TempCartIte
 		cartItems = append(cartItems, *cartItem)
 	}
 
-	return cartItems, nil
+ 	return cartItems, nil
 }
 
 // func (c *DbController) LoadProductsRangeAsCartItem(rng []models.TempCartItem) ([]models.CartItem, error) {

@@ -17,7 +17,7 @@ type JWTAccessAuthClaims struct {
 	jwt.RegisteredClaims
 }
 
-func NewJWTAccessClaimsFromUser(data *models.PublicUser) *JWTAccessAuthClaims {
+func NewJWTAccessClaimsFromUser(data *models.PublicUser, adur time.Duration) *JWTAccessAuthClaims {
 	return &JWTAccessAuthClaims{
 		ID:    data.ID,
 		Name:  data.Name,
@@ -26,7 +26,7 @@ func NewJWTAccessClaimsFromUser(data *models.PublicUser) *JWTAccessAuthClaims {
 		Type:  AccessToken,
 		RegisteredClaims: jwt.RegisteredClaims{
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(15 * time.Minute)),
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(adur)),
 			Subject:   strconv.Itoa(data.ID),
 		},
 	}
@@ -46,13 +46,13 @@ type JWTRefreshAuthClaims struct {
 	jwt.RegisteredClaims
 }
 
-func NewJWTRefreshClaimsFromID(id int) *JWTRefreshAuthClaims {
+func NewJWTRefreshClaimsFromID(id int, rdur time.Duration) *JWTRefreshAuthClaims {
 	return &JWTRefreshAuthClaims{
 		UserID: id,
 		Type:   RefreshToken,
 		RegisteredClaims: jwt.RegisteredClaims{
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(JWTRefreshLifeTimeHours * time.Hour)),
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(rdur)),
 		},
 	}
 }

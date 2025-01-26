@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"strconv"
 	"time"
@@ -16,6 +17,7 @@ import (
 	inredis "github.com/Core-Mouse/cm-backend/internal/redis"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 	"github.com/redis/go-redis/v9"
 )
@@ -63,6 +65,12 @@ func setupRedis(cfg *config.Config) *redis.Client {
 }
 
 func main() {
+	err := godotenv.Load("../../.env")
+
+	if err != nil {
+		log.Fatal("Error loading .env file!")
+	}
+
 	r := gin.Default()
 
 	config, err := config.ParseConfig("../../cfg.yml")
@@ -73,7 +81,7 @@ func main() {
 
 	setupCors(r, config)
 
-	db, err := database.NewDbController(config.DbDriver, ENV_POSTGRES)
+	db, err := database.NewDbController(config.DbDriver, os.Getenv(ENV_POSTGRES))
 
 	if err != nil {
 		panic(err)
@@ -83,7 +91,7 @@ func main() {
 		configureSwagger(r, config.Addr)
 	}
 
-	auth, err := loadJWTAuth(ENV_JWT_KEY)
+	auth, err := loadJWTAuth(os.Getenv(ENV_JWT_KEY))
 
 	if err != nil {
 		panic(err)

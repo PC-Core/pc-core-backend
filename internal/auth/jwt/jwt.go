@@ -2,6 +2,7 @@ package jwt
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/Core-Mouse/cm-backend/internal/models"
 	"github.com/Core-Mouse/cm-backend/internal/models/outputs"
@@ -18,8 +19,8 @@ func NewJWTAuth(key []byte) *JWTAuth {
 	}
 }
 
-func (a *JWTAuth) CreateRefreshToken(id int) (string, error) {
-	token := jwt.NewWithClaims(JWTTokenCryptoMethod, NewJWTRefreshClaimsFromID(id))
+func (a *JWTAuth) CreateRefreshToken(id int, rdur time.Duration) (string, error) {
+	token := jwt.NewWithClaims(JWTTokenCryptoMethod, NewJWTRefreshClaimsFromID(id, rdur))
 	jwt, err := token.SignedString(a.key)
 
 	if err != nil {
@@ -29,8 +30,8 @@ func (a *JWTAuth) CreateRefreshToken(id int) (string, error) {
 	return jwt, err
 }
 
-func (a *JWTAuth) CreateAccessToken(data *models.PublicUser) (string, error) {
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, NewJWTAccessClaimsFromUser(data))
+func (a *JWTAuth) CreateAccessToken(data *models.PublicUser, adur time.Duration) (string, error) {
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, NewJWTAccessClaimsFromUser(data, adur))
 	jwt, err := token.SignedString(a.key)
 
 	if err != nil {
@@ -41,13 +42,17 @@ func (a *JWTAuth) CreateAccessToken(data *models.PublicUser) (string, error) {
 }
 
 func (a *JWTAuth) Authentificate(data *models.PublicUser) (interface{}, error) {
-	access, err := a.CreateAccessToken(data)
+	return a.AuthentificateWithDur(data, time.Duration(JWTAccessLifeTimeHours * time.Hour), time.Duration(JWTRefreshLifeTimeHours * time.Hour))
+}
+
+func (a *JWTAuth) AuthentificateWithDur(data *models.PublicUser, adur time.Duration, rdur time.Duration) (interface{}, error) {
+	access, err := a.CreateAccessToken(data, adur)
 
 	if err != nil {
 		return nil, err
 	}
 
-	refresh, err := a.CreateRefreshToken(data.ID)
+	refresh, err := a.CreateRefreshToken(data.ID, rdur)
 
 	if err != nil {
 		return nil, err

@@ -3,7 +3,7 @@ package jwt
 import "github.com/golang-jwt/jwt/v5"
 
 const (
-	JWTAccessLifeTimeMins   = 15
+	JWTAccessLifeTimeHours   = 15 / 60
 	JWTRefreshLifeTimeHours = 24 * 30
 )
 

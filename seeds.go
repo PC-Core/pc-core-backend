@@ -8,6 +8,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 )
 
@@ -106,7 +107,28 @@ func InsertLaptops(db *sql.DB) {
 	}
 }
 
-func InsertCategories(db *sql.DB) {}
+func InsertCategories(db *sql.DB) {
+	cats := []struct {
+		Title       string
+		Description string
+		Icon        string
+		Slug        string
+	}{
+		{"Процессоры", "Сердце вашего компьютера! В нашем ассортименте процессоры для любых нужд — от бюджетных моделей до высококлассных чипов для гейминга и работы с тяжелыми приложениями", "", "cpu"},
+		{"Ноутбуки", "Идеальный выбор для тех, кто ценит мобильность и производительность. У нас представлены ноутбуки для работы, учебы, развлечений и гейминга с различными характеристиками и дизайнами.", "", "laptop"},
+		{"Видеокарты", "Для тех, кто ценит графику и производительность в играх или профессиональной работе. Мы предлагаем видеокарты от лидеров отрасли с отличными характеристиками для любого бюджета.", "", "gpu"},
+		{"ОЗУ", "Увеличьте быстродействие вашего ПК с помощью высококачественной оперативной памяти. У нас есть ОЗУ для любых нужд — от стандартных моделей до сверхбыстрых для энтузиастов и профессионалов.", "", "ram"},
+		{"ПК", "Готовые решения для работы, учёбы и гейминга. В нашем ассортименте — как стандартные офисные ПК, так и мощные игровые системы с топовыми комплектующими для самых требовательных пользователей.", "", "pc"},
+	}
+
+	for _, cat := range cats {
+		_, err := db.Exec("INSERT INTO Categories (title, description, icon, slug) VALUES ($1, $2, $3, $4)", cat.Title, cat.Description, cat.Icon, cat.Slug)
+
+		if err != nil {
+			fmt.Println("Error while inserting users: ", err)
+		}
+	}
+}
 
 var SEED_TYPES = map[string]func(*sql.DB){
 	SEED_TYPE_USER:     InsertUsers,
@@ -137,6 +159,12 @@ func handleCliArgs(args []string, db *sql.DB) {
 }
 
 func main() {
+	err := godotenv.Load()
+
+	if err != nil {
+		panic(err)
+	}
+
 	db, err := sql.Open("postgres", os.Getenv("POSTGRES_IBYTE_CONN"))
 
 	if err != nil {

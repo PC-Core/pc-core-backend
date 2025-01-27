@@ -6,9 +6,18 @@ import (
 	"encoding/hex"
 	"fmt"
 	"os"
+	"strings"
 
 	_ "github.com/lib/pq"
 )
+
+const (
+	SEED_TYPE_USER     = "user"
+	SEED_TYPE_LAPTOP   = "laptop"
+	SEED_TYPE_CATEGORY = "category"
+)
+
+var SEED_TYPE_NAMES = []string{SEED_TYPE_USER, SEED_TYPE_LAPTOP, SEED_TYPE_CATEGORY}
 
 func Sha256(value string) string {
 	hasher := sha256.New()
@@ -97,6 +106,36 @@ func InsertLaptops(db *sql.DB) {
 	}
 }
 
+func InsertCategories(db *sql.DB) {}
+
+var SEED_TYPES = map[string]func(*sql.DB){
+	SEED_TYPE_USER:     InsertUsers,
+	SEED_TYPE_LAPTOP:   InsertLaptops,
+	SEED_TYPE_CATEGORY: InsertCategories,
+}
+
+func formatHelpMessage() string {
+	return fmt.Sprintf("Setup seeds.\n\nUsage:\n\tgo run seeds.go [SEED TYPES]\n\nSeed Types:\n\t%s", strings.Join(SEED_TYPE_NAMES, "\n\t"))
+}
+
+func handleCliArgs(args []string, db *sql.DB) {
+	if len(args) == 1 {
+		fmt.Println(formatHelpMessage())
+		return
+	}
+
+	for _, arg := range args[1:] {
+		fn, ok := SEED_TYPES[arg]
+
+		if !ok {
+			fmt.Printf("Error: unknown parameter: %s\n", arg)
+			os.Exit(-1)
+		}
+
+		fn(db)
+	}
+}
+
 func main() {
 	db, err := sql.Open("postgres", os.Getenv("POSTGRES_IBYTE_CONN"))
 
@@ -105,6 +144,5 @@ func main() {
 		return
 	}
 
-	InsertUsers(db)
-	InsertLaptops(db)
+	handleCliArgs(os.Args, db)
 }

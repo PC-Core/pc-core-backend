@@ -13,12 +13,12 @@ import (
 
 type UserController struct {
 	engine *gin.Engine
-	db     *database.DbController
+	db     database.DbController
 	rctrl  *redis.RedisController
 	auth   auth.Auth
 }
 
-func NewUserController(engine *gin.Engine, db *database.DbController, rctrl *redis.RedisController, auth auth.Auth) *UserController {
+func NewUserController(engine *gin.Engine, db database.DbController, rctrl *redis.RedisController, auth auth.Auth) *UserController {
 	return &UserController{
 		engine, db, rctrl, auth,
 	}

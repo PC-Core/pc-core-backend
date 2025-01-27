@@ -6,7 +6,7 @@ import (
 	"github.com/Core-Mouse/cm-backend/internal/models"
 )
 
-func (c *DbController) GetLaptopChars(charId uint64) (*models.LaptopChars, error) {
+func (c *DPostgresDbController) GetLaptopChars(charId uint64) (*models.LaptopChars, error) {
 	var (
 		id  uint64
 		cpu string
@@ -25,7 +25,7 @@ func (c *DbController) GetLaptopChars(charId uint64) (*models.LaptopChars, error
 	return models.NewLaptopChars(id, cpu, ram, gpu), nil
 }
 
-func (c *DbController) AddLaptop(name string, price float64, selled uint64, stock uint64, cpu string, ram int16, gpu string) (*models.Product, *models.LaptopChars, error) {
+func (c *DPostgresDbController) AddLaptop(name string, price float64, selled uint64, stock uint64, cpu string, ram int16, gpu string) (*models.Product, *models.LaptopChars, error) {
 	var (
 		charId    uint64
 		productId uint64

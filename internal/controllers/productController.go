@@ -11,10 +11,10 @@ import (
 
 type ProductController struct {
 	engine *gin.Engine
-	db     *database.DbController
+	db     database.DbController
 }
 
-func NewProductController(engine *gin.Engine, db *database.DbController) *ProductController {
+func NewProductController(engine *gin.Engine, db database.DbController) *ProductController {
 	return &ProductController{
 		engine, db,
 	}

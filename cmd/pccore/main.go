@@ -81,7 +81,7 @@ func main() {
 
 	setupCors(r, config)
 
-	db, err := database.NewDbController(config.DbDriver, os.Getenv(ENV_POSTGRES))
+	db, err := database.NewDPostgresDbController(config.DbDriver, os.Getenv(ENV_POSTGRES))
 
 	if err != nil {
 		panic(err)

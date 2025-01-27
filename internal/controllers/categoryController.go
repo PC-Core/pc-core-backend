@@ -9,10 +9,10 @@ import (
 
 type CategoryController struct {
 	engine *gin.Engine
-	db     *database.DbController
+	db     database.DbController
 }
 
-func NewCategoryController(engine *gin.Engine, db *database.DbController) *CategoryController {
+func NewCategoryController(engine *gin.Engine, db database.DbController) *CategoryController {
 	return &CategoryController{
 		engine, db,
 	}

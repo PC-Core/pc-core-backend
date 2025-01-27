@@ -37,7 +37,7 @@ func JWTAuthorize(auth auth.Auth) gin.HandlerFunc {
 	}
 }
 
-func RoleCheck(required models.UserRole, db *database.DbController, caster helpers.RoleCastFunc) gin.HandlerFunc {
+func RoleCheck(required models.UserRole, db database.DbController, caster helpers.RoleCastFunc) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		data, exists := ctx.Get(helpers.UserDataKey)
 

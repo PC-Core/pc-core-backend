@@ -7,7 +7,7 @@ import (
 	"github.com/Core-Mouse/cm-backend/internal/models"
 )
 
-func (c *DbController) RegisterUser(name string, email string, password string) (*models.User, error) {
+func (c *DPostgresDbController) RegisterUser(name string, email string, password string) (*models.User, error) {
 	var id int
 	var role string
 
@@ -22,7 +22,7 @@ func (c *DbController) RegisterUser(name string, email string, password string) 
 	return models.NewUser(id, name, email, models.UserRole(role), passwordHash), nil
 }
 
-func (c *DbController) LoginUser(email string, password string) (*models.User, error) {
+func (c *DPostgresDbController) LoginUser(email string, password string) (*models.User, error) {
 	var (
 		id            int
 		name          string
@@ -52,7 +52,7 @@ func (c *DbController) LoginUser(email string, password string) (*models.User, e
 	return models.NewUser(id, name, remail, models.UserRole(role), rpasswordHash), nil
 }
 
-func (c *DbController) AuthentificateWithRole(email string, password string, required_role models.UserRole) error {
+func (c *DPostgresDbController) AuthentificateWithRole(email string, password string, required_role models.UserRole) error {
 	user, err := c.LoginUser(email, password)
 
 	if err != nil {
@@ -66,7 +66,7 @@ func (c *DbController) AuthentificateWithRole(email string, password string, req
 	return nil
 }
 
-func (c *DbController) GetUserByID(id int) (*models.User, error) {
+func (c *DPostgresDbController) GetUserByID(id int) (*models.User, error) {
 	res := c.db.QueryRow("SELECT id, name, email, role FROM Users WHERE id = $1", id)
 
 	if err := res.Err(); err != nil {

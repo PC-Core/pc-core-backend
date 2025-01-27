@@ -14,13 +14,13 @@ import (
 
 type CartController struct {
 	engine          *gin.Engine
-	db              *database.DbController
+	db              database.DbController
 	rctrl           *redis.RedisController
 	pucaster        helpers.PublicUserCaster
 	auth_middleware gin.HandlerFunc
 }
 
-func NewCartController(engine *gin.Engine, db *database.DbController, rctrl *redis.RedisController, pucaster helpers.PublicUserCaster, auth_middleware gin.HandlerFunc) *CartController {
+func NewCartController(engine *gin.Engine, db database.DbController, rctrl *redis.RedisController, pucaster helpers.PublicUserCaster, auth_middleware gin.HandlerFunc) *CartController {
 	return &CartController{
 		engine, db, rctrl, pucaster, auth_middleware,
 	}

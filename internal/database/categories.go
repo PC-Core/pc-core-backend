@@ -2,7 +2,7 @@ package database
 
 import "github.com/Core-Mouse/cm-backend/internal/models"
 
-func (c *DbController) GetCategories() ([]models.Category, error) {
+func (c *DPostgresDbController) GetCategories() ([]models.Category, error) {
 	cats := make([]models.Category, 0, 5)
 
 	res, err := c.db.Query("SELECT * FROM Categories")

@@ -2,6 +2,8 @@ package database
 
 import (
 	"database/sql"
+
+	"github.com/Core-Mouse/cm-backend/internal/models"
 )
 
 const (
@@ -11,8 +13,31 @@ const (
 // An interface for Product Characterics
 type ProductChars any
 
+type RowLike interface {
+	Scan(...any) error
+}
+
+type DbController interface {
+	GetCartByUserID(userID uint64) (*models.Cart, error)
+	AddToCart(product_id, user_id, quantity uint64) (uint64, error)
+	RemoveFromCart(product_id, user_id uint64) (uint64, error)
+	ChangeQuantity(product_id, user_id uint64, val int64) (uint64, error)
+	GetCategories() ([]models.Category, error)
+	GetLaptopChars(charId uint64) (*models.LaptopChars, error)
+	AddLaptop(name string, price float64, selled uint64, stock uint64, cpu string, ram int16, gpu string) (*models.Product, *models.LaptopChars, error)
+	GetProducts(start uint64, count uint64) ([]models.Product, error)
+	ScanProduct(rows RowLike) (*models.Product, error)
+	GetProductCharsByProductID(productId uint64) (ProductChars, error)
+	GetProductById(id uint64) (*models.Product, error)
+	LoadProductsRangeAsCartItem(tempCart []models.TempCartItem) ([]models.CartItem, error)
+	RegisterUser(name string, email string, password string) (*models.User, error)
+	LoginUser(email string, password string) (*models.User, error)
+	AuthentificateWithRole(email string, password string, required_role models.UserRole) error
+	GetUserByID(id int) (*models.User, error)
+}
+
 // Database controller
-type DbController struct {
+type DPostgresDbController struct {
 	db *sql.DB
 }
 
@@ -26,14 +51,14 @@ type DbController struct {
 // Returns:
 //
 //	`*DbController` or `error`
-func NewDbController(driver string, conn string) (*DbController, error) {
+func NewDPostgresDbController(driver string, conn string) (*DPostgresDbController, error) {
 	db, err := sql.Open(driver, conn)
 
 	if err != nil {
 		return nil, err
 	}
 
-	return &DbController{
+	return &DPostgresDbController{
 		db,
 	}, nil
 }

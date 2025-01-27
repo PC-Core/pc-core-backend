@@ -8,11 +8,7 @@ import (
 	"github.com/lib/pq"
 )
 
-type RowLike interface {
-	Scan(...any) error
-}
-
-func (c *DbController) GetProducts(start uint64, count uint64) ([]models.Product, error) {
+func (c *DPostgresDbController) GetProducts(start uint64, count uint64) ([]models.Product, error) {
 	rows, err := c.db.Query("SELECT * FROM Products OFFSET $1 LIMIT $2", start, count)
 
 	if err != nil {
@@ -43,7 +39,7 @@ func (c *DbController) GetProducts(start uint64, count uint64) ([]models.Product
 	return products, nil
 }
 
-func (c *DbController) ScanProduct(rows RowLike) (*models.Product, error) {
+func (c *DPostgresDbController) ScanProduct(rows RowLike) (*models.Product, error) {
 	var (
 		rid           uint64
 		name          string
@@ -61,7 +57,7 @@ func (c *DbController) ScanProduct(rows RowLike) (*models.Product, error) {
 	return models.NewProduct(rid, name, price, selled, stock, charTableName, charId), nil
 }
 
-func (c *DbController) GetProductById(id uint64) (*models.Product, error) {
+func (c *DPostgresDbController) GetProductById(id uint64) (*models.Product, error) {
 	row := c.db.QueryRow("SELECT * FROM Products WHERE id = $1", id)
 
 	p, err := c.ScanProduct(row)
@@ -74,7 +70,7 @@ func (c *DbController) GetProductById(id uint64) (*models.Product, error) {
 
 }
 
-func (c *DbController) GetProductCharsByProductID(productId uint64) (ProductChars, error) {
+func (c *DPostgresDbController) GetProductCharsByProductID(productId uint64) (ProductChars, error) {
 	p, err := c.GetProductById(productId)
 
 	if err != nil {
@@ -89,7 +85,7 @@ func (c *DbController) GetProductCharsByProductID(productId uint64) (ProductChar
 	}
 }
 
-func (c *DbController) LoadProductsRangeAsCartItem(tempCart []models.TempCartItem) ([]models.CartItem, error) {
+func (c *DPostgresDbController) LoadProductsRangeAsCartItem(tempCart []models.TempCartItem) ([]models.CartItem, error) {
 	productIDs := make([]uint64, len(tempCart))
 	quantityMap := make(map[uint64]uint)
 	for i, item := range tempCart {
@@ -136,7 +132,7 @@ func (c *DbController) LoadProductsRangeAsCartItem(tempCart []models.TempCartIte
 		cartItems = append(cartItems, *cartItem)
 	}
 
- 	return cartItems, nil
+	return cartItems, nil
 }
 
 // func (c *DbController) LoadProductsRangeAsCartItem(rng []models.TempCartItem) ([]models.CartItem, error) {

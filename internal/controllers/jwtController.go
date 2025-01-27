@@ -14,7 +14,7 @@ import (
 
 type JWTController struct {
 	engine   *gin.Engine
-	db       *database.DbController
+	db       database.DbController
 	jwt_auth *jwt.JWTAuth
 }
 
@@ -22,7 +22,7 @@ type SingleAccessToken struct {
 	AccessToken string `json:"access_token"`
 }
 
-func NewJWTController(engine *gin.Engine, db *database.DbController, jwt_auth *jwt.JWTAuth) *JWTController {
+func NewJWTController(engine *gin.Engine, db database.DbController, jwt_auth *jwt.JWTAuth) *JWTController {
 	return &JWTController{
 		engine, db, jwt_auth,
 	}
@@ -57,7 +57,7 @@ func (c *JWTController) updateAccessToken(ctx *gin.Context) {
 
 	pubuser := models.NewPublicUserFromUser(user)
 
-	new_token, err := c.jwt_auth.CreateAccessToken(pubuser, time.Duration(jwt.JWTAccessLifeTimeHours * time.Hour))
+	new_token, err := c.jwt_auth.CreateAccessToken(pubuser, time.Duration(jwt.JWTAccessLifeTime))
 
 	if CheckErrorAndWriteBadRequest(ctx, err) {
 		return

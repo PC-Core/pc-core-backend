@@ -1,10 +1,14 @@
 package jwt
 
-import "github.com/golang-jwt/jwt/v5"
+import (
+	"time"
+
+	"github.com/golang-jwt/jwt/v5"
+)
 
 const (
-	JWTAccessLifeTimeHours   = 15 / 60
-	JWTRefreshLifeTimeHours = 24 * 30
+	JWTAccessLifeTime  = 15 * time.Minute
+	JWTRefreshLifeTime = 24 * 30 * time.Hour
 )
 
 var JWTTokenCryptoMethod = jwt.SigningMethodHS256

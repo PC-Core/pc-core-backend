@@ -42,7 +42,7 @@ func (a *JWTAuth) CreateAccessToken(data *models.PublicUser, adur time.Duration)
 }
 
 func (a *JWTAuth) Authentificate(data *models.PublicUser) (interface{}, error) {
-	return a.AuthentificateWithDur(data, time.Duration(JWTAccessLifeTimeHours * time.Hour), time.Duration(JWTRefreshLifeTimeHours * time.Hour))
+	return a.AuthentificateWithDur(data, time.Duration(JWTAccessLifeTime), time.Duration(JWTRefreshLifeTime))
 }
 
 func (a *JWTAuth) AuthentificateWithDur(data *models.PublicUser, adur time.Duration, rdur time.Duration) (interface{}, error) {

@@ -15,12 +15,12 @@ import (
 
 type LaptopController struct {
 	engine          *gin.Engine
-	db              *database.DbController
+	db              database.DbController
 	auth_middleware gin.HandlerFunc
 	caster          helpers.RoleCastFunc
 }
 
-func NewLaptopController(engine *gin.Engine, db *database.DbController, auth_middleware gin.HandlerFunc, caster helpers.RoleCastFunc) *LaptopController {
+func NewLaptopController(engine *gin.Engine, db database.DbController, auth_middleware gin.HandlerFunc, caster helpers.RoleCastFunc) *LaptopController {
 	return &LaptopController{
 		engine, db, auth_middleware, caster,
 	}

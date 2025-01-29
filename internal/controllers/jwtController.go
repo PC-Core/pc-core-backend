@@ -1,12 +1,12 @@
 package controllers
 
 import (
-	"fmt"
 	"net/http"
 	"time"
 
 	"github.com/Core-Mouse/cm-backend/internal/auth/jwt"
 	"github.com/Core-Mouse/cm-backend/internal/database"
+	"github.com/Core-Mouse/cm-backend/internal/errors"
 	"github.com/Core-Mouse/cm-backend/internal/helpers"
 	"github.com/Core-Mouse/cm-backend/internal/models"
 	"github.com/gin-gonic/gin"
@@ -39,8 +39,8 @@ func (c *JWTController) ApplyRoutes() {
 // @Produce      json
 // @Param 		 Authorization	header string	true	"User's refresh token"
 // @Success      200  {object}  SingleAccessToken
-// @Failure      401  {object}  map[string]interface{}
-// @Failure		 400  {object}	map[string]interface{}
+// @Failure      401  {object}  errors.PublicPCCError
+// @Failure		 400  {object}  errors.PublicPCCError
 // @Router       /auth/jwt/update [post]
 func (c *JWTController) updateAccessToken(ctx *gin.Context) {
 	id, err := c.getUserIDFromRefreshHeader(ctx)
@@ -69,7 +69,7 @@ func (c *JWTController) updateAccessToken(ctx *gin.Context) {
 
 }
 
-func (c *JWTController) getUserIDFromRefreshHeader(ctx *gin.Context) (int, error) {
+func (c *JWTController) getUserIDFromRefreshHeader(ctx *gin.Context) (int, errors.PCCError) {
 	str_token, err := helpers.GetAutorizationToken(ctx, helpers.BearerPrefix)
 
 	if err != nil {
@@ -85,7 +85,7 @@ func (c *JWTController) getUserIDFromRefreshHeader(ctx *gin.Context) (int, error
 	claims, ok := token.Claims.(*jwt.JWTRefreshAuthClaims)
 
 	if !ok {
-		return -1, fmt.Errorf("wrong JWT claims type provided")
+		return -1, errors.NewInternalSecretError()
 	}
 
 	return claims.UserID, nil

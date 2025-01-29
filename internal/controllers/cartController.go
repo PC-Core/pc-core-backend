@@ -1,10 +1,11 @@
 package controllers
 
 import (
-	"fmt"
 	"net/http"
 
+	"github.com/Core-Mouse/cm-backend/internal/controllers/conerrors"
 	"github.com/Core-Mouse/cm-backend/internal/database"
+	"github.com/Core-Mouse/cm-backend/internal/errors"
 	"github.com/Core-Mouse/cm-backend/internal/helpers"
 	"github.com/Core-Mouse/cm-backend/internal/models"
 	"github.com/Core-Mouse/cm-backend/internal/models/inputs"
@@ -30,11 +31,11 @@ func (c *CartController) GetPUCaster() helpers.PublicUserCaster {
 	return c.pucaster
 }
 
-func (c *CartController) GetPubUser(ctx *gin.Context) (*models.PublicUser, error) {
+func (c *CartController) GetPubUser(ctx *gin.Context) (*models.PublicUser, errors.PCCError) {
 	userdata, exists := ctx.Get(helpers.UserDataKey)
 
 	if !exists {
-		return nil, fmt.Errorf("no user data found")
+		return nil, conerrors.GetUserDataFromContextError()
 	}
 
 	pu, err := c.pucaster(userdata)
@@ -56,7 +57,7 @@ func (c *CartController) ApplyRoutes() {
 	}
 }
 
-func (c *CartController) getTempCart(pu *models.PublicUser) (*models.Cart, error) {
+func (c *CartController) getTempCart(pu *models.PublicUser) (*models.Cart, errors.PCCError) {
 	arr, err := c.rctrl.GetCart(uint64(pu.ID))
 
 	if err != nil {
@@ -72,11 +73,11 @@ func (c *CartController) getTempCart(pu *models.PublicUser) (*models.Cart, error
 	return models.NewCart(0, uint64(pu.ID), products), nil
 }
 
-func (c *CartController) getDefaultCart(pu *models.PublicUser) (*models.Cart, error) {
+func (c *CartController) getDefaultCart(pu *models.PublicUser) (*models.Cart, errors.PCCError) {
 	return c.db.GetCartByUserID(uint64(pu.ID))
 }
 
-func (c *CartController) addToTempCart(pu *models.PublicUser, input inputs.AddToCartInput) (uint64, error) {
+func (c *CartController) addToTempCart(pu *models.PublicUser, input inputs.AddToCartInput) (uint64, errors.PCCError) {
 	id, err := c.rctrl.AddToCart(uint64(pu.ID), input.ProductID, uint(input.Quantity))
 
 	if err != nil {
@@ -86,7 +87,7 @@ func (c *CartController) addToTempCart(pu *models.PublicUser, input inputs.AddTo
 	return id, nil
 }
 
-func (c *CartController) addToDefaultCart(pu *models.PublicUser, input inputs.AddToCartInput) (uint64, error) {
+func (c *CartController) addToDefaultCart(pu *models.PublicUser, input inputs.AddToCartInput) (uint64, errors.PCCError) {
 	return c.db.AddToCart(input.ProductID, uint64(pu.ID), uint64(input.Quantity))
 }
 
@@ -97,9 +98,9 @@ func (c *CartController) addToDefaultCart(pu *models.PublicUser, input inputs.Ad
 // @Produce      json
 // @Param 		 Authorization	header	string	true	"access token for authorization"
 // @Success      200  {object}  models.Cart
-// @Failure      400  {object}  map[string]interface{}
-// @Failure      401  {object}  map[string]interface{}
-// @Failure      403  {object}  map[string]interface{}
+// @Failure      400  {object}  errors.PublicPCCError
+// @Failure      401  {object}  errors.PublicPCCError
+// @Failure      403  {object}  errors.PublicPCCError
 // @Router       /cart/ [get]
 func (c *CartController) getCart(ctx *gin.Context) {
 	pu, err := c.GetPubUser(ctx)
@@ -132,9 +133,9 @@ func (c *CartController) getCart(ctx *gin.Context) {
 // @Param 		 Authorization	header	string					true	"access token for authorization"
 // @Param		 obj  			body  	inputs.AddToCartInput	true	"info about a product to add"
 // @Success      201  {object}  uint64
-// @Failure      400  {object}  map[string]interface{}
-// @Failure      401  {object}  map[string]interface{}
-// @Failure      403  {object}  map[string]interface{}
+// @Failure      400  {object}  errors.PublicPCCError
+// @Failure      401  {object}  errors.PublicPCCError
+// @Failure      403  {object}  errors.PublicPCCError
 // @Router       /cart/ [post]
 func (c *CartController) addToCart(ctx *gin.Context) {
 	pu, err := c.GetPubUser(ctx)
@@ -145,7 +146,11 @@ func (c *CartController) addToCart(ctx *gin.Context) {
 
 	var input inputs.AddToCartInput
 
-	err = ctx.ShouldBindBodyWithJSON(&input)
+	berr := ctx.ShouldBindBodyWithJSON(&input)
+
+	if berr != nil {
+		err = conerrors.BindError()
+	}
 
 	if CheckErrorAndWriteBadRequest(ctx, err) {
 		return
@@ -175,9 +180,9 @@ func (c *CartController) addToCart(ctx *gin.Context) {
 // @Param 		 Authorization	header	string						true	"access token for authorization"
 // @Param		 obj  			body  	inputs.RemoveFromCartInput	true	"info about a product to remove"
 // @Success      200  {object}  uint64
-// @Failure      400  {object}  map[string]interface{}
-// @Failure      401  {object}  map[string]interface{}
-// @Failure      403  {object}  map[string]interface{}
+// @Failure      400  {object}  errors.PublicPCCError
+// @Failure      401  {object}  errors.PublicPCCError
+// @Failure      403  {object}  errors.PublicPCCError
 // @Router       /cart/ [delete]
 func (c *CartController) removeFromCart(ctx *gin.Context) {
 	pu, err := c.GetPubUser(ctx)
@@ -188,7 +193,11 @@ func (c *CartController) removeFromCart(ctx *gin.Context) {
 
 	var input inputs.RemoveFromCartInput
 
-	err = ctx.ShouldBindBodyWithJSON(&input)
+	berr := ctx.ShouldBindBodyWithJSON(&input)
+
+	if berr != nil {
+		err = conerrors.BindError()
+	}
 
 	if CheckErrorAndWriteBadRequest(ctx, err) {
 		return
@@ -211,9 +220,9 @@ func (c *CartController) removeFromCart(ctx *gin.Context) {
 // @Param 		 Authorization	header	string					true	"access token for authorization"
 // @Param		 obj  			body  	inputs.AddToCartInput	true	"info about a product to add"
 // @Success      200  {object}  uint64
-// @Failure      400  {object}  map[string]interface{}
-// @Failure      401  {object}  map[string]interface{}
-// @Failure      403  {object}  map[string]interface{}
+// @Failure      400  {object}  errors.PublicPCCError
+// @Failure      401  {object}  errors.PublicPCCError
+// @Failure      403  {object}  errors.PublicPCCError
 // @Router       /cart/ [put]
 func (c *CartController) changeQuantity(ctx *gin.Context) {
 	pu, err := c.GetPubUser(ctx)
@@ -224,7 +233,11 @@ func (c *CartController) changeQuantity(ctx *gin.Context) {
 
 	var input inputs.AddToCartInput
 
-	err = ctx.ShouldBindBodyWithJSON(&input)
+	berr := ctx.ShouldBindBodyWithJSON(&input)
+
+	if berr != nil {
+		err = conerrors.BindError()
+	}
 
 	if CheckErrorAndWriteBadRequest(ctx, err) {
 		return

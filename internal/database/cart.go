@@ -1,10 +1,12 @@
 package database
 
 import (
+	"github.com/Core-Mouse/cm-backend/internal/database/dberrors"
+	"github.com/Core-Mouse/cm-backend/internal/errors"
 	"github.com/Core-Mouse/cm-backend/internal/models"
 )
 
-func (c *DPostgresDbController) GetCartByUserID(userID uint64) (*models.Cart, error) {
+func (c *DPostgresDbController) GetCartByUserID(userID uint64) (*models.Cart, errors.PCCError) {
 	query := `
 	SELECT
 		Cart.quantity,
@@ -28,7 +30,7 @@ func (c *DPostgresDbController) GetCartByUserID(userID uint64) (*models.Cart, er
 	rows, err := c.db.Query(query, userID)
 
 	if err != nil {
-		return nil, err
+		return nil, dberrors.PQDbErrorCaster(err)
 	}
 
 	defer rows.Close()
@@ -45,8 +47,9 @@ func (c *DPostgresDbController) GetCartByUserID(userID uint64) (*models.Cart, er
 		err := rows.Scan(&item.Quantity, &item.AddedAt,
 			&product.ID, &product.Name, &product.Price, &product.Selled,
 			&product.Stock, &product.CharTableName, &product.CharId)
+
 		if err != nil {
-			return nil, err
+			return nil, dberrors.PQDbErrorCaster(err)
 		}
 
 		item.Product = product
@@ -54,7 +57,7 @@ func (c *DPostgresDbController) GetCartByUserID(userID uint64) (*models.Cart, er
 	}
 
 	if err = rows.Err(); err != nil {
-		return nil, err
+		return nil, dberrors.PQDbErrorCaster(err)
 	}
 
 	return cart, nil
@@ -64,19 +67,19 @@ func (c *DPostgresDbController) GetCartByUserID(userID uint64) (*models.Cart, er
 
 // }
 
-func (c *DPostgresDbController) AddToCart(product_id, user_id, quantity uint64) (uint64, error) {
+func (c *DPostgresDbController) AddToCart(product_id, user_id, quantity uint64) (uint64, errors.PCCError) {
 	_, err := c.db.Exec("INSERT INTO Cart (user_id, product_id, quantity) VALUES ($1, $2, $3) ON CONFLICT (user_id, product_id) DO UPDATE SET quantity = Cart.quantity + $3;", user_id, product_id, quantity)
-	return product_id, err
+	return product_id, dberrors.PQDbErrorCaster(err)
 }
 
-func (c *DPostgresDbController) RemoveFromCart(product_id, user_id uint64) (uint64, error) {
+func (c *DPostgresDbController) RemoveFromCart(product_id, user_id uint64) (uint64, errors.PCCError) {
 	_, err := c.db.Exec("DELETE FROM Cart WHERE user_id = $1 AND product_id = $2", user_id, product_id)
-	return product_id, err
+	return product_id, dberrors.PQDbErrorCaster(err)
 }
 
-func (c *DPostgresDbController) ChangeQuantity(product_id, user_id uint64, val int64) (uint64, error) {
+func (c *DPostgresDbController) ChangeQuantity(product_id, user_id uint64, val int64) (uint64, errors.PCCError) {
 	_, err := c.db.Exec("UPDATE Cart SET quantity = GREATEST(quantity + $1, 1) WHERE product_id = $2 AND user_id = $3", val, product_id, user_id)
-	return product_id, err
+	return product_id, dberrors.PQDbErrorCaster(err)
 }
 
 // func (c *DbController) parseCart(itemRows *sql.Rows) (*models.Cart, error) {

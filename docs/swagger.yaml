@@ -4,6 +4,99 @@ definitions:
       access_token:
         type: string
     type: object
+  errors.ErrorCode:
+    enum:
+    - 0
+    - 1
+    - 2
+    - 3
+    - 4
+    - 5
+    - 6
+    - 7
+    - 8
+    - 9
+    - 10
+    - 11
+    - 12
+    - 13
+    - 14
+    - 15
+    - 16
+    - 17
+    - 18
+    - 19
+    - 20
+    - 21
+    - 22
+    type: integer
+    x-enum-varnames:
+    - EC_INTERNAL
+    - EC_DB_UNIQUE_FAIL
+    - EC_DB_NOT_FOUND_ERROR
+    - EC_DB_WRONG_CHARS_TABLE_NAME
+    - EC_DB_ROLE_ERROR
+    - EC_DB_OTHER
+    - EC_CTRLS_INPUT_ERROR
+    - EC_CTRLS_NO_USER_DATA_ERROR
+    - EC_REDIS_NIL
+    - EC_REDIS_OTHER
+    - EC_REDIS_WRONG_VALUE
+    - EC_JSON_MARSHAL_ERROR
+    - EC_JSON_UNMARSHAL_ERROR
+    - EC_JWT_TOKEN_MALFORMED
+    - EC_JWT_TOKEN_EXPIRED
+    - EC_JWT_TOKEN_NOT_VALID_YET
+    - EC_UNKNOWN_JWT_TOKEN_ERROR
+    - EC_JWT_ERROR_TOKEN_TYPE
+    - EC_HEADER_MISSING
+    - EC_ATOI_NOT_AN_UINT
+    - EC_ATOI_RANGE_ERROR
+    - EC_ATOI_UNKNOWN
+    - EC_ROLE_LOWER
+  errors.ErrorKind:
+    enum:
+    - internal
+    - database
+    - jwt
+    - controllers
+    - redis
+    - json
+    - header
+    - atoi
+    - roles
+    type: string
+    x-enum-varnames:
+    - EK_INTERNAL
+    - EK_DATABASE
+    - EK_JWT
+    - EK_CTRLS
+    - EK_REDIS
+    - EK_JSON
+    - EK_HEADER
+    - EK_ATOI
+    - EK_ROLES
+  errors.PublicPCCError:
+    properties:
+      code:
+        allOf:
+        - $ref: '#/definitions/errors.ErrorCode'
+        description: |-
+          Code represents the error code in terms of this project
+          It should NEVER contain the inner code from the database drive or something similar
+      details:
+        description: |-
+          Details may provide more details about the error but should NEVER contain the secret or
+          sensetive data
+      kind:
+        allOf:
+        - $ref: '#/definitions/errors.ErrorKind'
+        description: Kind represents the information about the module or the step
+          on which the error occured
+      message:
+        description: SafeMessage contains the summary message that should be safe
+        type: string
+    type: object
   inputs.AddLaptopInput:
     properties:
       cpu:
@@ -126,10 +219,14 @@ definitions:
     type: object
   models.UserRole:
     enum:
+    - Temporary
     - Default
+    - Admin
     type: string
     x-enum-varnames:
+    - Temporary
     - Default
+    - Admin
   outputs.JWTPair:
     properties:
       access_token:
@@ -160,13 +257,11 @@ paths:
         "400":
           description: Bad Request
           schema:
-            additionalProperties: true
-            type: object
+            $ref: '#/definitions/errors.PublicPCCError'
         "401":
           description: Unauthorized
           schema:
-            additionalProperties: true
-            type: object
+            $ref: '#/definitions/errors.PublicPCCError'
       summary: Update Access JWT token
       tags:
       - jwt
@@ -196,18 +291,15 @@ paths:
         "400":
           description: Bad Request
           schema:
-            additionalProperties: true
-            type: object
+            $ref: '#/definitions/errors.PublicPCCError'
         "401":
           description: Unauthorized
           schema:
-            additionalProperties: true
-            type: object
+            $ref: '#/definitions/errors.PublicPCCError'
         "403":
           description: Forbidden
           schema:
-            additionalProperties: true
-            type: object
+            $ref: '#/definitions/errors.PublicPCCError'
       summary: Remove the product from the cart
       tags:
       - cart
@@ -230,18 +322,15 @@ paths:
         "400":
           description: Bad Request
           schema:
-            additionalProperties: true
-            type: object
+            $ref: '#/definitions/errors.PublicPCCError'
         "401":
           description: Unauthorized
           schema:
-            additionalProperties: true
-            type: object
+            $ref: '#/definitions/errors.PublicPCCError'
         "403":
           description: Forbidden
           schema:
-            additionalProperties: true
-            type: object
+            $ref: '#/definitions/errors.PublicPCCError'
       summary: Get user's cart
       tags:
       - cart
@@ -270,18 +359,15 @@ paths:
         "400":
           description: Bad Request
           schema:
-            additionalProperties: true
-            type: object
+            $ref: '#/definitions/errors.PublicPCCError'
         "401":
           description: Unauthorized
           schema:
-            additionalProperties: true
-            type: object
+            $ref: '#/definitions/errors.PublicPCCError'
         "403":
           description: Forbidden
           schema:
-            additionalProperties: true
-            type: object
+            $ref: '#/definitions/errors.PublicPCCError'
       summary: Add product to a cart
       tags:
       - cart
@@ -310,18 +396,15 @@ paths:
         "400":
           description: Bad Request
           schema:
-            additionalProperties: true
-            type: object
+            $ref: '#/definitions/errors.PublicPCCError'
         "401":
           description: Unauthorized
           schema:
-            additionalProperties: true
-            type: object
+            $ref: '#/definitions/errors.PublicPCCError'
         "403":
           description: Forbidden
           schema:
-            additionalProperties: true
-            type: object
+            $ref: '#/definitions/errors.PublicPCCError'
       summary: Update product's quantity
       tags:
       - cart
@@ -373,13 +456,11 @@ paths:
         "400":
           description: Bad Request
           schema:
-            additionalProperties: true
-            type: object
+            $ref: '#/definitions/errors.PublicPCCError'
         "403":
           description: Forbidden
           schema:
-            additionalProperties: true
-            type: object
+            $ref: '#/definitions/errors.PublicPCCError'
       summary: Add a new laptop
       tags:
       - laptops
@@ -403,8 +484,7 @@ paths:
         "400":
           description: Bad Request
           schema:
-            additionalProperties: true
-            type: object
+            $ref: '#/definitions/errors.PublicPCCError'
       summary: Get laptop chars
       tags:
       - laptops
@@ -431,8 +511,7 @@ paths:
         "400":
           description: Bad Request
           schema:
-            additionalProperties: true
-            type: object
+            $ref: '#/definitions/errors.PublicPCCError'
       summary: Get products from page N in quantity M
       tags:
       - products
@@ -456,8 +535,7 @@ paths:
         "400":
           description: Bad Request
           schema:
-            additionalProperties: true
-            type: object
+            $ref: '#/definitions/errors.PublicPCCError'
       summary: Get a single product by ID
       tags:
       - products
@@ -482,8 +560,7 @@ paths:
         "400":
           description: Bad Request
           schema:
-            additionalProperties: true
-            type: object
+            $ref: '#/definitions/errors.PublicPCCError'
       summary: Login
       tags:
       - users
@@ -508,8 +585,7 @@ paths:
         "400":
           description: Bad Request
           schema:
-            additionalProperties: true
-            type: object
+            $ref: '#/definitions/errors.PublicPCCError'
       summary: Register a new User
       tags:
       - users

@@ -20,6 +20,7 @@ import (
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 	"github.com/redis/go-redis/v9"
+	"github.com/swaggo/swag"
 )
 
 const (
@@ -28,13 +29,23 @@ const (
 	ENV_REDIS_PASSWORD = "PCCORE_REDIS_PASSWORD"
 )
 
+const SWAGGER_KEY = "swagger"
+
 func configureSwagger(gin *gin.Engine, path string) {
 	docs.SwaggerInfo.Title = "PC Core Backend"
 	docs.SwaggerInfo.Host = path
 	docs.SwaggerInfo.Version = "0.0.1"
 
+	swaggerRegisterCheck()
+
 	swagger := controllers.NewSwaggerController(gin)
 	swagger.ApplyRoutes()
+}
+
+func swaggerRegisterCheck() {
+	if swag.GetSwagger(SWAGGER_KEY) == nil {
+		swag.Register(SWAGGER_KEY, docs.SwaggerInfo)
+	}
 }
 
 func setupCors(r *gin.Engine, cfg *config.Config) {

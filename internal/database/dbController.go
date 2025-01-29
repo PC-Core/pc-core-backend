@@ -3,6 +3,7 @@ package database
 import (
 	"database/sql"
 
+	"github.com/Core-Mouse/cm-backend/internal/errors"
 	"github.com/Core-Mouse/cm-backend/internal/models"
 )
 
@@ -18,22 +19,22 @@ type RowLike interface {
 }
 
 type DbController interface {
-	GetCartByUserID(userID uint64) (*models.Cart, error)
-	AddToCart(product_id, user_id, quantity uint64) (uint64, error)
-	RemoveFromCart(product_id, user_id uint64) (uint64, error)
-	ChangeQuantity(product_id, user_id uint64, val int64) (uint64, error)
-	GetCategories() ([]models.Category, error)
-	GetLaptopChars(charId uint64) (*models.LaptopChars, error)
-	AddLaptop(name string, price float64, selled uint64, stock uint64, cpu string, ram int16, gpu string) (*models.Product, *models.LaptopChars, error)
-	GetProducts(start uint64, count uint64) ([]models.Product, error)
-	ScanProduct(rows RowLike) (*models.Product, error)
-	GetProductCharsByProductID(productId uint64) (ProductChars, error)
-	GetProductById(id uint64) (*models.Product, error)
-	LoadProductsRangeAsCartItem(tempCart []models.TempCartItem) ([]models.CartItem, error)
-	RegisterUser(name string, email string, password string) (*models.User, error)
-	LoginUser(email string, password string) (*models.User, error)
-	AuthentificateWithRole(email string, password string, required_role models.UserRole) error
-	GetUserByID(id int) (*models.User, error)
+	GetCartByUserID(userID uint64) (*models.Cart, errors.PCCError)
+	AddToCart(product_id, user_id, quantity uint64) (uint64, errors.PCCError)
+	RemoveFromCart(product_id, user_id uint64) (uint64, errors.PCCError)
+	ChangeQuantity(product_id, user_id uint64, val int64) (uint64, errors.PCCError)
+	GetCategories() ([]models.Category, errors.PCCError)
+	GetLaptopChars(charId uint64) (*models.LaptopChars, errors.PCCError)
+	AddLaptop(name string, price float64, selled uint64, stock uint64, cpu string, ram int16, gpu string) (*models.Product, *models.LaptopChars, errors.PCCError)
+	GetProducts(start uint64, count uint64) ([]models.Product, errors.PCCError)
+	ScanProduct(rows RowLike) (*models.Product, errors.PCCError)
+	GetProductCharsByProductID(productId uint64) (ProductChars, errors.PCCError)
+	GetProductById(id uint64) (*models.Product, errors.PCCError)
+	LoadProductsRangeAsCartItem(tempCart []models.TempCartItem) ([]models.CartItem, errors.PCCError)
+	RegisterUser(name string, email string, password string) (*models.User, errors.PCCError)
+	LoginUser(email string, password string) (*models.User, errors.PCCError)
+	AuthentificateWithRole(email string, password string, required_role models.UserRole) errors.PCCError
+	GetUserByID(id int) (*models.User, errors.PCCError)
 }
 
 // Database controller

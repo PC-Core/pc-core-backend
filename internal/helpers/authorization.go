@@ -1,8 +1,7 @@
 package helpers
 
 import (
-	"fmt"
-
+	"github.com/Core-Mouse/cm-backend/internal/errors"
 	"github.com/gin-gonic/gin"
 )
 
@@ -11,11 +10,11 @@ const (
 	BearerPrefix        = "Bearer "
 )
 
-func GetAutorizationToken(ctx *gin.Context, prefix string) (string, error) {
+func GetAutorizationToken(ctx *gin.Context, prefix string) (string, errors.PCCError) {
 	authHeader := ctx.GetHeader(AuthorizationHeader)
 
 	if len(authHeader) <= len(prefix) || authHeader[:len(prefix)] != prefix {
-		return "", fmt.Errorf("authorization header missing or invalid")
+		return "", errors.MissingHeader(AuthorizationHeader)
 	}
 
 	return authHeader[len(prefix):], nil

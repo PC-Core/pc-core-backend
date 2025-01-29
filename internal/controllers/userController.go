@@ -4,7 +4,9 @@ import (
 	"net/http"
 
 	"github.com/Core-Mouse/cm-backend/internal/auth"
+	"github.com/Core-Mouse/cm-backend/internal/controllers/conerrors"
 	"github.com/Core-Mouse/cm-backend/internal/database"
+	"github.com/Core-Mouse/cm-backend/internal/errors"
 	"github.com/Core-Mouse/cm-backend/internal/models"
 	"github.com/Core-Mouse/cm-backend/internal/models/inputs"
 	"github.com/Core-Mouse/cm-backend/internal/redis"
@@ -37,14 +39,15 @@ func (c *UserController) ApplyRoutes() {
 // @Produce      json
 // @Param 		 user	body inputs.RegisterUserInput	true	"User data to register"
 // @Success      200  {object}  models.User
-// @Failure      400  {object}  map[string]interface{}
+// @Failure      400  {object}  errors.PublicPCCError
 // @Router       /users/register [post]
 func (c *UserController) registerUser(ctx *gin.Context) {
 	var input inputs.RegisterUserInput
 
-	err := ctx.ShouldBindJSON(&input)
+	berr := ctx.ShouldBindJSON(&input)
 
-	if CheckErrorAndWriteBadRequest(ctx, err) {
+	if berr != nil {
+		CheckErrorAndWriteBadRequest(ctx, conerrors.BindError())
 		return
 	}
 
@@ -64,12 +67,17 @@ func (c *UserController) registerUser(ctx *gin.Context) {
 // @Produce      json
 // @Param 		 user	body inputs.LoginUserInput	true	"User data to login"
 // @Success      200  {object}  outputs.JWTPair
-// @Failure      400  {object}  map[string]interface{}
+// @Failure      400  {object}  errors.PublicPCCError
 // @Router       /users/login [get]
 func (c *UserController) loginUser(ctx *gin.Context) {
 	var input inputs.LoginUserInput
+	var err errors.PCCError
 
-	err := ctx.ShouldBindQuery(&input)
+	berr := ctx.ShouldBindQuery(&input)
+
+	if berr != nil {
+		err = conerrors.BindError()
+	}
 
 	if CheckErrorAndWriteBadRequest(ctx, err) {
 		return

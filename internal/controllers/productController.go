@@ -4,7 +4,9 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/Core-Mouse/cm-backend/internal/controllers/conerrors"
 	"github.com/Core-Mouse/cm-backend/internal/database"
+	"github.com/Core-Mouse/cm-backend/internal/errors"
 	"github.com/Core-Mouse/cm-backend/internal/models/inputs"
 	"github.com/gin-gonic/gin"
 )
@@ -32,14 +34,15 @@ func (c *ProductController) ApplyRoutes() {
 // @Produce      json
 // @Param 		 product query	inputs.GetProductsInput	true	"Page and count"
 // @Success      200  {array}  models.Product
-// @Failure      400  {object}  map[string]interface{}
+// @Failure      400  {object}  errors.PublicPCCError
 // @Router       /products/ [get]
 func (c *ProductController) getProducts(ctx *gin.Context) {
 	var input inputs.GetProductsInput
 
-	err := ctx.ShouldBindQuery(&input)
+	berr := ctx.ShouldBindQuery(&input)
 
-	if CheckErrorAndWriteBadRequest(ctx, err) {
+	if berr != nil {
+		CheckErrorAndWriteBadRequest(ctx, conerrors.BindError())
 		return
 	}
 
@@ -63,20 +66,20 @@ func (c *ProductController) getProducts(ctx *gin.Context) {
 // @Produce      json
 // @Param 		 id		path	uint64	true	"Product ID"
 // @Success      200  {object}  models.Product
-// @Failure      400  {object}  map[string]interface{}
+// @Failure      400  {object} errors.PublicPCCError
 // @Router       /products/{id} [get]
 func (c *ProductController) getProductById(ctx *gin.Context) {
 	ids := ctx.Param("id")
 
 	id, err := strconv.ParseUint(ids, 10, 64)
 
-	if CheckErrorAndWriteBadRequest(ctx, err) {
+	if CheckErrorAndWriteBadRequest(ctx, errors.NewAtoiError(err)) {
 		return
 	}
 
-	product, err := c.db.GetProductById(id)
+	product, perr := c.db.GetProductById(id)
 
-	if CheckErrorAndWriteBadRequest(ctx, err) {
+	if CheckErrorAndWriteBadRequest(ctx, perr) {
 		return
 	}
 

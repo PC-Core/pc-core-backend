@@ -1,14 +1,18 @@
 package database
 
-import "github.com/Core-Mouse/cm-backend/internal/models"
+import (
+	"github.com/Core-Mouse/cm-backend/internal/database/dberrors"
+	"github.com/Core-Mouse/cm-backend/internal/errors"
+	"github.com/Core-Mouse/cm-backend/internal/models"
+)
 
-func (c *DPostgresDbController) GetCategories() ([]models.Category, error) {
+func (c *DPostgresDbController) GetCategories() ([]models.Category, errors.PCCError) {
 	cats := make([]models.Category, 0, 5)
 
 	res, err := c.db.Query("SELECT * FROM Categories")
 
 	if err != nil {
-		return nil, err
+		return nil, dberrors.PQDbErrorCaster(err)
 	}
 
 	defer res.Close()
@@ -17,7 +21,7 @@ func (c *DPostgresDbController) GetCategories() ([]models.Category, error) {
 		var cat models.Category
 
 		if err := res.Scan(&cat.ID, &cat.Title, &cat.Description, &cat.Icon, &cat.Slug); err != nil {
-			return nil, err
+			return nil, dberrors.PQDbErrorCaster(err)
 		}
 
 		cats = append(cats, cat)

@@ -7,12 +7,14 @@ import (
 	"time"
 
 	"github.com/Core-Mouse/cm-backend/internal/auth"
+	"github.com/Core-Mouse/cm-backend/internal/errors"
 	"github.com/Core-Mouse/cm-backend/internal/models"
+	"github.com/Core-Mouse/cm-backend/internal/redis/rerrors"
 	"github.com/redis/go-redis/v9"
 )
 
 const (
-	UserIDKey  = "userID"
+	UserIDKey = "userID"
 	//ExpTimeHrs = 24 * 30 * time.Hour
 )
 
@@ -28,23 +30,23 @@ func NewRedisController(client *redis.Client) *RedisController {
 	}
 }
 
-func (c *RedisController) GetNextID() (uint64, error) {
+func (c *RedisController) GetNextID() (uint64, errors.PCCError) {
 	id := c.client.Incr(context.Background(), UserIDKey)
 
 	if err := id.Err(); err != nil {
-		return IntErrorCode, err
+		return IntErrorCode, rerrors.RedisErrorCaster(err)
 	}
 
 	value := id.Val()
 
 	if value < 0 {
-		return IntErrorCode, fmt.Errorf("redis returned negative value")
+		return IntErrorCode, rerrors.NewRedisErrorWrongValue()
 	}
 
 	return uint64(value), nil
 }
 
-func (c *RedisController) CreateTempUser(auth auth.Auth) (interface{}, error) {
+func (c *RedisController) CreateTempUser(auth auth.Auth) (interface{}, errors.PCCError) {
 	id, err := c.GetNextID()
 
 	if err != nil {
@@ -52,28 +54,32 @@ func (c *RedisController) CreateTempUser(auth auth.Auth) (interface{}, error) {
 	}
 
 	tu := models.NewPublicUser(int(id), "", "", models.Temporary)
-	b, err := json.Marshal(tu)
+	b, jerr := json.Marshal(tu)
+
+	if jerr != nil {
+		err = errors.NewInternalSecretError()
+	}
 
 	if err != nil {
 		return nil, err
 	}
 
-	dur, err := c.getUserIDTTL();
+	dur, err := c.getUserIDTTL()
 
 	if err != nil {
 		return nil, err
 	}
 
-	err = c.client.Set(context.Background(), fmt.Sprintf("user:%d", id), b, dur).Err()
+	rerr := c.client.Set(context.Background(), fmt.Sprintf("user:%d", id), b, dur).Err()
 
-	if err != nil {
-		return nil, err
+	if rerr != nil {
+		return nil, rerrors.RedisErrorCaster(rerr)
 	}
 
 	return auth.AuthentificateWithDur(tu, dur, dur)
 }
 
-func (c *RedisController) GetCart(user_id uint64) ([]models.TempCartItem, error) {
+func (c *RedisController) GetCart(user_id uint64) ([]models.TempCartItem, errors.PCCError) {
 	cartobj := c.client.Get(context.Background(), fmt.Sprintf("cart:%d", user_id))
 
 	err := cartobj.Err()
@@ -83,7 +89,7 @@ func (c *RedisController) GetCart(user_id uint64) ([]models.TempCartItem, error)
 	}
 
 	if err != nil {
-		return nil, err
+		return nil, rerrors.RedisErrorCaster(err)
 	}
 
 	cart := make([]models.TempCartItem, 0)
@@ -91,24 +97,24 @@ func (c *RedisController) GetCart(user_id uint64) ([]models.TempCartItem, error)
 	err = json.Unmarshal([]byte(cartobj.Val()), &cart)
 
 	if err != nil {
-		return nil, err
+		return nil, errors.NewJsonUnmarshalError()
 	}
 
 	return cart, nil
 }
 
-func (c *RedisController) CreateCartAndPut(user_id uint64, product_id uint64, quantity uint) (uint64, error) {
+func (c *RedisController) CreateCartAndPut(user_id uint64, product_id uint64, quantity uint) (uint64, errors.PCCError) {
 	cart := []models.TempCartItem{
 		*models.NewTempCartItem(product_id, quantity),
 	}
 
-	json_cart, err := json.Marshal(cart)
+	json_cart, jerr := json.Marshal(cart)
 
-	if err != nil {
-		return IntErrorCode, err
+	if jerr != nil {
+		return IntErrorCode, errors.NewJsonMarshalError()
 	}
 
-	ttl, err := c.getUserIDTTL();
+	ttl, err := c.getUserIDTTL()
 
 	if err != nil {
 		return IntErrorCode, err
@@ -123,7 +129,7 @@ func (c *RedisController) CreateCartAndPut(user_id uint64, product_id uint64, qu
 	return product_id, nil
 }
 
-func (c *RedisController) AddToCart(user_id uint64, product_id uint64, quantity uint) (uint64, error) {
+func (c *RedisController) AddToCart(user_id uint64, product_id uint64, quantity uint) (uint64, errors.PCCError) {
 	record := fmt.Sprintf("cart:%d", user_id)
 
 	tu := c.client.Get(context.Background(), record)
@@ -135,7 +141,7 @@ func (c *RedisController) AddToCart(user_id uint64, product_id uint64, quantity 
 	}
 
 	if err != nil {
-		return IntErrorCode, err
+		return IntErrorCode, rerrors.RedisErrorCaster(err)
 	}
 
 	var cart []models.TempCartItem
@@ -143,13 +149,13 @@ func (c *RedisController) AddToCart(user_id uint64, product_id uint64, quantity 
 	err = json.Unmarshal([]byte(tu.Val()), &cart)
 
 	if err != nil {
-		return IntErrorCode, err
+		return IntErrorCode, errors.NewJsonUnmarshalError()
 	}
 
-	ttl, err := c.getUserIDTTL();
+	ttl, terr := c.getUserIDTTL()
 
-	if err != nil {
-		return IntErrorCode, err
+	if terr != nil {
+		return IntErrorCode, terr
 	}
 
 	if !c.checkCartForCollisionsAndAppend(cart, product_id, quantity) {
@@ -159,13 +165,13 @@ func (c *RedisController) AddToCart(user_id uint64, product_id uint64, quantity 
 	newcart, err := json.Marshal(cart)
 
 	if err != nil {
-		return IntErrorCode, err
+		return IntErrorCode, errors.NewJsonMarshalError()
 	}
 
 	err = c.client.Set(context.Background(), record, newcart, ttl).Err()
 
 	if err != nil {
-		return IntErrorCode, err
+		return IntErrorCode, rerrors.RedisErrorCaster(err)
 	}
 
 	return product_id, nil
@@ -185,11 +191,11 @@ func (c *RedisController) checkCartForCollisionsAndAppend(cart []models.TempCart
 	return false
 }
 
-func (c *RedisController) getUserIDTTL() (time.Duration, error) {
+func (c *RedisController) getUserIDTTL() (time.Duration, errors.PCCError) {
 	res := c.client.TTL(context.Background(), UserIDKey)
 
 	if err := res.Err(); err != nil {
-		return time.Duration(0), err
+		return time.Duration(0), rerrors.RedisErrorCaster(err)
 	}
 
 	return res.Val(), nil

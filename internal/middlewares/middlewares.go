@@ -1,12 +1,13 @@
 package middlewares
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/Core-Mouse/cm-backend/internal/auth"
 	"github.com/Core-Mouse/cm-backend/internal/database"
+	"github.com/Core-Mouse/cm-backend/internal/errors"
 	"github.com/Core-Mouse/cm-backend/internal/helpers"
+	"github.com/Core-Mouse/cm-backend/internal/middlewares/merrors"
 	"github.com/Core-Mouse/cm-backend/internal/models"
 	"github.com/gin-gonic/gin"
 )
@@ -18,7 +19,7 @@ func JWTAuthorize(auth auth.Auth) gin.HandlerFunc {
 		token, err := helpers.GetAutorizationToken(ctx, helpers.BearerPrefix)
 
 		if err != nil {
-			ctx.JSON(http.StatusUnauthorized, gin.H{"error": err})
+			ctx.JSON(http.StatusUnauthorized, gin.H{"error": err.IntoPublic()})
 			ctx.Abort()
 			return
 		}
@@ -26,7 +27,7 @@ func JWTAuthorize(auth auth.Auth) gin.HandlerFunc {
 		data, err := auth.Authorize(token)
 
 		if err != nil {
-			ctx.JSON(http.StatusForbidden, gin.H{"error": "Wrong accept token provided"})
+			ctx.JSON(http.StatusForbidden, gin.H{"error": err.IntoPublic()})
 			ctx.Abort()
 			return
 		}
@@ -42,7 +43,7 @@ func RoleCheck(required models.UserRole, db database.DbController, caster helper
 		data, exists := ctx.Get(helpers.UserDataKey)
 
 		if !exists {
-			ctx.JSON(http.StatusUnauthorized, gin.H{"error": "No user data present"})
+			ctx.JSON(http.StatusUnauthorized, gin.H{"error": errors.NewInternalSecretError()})
 			ctx.Abort()
 			return
 		}
@@ -50,13 +51,13 @@ func RoleCheck(required models.UserRole, db database.DbController, caster helper
 		role, err := caster(data)
 
 		if err != nil {
-			ctx.JSON(http.StatusUnauthorized, gin.H{"error": err})
+			ctx.JSON(http.StatusUnauthorized, gin.H{"error": errors.NewInternalSecretError()})
 			ctx.Abort()
 			return
 		}
 
 		if role != required {
-			ctx.JSON(http.StatusForbidden, gin.H{"error": fmt.Sprintf("You do not have the required role. Current Role is: %s", role)})
+			ctx.JSON(http.StatusForbidden, gin.H{"error": merrors.NewLowerRoleError(required, role)})
 			ctx.Abort()
 			return
 		}

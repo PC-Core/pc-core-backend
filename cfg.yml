@@ -3,8 +3,8 @@ port: 8080
 dbdriver: postgres
 allowcors: 
   - http://127.0.0.1:5500
-  - http://127.0.0.1:300
-  - http://127.0.0.1:400]
+  - http://127.0.0.1:3000
+  - http://127.0.0.1:4000
 redisConn:
   addr: localhost
   port: 6379

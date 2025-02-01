@@ -57,7 +57,13 @@ func (c *UserController) registerUser(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusCreated, user)
+	tk_pair, err := c.auth.Authentificate(models.NewPublicUserFromUser(user))
+
+	if err != nil {
+		CheckErrorAndWriteBadRequest(ctx, errors.NewInternalSecretError())
+	}
+
+	ctx.JSON(http.StatusCreated, tk_pair)
 }
 
 // Login

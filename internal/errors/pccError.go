@@ -74,6 +74,14 @@ const (
 	EC_ATOI_UNKNOWN
 	// Error code means that the presented role was lower than the required one
 	EC_ROLE_LOWER
+	// Error code means that the email is ill-formed
+	EC_BIND_EMAIL_VALIDATION_ERROR
+	// Error code means that the other field is ill-formed
+	EC_BIND_OTHER_VALIDATION_ERROR
+	// Error code means that the json string has wrong syntax
+	EC_JSON_SYNTAX_ERROR
+	// Error code means that the request has an empty body
+	EC_CTRLS_UNEXPECTED_EMPTY_BODY
 )
 
 // PCCError - minimal error interface used in the PC Core project

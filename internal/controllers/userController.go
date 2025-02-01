@@ -44,10 +44,8 @@ func (c *UserController) ApplyRoutes() {
 func (c *UserController) registerUser(ctx *gin.Context) {
 	var input inputs.RegisterUserInput
 
-	berr := ctx.ShouldBindJSON(&input)
-
-	if berr != nil {
-		CheckErrorAndWriteBadRequest(ctx, conerrors.BindError())
+	if berr := ctx.ShouldBindJSON(&input); berr != nil {
+		CheckErrorAndWriteBadRequest(ctx, conerrors.BindErrorCast(berr))
 		return
 	}
 
@@ -79,13 +77,8 @@ func (c *UserController) loginUser(ctx *gin.Context) {
 	var input inputs.LoginUserInput
 	var err errors.PCCError
 
-	berr := ctx.ShouldBindQuery(&input)
-
-	if berr != nil {
-		err = conerrors.BindError()
-	}
-
-	if CheckErrorAndWriteBadRequest(ctx, err) {
+	if berr := ctx.ShouldBindQuery(&input); berr != nil {
+		CheckErrorAndWriteBadRequest(ctx, conerrors.BindErrorCast(berr))
 		return
 	}
 

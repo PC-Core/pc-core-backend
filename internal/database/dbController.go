@@ -33,7 +33,6 @@ type DbController interface {
 	LoadProductsRangeAsCartItem(tempCart []models.TempCartItem) ([]models.CartItem, errors.PCCError)
 	RegisterUser(name string, email string, password string) (*models.User, errors.PCCError)
 	LoginUser(email string, password string) (*models.User, errors.PCCError)
-	AuthentificateWithRole(email string, password string, required_role models.UserRole) errors.PCCError
 	GetUserByID(id int) (*models.User, errors.PCCError)
 }
 

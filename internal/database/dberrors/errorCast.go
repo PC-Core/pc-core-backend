@@ -1,6 +1,8 @@
 package dberrors
 
 import (
+	"database/sql"
+
 	"github.com/Core-Mouse/cm-backend/internal/errors"
 	"github.com/lib/pq"
 )
@@ -9,7 +11,7 @@ import (
 // This implementation is made for the Postgres database and github.com/lib/pq driver
 // In normal situation it always takes *pq.Error and returns errors.InternalDatabaseError
 // If the passed parameter was not the *pq.Error, it returns errors.InternalSecretError
-func PQDbErrorCaster(err error) errors.PCCError {
+func PQDbErrorCaster(db *sql.DB, err error) errors.PCCError {
 	if err == nil {
 		return nil
 	}
@@ -20,5 +22,5 @@ func PQDbErrorCaster(err error) errors.PCCError {
 		return errors.NewInternalSecretError()
 	}
 
-	return NewPQDbError(inner)
+	return newPQDbError(db, inner)
 }

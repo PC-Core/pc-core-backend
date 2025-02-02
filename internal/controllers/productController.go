@@ -42,7 +42,7 @@ func (c *ProductController) getProducts(ctx *gin.Context) {
 	berr := ctx.ShouldBindQuery(&input)
 
 	if berr != nil {
-		CheckErrorAndWriteBadRequest(ctx, conerrors.BindError())
+		CheckErrorAndWriteBadRequest(ctx, conerrors.BindErrorCast(berr))
 		return
 	}
 

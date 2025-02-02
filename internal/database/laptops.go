@@ -21,7 +21,7 @@ func (c *DPostgresDbController) GetLaptopChars(charId uint64) (*models.LaptopCha
 	err := row.Scan(&id, &cpu, &ram, &gpu)
 
 	if err != nil {
-		return nil, dberrors.PQDbErrorCaster(err)
+		return nil, dberrors.PQDbErrorCaster(c.db, err)
 	}
 
 	return models.NewLaptopChars(id, cpu, ram, gpu), nil
@@ -36,7 +36,7 @@ func (c *DPostgresDbController) AddLaptop(name string, price float64, selled uin
 	tx, err := c.db.Begin()
 
 	if err != nil {
-		return nil, nil, dberrors.PQDbErrorCaster(err)
+		return nil, nil, dberrors.PQDbErrorCaster(c.db, err)
 	}
 
 	defer tx.Rollback()
@@ -44,17 +44,17 @@ func (c *DPostgresDbController) AddLaptop(name string, price float64, selled uin
 	err = tx.QueryRow(fmt.Sprintf("INSERT INTO %s (cpu, ram, gpu) VALUES ($1, $2, $3) returning id", LaptopCharsTable), cpu, ram, gpu).Scan(&charId)
 
 	if err != nil {
-		return nil, nil, dberrors.PQDbErrorCaster(err)
+		return nil, nil, dberrors.PQDbErrorCaster(c.db, err)
 	}
 
 	err = tx.QueryRow("INSERT INTO Products (name, price, selled, stock, chars_table_name, chars_id) VALUES ($1, $2, $3, $4, $5, $6) returning id", name, price, selled, stock, LaptopCharsTable, charId).Scan(&productId)
 
 	if err != nil {
-		return nil, nil, dberrors.PQDbErrorCaster(err)
+		return nil, nil, dberrors.PQDbErrorCaster(c.db, err)
 	}
 
 	if err := tx.Commit(); err != nil {
-		return nil, nil, dberrors.PQDbErrorCaster(err)
+		return nil, nil, dberrors.PQDbErrorCaster(c.db, err)
 	}
 
 	return models.NewProduct(productId, name, price, selled, stock, LaptopCharsTable, charId),

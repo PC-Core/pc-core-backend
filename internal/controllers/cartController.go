@@ -146,13 +146,8 @@ func (c *CartController) addToCart(ctx *gin.Context) {
 
 	var input inputs.AddToCartInput
 
-	berr := ctx.ShouldBindBodyWithJSON(&input)
-
-	if berr != nil {
-		err = conerrors.BindError()
-	}
-
-	if CheckErrorAndWriteBadRequest(ctx, err) {
+	if berr := ctx.ShouldBindBodyWithJSON(&input); berr != nil {
+		CheckErrorAndWriteBadRequest(ctx, conerrors.BindErrorCast(berr))
 		return
 	}
 
@@ -193,13 +188,8 @@ func (c *CartController) removeFromCart(ctx *gin.Context) {
 
 	var input inputs.RemoveFromCartInput
 
-	berr := ctx.ShouldBindBodyWithJSON(&input)
-
-	if berr != nil {
-		err = conerrors.BindError()
-	}
-
-	if CheckErrorAndWriteBadRequest(ctx, err) {
+	if berr := ctx.ShouldBindBodyWithJSON(&input); berr != nil {
+		CheckErrorAndWriteBadRequest(ctx, conerrors.BindErrorCast(berr))
 		return
 	}
 
@@ -233,13 +223,8 @@ func (c *CartController) changeQuantity(ctx *gin.Context) {
 
 	var input inputs.AddToCartInput
 
-	berr := ctx.ShouldBindBodyWithJSON(&input)
-
-	if berr != nil {
-		err = conerrors.BindError()
-	}
-
-	if CheckErrorAndWriteBadRequest(ctx, err) {
+	if berr := ctx.ShouldBindBodyWithJSON(&input); berr != nil {
+		CheckErrorAndWriteBadRequest(ctx, conerrors.BindErrorCast(berr))
 		return
 	}
 

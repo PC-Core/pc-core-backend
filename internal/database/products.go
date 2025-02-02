@@ -13,7 +13,7 @@ func (c *DPostgresDbController) GetProducts(start uint64, count uint64) ([]model
 	rows, err := c.db.Query("SELECT * FROM Products OFFSET $1 LIMIT $2", start, count)
 
 	if err != nil {
-		return nil, dberrors.PQDbErrorCaster(err)
+		return nil, dberrors.PQDbErrorCaster(c.db, err)
 	}
 
 	defer rows.Close()
@@ -24,7 +24,7 @@ func (c *DPostgresDbController) GetProducts(start uint64, count uint64) ([]model
 		p, err := c.ScanProduct(rows)
 
 		if err != nil {
-			return nil, dberrors.PQDbErrorCaster(err)
+			return nil, dberrors.PQDbErrorCaster(c.db, err)
 		}
 
 		products = append(
@@ -34,7 +34,7 @@ func (c *DPostgresDbController) GetProducts(start uint64, count uint64) ([]model
 	}
 
 	if err := rows.Err(); err != nil {
-		return nil, dberrors.PQDbErrorCaster(err)
+		return nil, dberrors.PQDbErrorCaster(c.db, err)
 	}
 
 	return products, nil
@@ -52,7 +52,7 @@ func (c *DPostgresDbController) ScanProduct(rows RowLike) (*models.Product, erro
 	)
 
 	if err := rows.Scan(&rid, &name, &price, &selled, &stock, &charTableName, &charId); err != nil {
-		return nil, dberrors.PQDbErrorCaster(err)
+		return nil, dberrors.PQDbErrorCaster(c.db, err)
 	}
 
 	return models.NewProduct(rid, name, price, selled, stock, charTableName, charId), nil
@@ -64,7 +64,7 @@ func (c *DPostgresDbController) GetProductById(id uint64) (*models.Product, erro
 	p, err := c.ScanProduct(row)
 
 	if err != nil {
-		return nil, dberrors.PQDbErrorCaster(err)
+		return nil, dberrors.PQDbErrorCaster(c.db, err)
 	}
 
 	return p, nil
@@ -101,7 +101,7 @@ func (c *DPostgresDbController) LoadProductsRangeAsCartItem(tempCart []models.Te
 	`
 	rows, err := c.db.Query(query, pq.Array(productIDs))
 	if err != nil {
-		return nil, dberrors.PQDbErrorCaster(err)
+		return nil, dberrors.PQDbErrorCaster(c.db, err)
 	}
 	defer rows.Close()
 
@@ -119,7 +119,7 @@ func (c *DPostgresDbController) LoadProductsRangeAsCartItem(tempCart []models.Te
 
 		err := rows.Scan(&id, &name, &price, &selled, &stock, &chartablename, &charid)
 		if err != nil {
-			return nil, dberrors.PQDbErrorCaster(err)
+			return nil, dberrors.PQDbErrorCaster(c.db, err)
 		}
 
 		quantity, exists := quantityMap[id]

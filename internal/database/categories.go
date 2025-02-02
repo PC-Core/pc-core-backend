@@ -12,7 +12,7 @@ func (c *DPostgresDbController) GetCategories() ([]models.Category, errors.PCCEr
 	res, err := c.db.Query("SELECT * FROM Categories")
 
 	if err != nil {
-		return nil, dberrors.PQDbErrorCaster(err)
+		return nil, dberrors.PQDbErrorCaster(c.db, err)
 	}
 
 	defer res.Close()
@@ -21,7 +21,7 @@ func (c *DPostgresDbController) GetCategories() ([]models.Category, errors.PCCEr
 		var cat models.Category
 
 		if err := res.Scan(&cat.ID, &cat.Title, &cat.Description, &cat.Icon, &cat.Slug); err != nil {
-			return nil, dberrors.PQDbErrorCaster(err)
+			return nil, dberrors.PQDbErrorCaster(c.db, err)
 		}
 
 		cats = append(cats, cat)

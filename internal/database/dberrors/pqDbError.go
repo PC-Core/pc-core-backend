@@ -1,21 +1,97 @@
 package dberrors
 
 import (
-	"fmt"
+	"database/sql"
 
 	"github.com/Core-Mouse/cm-backend/internal/errors"
 	"github.com/lib/pq"
 )
 
-// parseDbErrorCode parses lib/pq ErrorCode to the errors.ErrorCode
-func parseDbErrorCode(code pq.ErrorCode) errors.ErrorCode {
-	switch code {
+const (
+	PQE_UNIQUE_VIOLATION = "Unique constraint violation"
+	PQE_OTHER_ERROR = "Unknown error"
+	PQE_LOGIN_INVALID_DATA_ERROR = "Email or password is invalid"
+)
+
+type DbUniqueDetails struct {
+	Columns []string
+}
+
+// createPostgresError creates the error instance
+func createPostgresError(db *sql.DB, err *pq.Error) errors.PCCError {
+	switch err.Code {
 	case "23505":
-		return errors.EC_DB_UNIQUE_FAIL
+		return createUniqueError(db, err)
 	default:
-		return errors.EC_DB_OTHER
+		return createOtherError(err)
 	}
 }
+
+func createOtherError(err *pq.Error) errors.PCCError {
+	return &PQDbError{
+		err,
+		errors.EC_DB_OTHER,
+		errors.EK_DATABASE,
+		nil,
+		PQE_OTHER_ERROR,
+	}
+}
+
+func createUniqueError(db *sql.DB, err *pq.Error) errors.PCCError {
+	details, ierr := dbUniqueFailDetails(db, err)
+
+	if ierr != nil {
+		return PQDbErrorCaster(db, ierr)
+	}
+
+	return &PQDbError{
+		err,
+		errors.EC_DB_UNIQUE_FAIL,
+		errors.EK_DATABASE,
+		details,
+		PQE_UNIQUE_VIOLATION,
+	}
+}
+
+// dbUniqueFailDetails creates instance of DbUniqueDetails
+func dbUniqueFailDetails(db *sql.DB, err *pq.Error) (*DbUniqueDetails, error) {
+	columns, ierr := getConstraintColumns(db, err.Table, err.Constraint)
+
+	if ierr != nil {
+		return nil, ierr
+	}
+
+	return &DbUniqueDetails{
+		columns,
+	}, nil
+}
+
+// getConstraintColumns gets column name from Constraint
+func getConstraintColumns(db *sql.DB, tableName, constraintName string) ([]string, error) {
+    query := `
+        SELECT a.attname
+        FROM   pg_index i
+        JOIN   pg_attribute a ON a.attrelid = i.indrelid AND a.attnum = ANY(i.indkey)
+        WHERE  i.indrelid = $1::regclass
+        AND    i.indexrelid = $2::regclass;
+    `
+    rows, err := db.Query(query, tableName, constraintName)
+    if err != nil {
+        return nil, err
+    }
+    defer rows.Close()
+
+    var columns []string
+    for rows.Next() {
+        var col string
+        if err := rows.Scan(&col); err != nil {
+            return nil, err
+        }
+        columns = append(columns, col)
+    }
+    return columns, nil
+}
+
 
 // PQDbError represents the inner Postgres error from the github.com/lib/pq driver
 // This error struct is private so it can contain secret data and should NEVER go beyond the server
@@ -26,23 +102,23 @@ type PQDbError struct {
 	code errors.ErrorCode
 	// kind contains the error kind in terms of this project
 	kind errors.ErrorKind
+	details any
+	message string
 }
 
-// NewPQDbError creates a new instance of PQDbError struct.
+// newPQDbError creates a new instance of PQDbError struct.
 // It evaluates the code and kind fields at once
-func NewPQDbError(inner *pq.Error) *PQDbError {
-	code := parseDbErrorCode(inner.Code)
-
-	return &PQDbError{
-		inner: inner,
-		code:  code,
-		kind:  errors.EK_DATABASE,
-	}
+func newPQDbError(db *sql.DB, inner *pq.Error) errors.PCCError {
+	return createPostgresError(db, inner)
 }
 
-func NewPQDbErrorWOInner(code errors.ErrorCode, kind errors.ErrorKind) *PQDbError {
+func NewInvalidLoginDataError() *PQDbError {
+	return newPQDbErrorWOInner(errors.EC_DB_LOGIN_ERROR, errors.EK_DATABASE, PQE_LOGIN_INVALID_DATA_ERROR, nil)
+}
+
+func newPQDbErrorWOInner(code errors.ErrorCode, kind errors.ErrorKind, message string, details any) *PQDbError {
 	return &PQDbError{
-		nil, code, kind,
+		nil, code, kind, details, message,
 	}
 }
 
@@ -59,6 +135,6 @@ func (e *PQDbError) GetErrorCode() errors.ErrorCode {
 }
 
 func (e *PQDbError) IntoPublic() *errors.PublicPCCError {
-	error_message := fmt.Sprintf("Database error with code: %d", e.code)
-	return errors.NewPublicPCCError(e.code, e.kind, nil, error_message)
+	//error_message := fmt.Sprintf("Database error with code: %d", e.code)
+	return errors.NewPublicPCCError(e.code, e.kind, e.details, e.message)
 }

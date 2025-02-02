@@ -82,6 +82,8 @@ const (
 	EC_JSON_SYNTAX_ERROR
 	// Error code means that the request has an empty body
 	EC_CTRLS_UNEXPECTED_EMPTY_BODY
+	// Error code means that login data is invalid
+	EC_DB_LOGIN_ERROR
 )
 
 // PCCError - minimal error interface used in the PC Core project

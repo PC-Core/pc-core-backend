@@ -14,7 +14,7 @@ const (
 )
 
 type DbUniqueDetails struct {
-	Columns []string
+	Columns []string `json:"columns"`
 }
 
 // createPostgresError creates the error instance

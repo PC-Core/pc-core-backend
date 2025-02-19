@@ -14,6 +14,14 @@ import (
 
 type AuthMiddleware func(auth auth.Auth) gin.HandlerFunc
 
+func checkJWTRefresh(ctx *gin.Context) {
+	// tk, err := ctx.Request.Cookie(helpers.REFRESH_COOKIE_NAME)
+
+	// if err != nil {
+	// 	return
+	// }
+}
+
 func JWTAuthorize(auth auth.Auth) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		token, err := helpers.GetAutorizationToken(ctx, helpers.BearerPrefix)

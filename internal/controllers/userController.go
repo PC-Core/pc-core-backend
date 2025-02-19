@@ -7,8 +7,10 @@ import (
 	"github.com/Core-Mouse/cm-backend/internal/controllers/conerrors"
 	"github.com/Core-Mouse/cm-backend/internal/database"
 	"github.com/Core-Mouse/cm-backend/internal/errors"
+	"github.com/Core-Mouse/cm-backend/internal/helpers"
 	"github.com/Core-Mouse/cm-backend/internal/models"
 	"github.com/Core-Mouse/cm-backend/internal/models/inputs"
+	"github.com/Core-Mouse/cm-backend/internal/models/outputs"
 	"github.com/Core-Mouse/cm-backend/internal/redis"
 	"github.com/gin-gonic/gin"
 )
@@ -20,6 +22,8 @@ type UserController struct {
 	auth   auth.Auth
 }
 
+const CookieUseHttps = false
+
 func NewUserController(engine *gin.Engine, db database.DbController, rctrl *redis.RedisController, auth auth.Auth) *UserController {
 	return &UserController{
 		engine, db, rctrl, auth,
@@ -30,6 +34,7 @@ func (c *UserController) ApplyRoutes() {
 	c.engine.POST("/users/register", c.registerUser)
 	c.engine.GET("/users/login", c.loginUser)
 	c.engine.POST("/users/temp/new", c.createTempUser)
+	c.engine.GET("/users/logout", c.logoutUser)
 }
 
 // Register a new User
@@ -38,7 +43,7 @@ func (c *UserController) ApplyRoutes() {
 // @Accept       json
 // @Produce      json
 // @Param 		 user	body inputs.RegisterUserInput	true	"User data to register"
-// @Success      200  {object}  models.User
+// @Success      200  {object}  outputs.LoginResult
 // @Failure      400  {object}  errors.PublicPCCError
 // @Router       /users/register [post]
 func (c *UserController) registerUser(ctx *gin.Context) {
@@ -55,13 +60,13 @@ func (c *UserController) registerUser(ctx *gin.Context) {
 		return
 	}
 
-	tk_pair, err := c.auth.Authentificate(models.NewPublicUserFromUser(user))
+	res, err := c.auth.Authentificate(models.NewPublicUserFromUser(user))
 
 	if err != nil {
 		CheckErrorAndWriteBadRequest(ctx, errors.NewInternalSecretError())
 	}
 
-	ctx.JSON(http.StatusCreated, tk_pair)
+	sendAuthData(ctx, res, http.StatusCreated, models.NewPublicUserFromUser(user))
 }
 
 // Login
@@ -70,7 +75,7 @@ func (c *UserController) registerUser(ctx *gin.Context) {
 // @Accept       json
 // @Produce      json
 // @Param 		 user	body inputs.LoginUserInput	true	"User data to login"
-// @Success      200  {object}  outputs.JWTPair
+// @Success      200  {object}  outputs.LoginResult
 // @Failure      400  {object}  errors.PublicPCCError
 // @Router       /users/login [get]
 func (c *UserController) loginUser(ctx *gin.Context) {
@@ -94,7 +99,12 @@ func (c *UserController) loginUser(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusOK, res)
+	sendAuthData(ctx, res, http.StatusOK, models.NewPublicUserFromUser(user))
+}
+
+func sendAuthData(ctx *gin.Context, ad *models.AuthData, status int, user *models.PublicUser) {
+	ctx.SetCookie(helpers.RefreshCookieName, ad.GetPrivate().String(), int(auth.AuthPrivateCookieLifetime.Seconds()), "/", "", CookieUseHttps, true)
+	ctx.JSON(status, outputs.NewLoginResult(user, outputs.AuthMap{"access": ad.GetPublic().String()}))
 }
 
 func (c *UserController) createTempUser(ctx *gin.Context) {
@@ -105,4 +115,16 @@ func (c *UserController) createTempUser(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusCreated, res)
+}
+
+// Logout
+// @Summary      Logout
+// @Tags         users
+// @Accept       json
+// @Produce      json
+// @Success      200  {string}	ok
+// @Router       /users/logout [get]
+func (c *UserController) logoutUser(ctx *gin.Context) {
+	ctx.SetCookie(helpers.RefreshCookieName, "", -1, "/", "", CookieUseHttps, true)
+	ctx.JSON(http.StatusOK, "ok")
 }

@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/Core-Mouse/cm-backend/internal/auth"
 	"github.com/Core-Mouse/cm-backend/internal/auth/jwt"
 	"github.com/Core-Mouse/cm-backend/internal/database"
 	"github.com/Core-Mouse/cm-backend/internal/errors"
@@ -57,7 +58,7 @@ func (c *JWTController) updateAccessToken(ctx *gin.Context) {
 
 	pubuser := models.NewPublicUserFromUser(user)
 
-	new_token, err := c.jwt_auth.CreateAccessToken(pubuser, time.Duration(jwt.JWTAccessLifeTime))
+	new_token, err := c.jwt_auth.CreateAccessToken(pubuser, time.Duration(auth.AuthPublicLifetime))
 
 	if CheckErrorAndWriteBadRequest(ctx, err) {
 		return

@@ -4,12 +4,19 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/Core-Mouse/cm-backend/internal/auth"
 	"github.com/Core-Mouse/cm-backend/internal/auth/jwt/jerrors"
 	"github.com/Core-Mouse/cm-backend/internal/errors"
 	"github.com/Core-Mouse/cm-backend/internal/models"
 	"github.com/Core-Mouse/cm-backend/internal/models/outputs"
 	"github.com/golang-jwt/jwt/v5"
 )
+
+type StrWrapper string;
+
+func (s StrWrapper) String() string {
+	return string(s);
+}
 
 type JWTAuth struct {
 	key []byte
@@ -43,11 +50,11 @@ func (a *JWTAuth) CreateAccessToken(data *models.PublicUser, adur time.Duration)
 	return jwt, nil
 }
 
-func (a *JWTAuth) Authentificate(data *models.PublicUser) (interface{}, errors.PCCError) {
-	return a.AuthentificateWithDur(data, time.Duration(JWTAccessLifeTime), time.Duration(JWTRefreshLifeTime))
+func (a *JWTAuth) Authentificate(data *models.PublicUser) (*models.AuthData, errors.PCCError) {
+	return a.AuthentificateWithDur(data, time.Duration(auth.AuthPublicLifetime), time.Duration(auth.AuthPrivateCookieLifetime))
 }
 
-func (a *JWTAuth) AuthentificateWithDur(data *models.PublicUser, adur time.Duration, rdur time.Duration) (interface{}, errors.PCCError) {
+func (a *JWTAuth) AuthentificateWithDur(data *models.PublicUser, adur time.Duration, rdur time.Duration) (*models.AuthData, errors.PCCError) {
 	access, err := a.CreateAccessToken(data, adur)
 
 	if err != nil {
@@ -60,7 +67,7 @@ func (a *JWTAuth) AuthentificateWithDur(data *models.PublicUser, adur time.Durat
 		return nil, err
 	}
 
-	return outputs.NewJWTPair(access, refresh), nil
+	return models.NewAuthData(StrWrapper(access), StrWrapper(refresh)), nil
 }
 
 func (a *JWTAuth) parsePairType(data interface{}) (*outputs.JWTPair, errors.PCCError) {
@@ -142,7 +149,7 @@ func (a *JWTAuth) CheckAndReissue(token string) (string, errors.PCCError) {
 		return "", jerrors.JwtErrorCaster(ierr)
 	}
 
-	if exp.Sub(time.Now()) > 1 * time.Minute {
+	if time.Until(exp.Time) > 1 * time.Minute {
 		return token, nil
 	}
 
@@ -158,5 +165,5 @@ func (a *JWTAuth) CheckAndReissue(token string) (string, errors.PCCError) {
 		return "", errors.NewAtoiError(ierr)
 	}
 
-	return a.CreateRefreshToken(isub, JWTRefreshLifeTime)
+	return a.CreateRefreshToken(isub, auth.AuthPrivateCookieLifetime)
 }

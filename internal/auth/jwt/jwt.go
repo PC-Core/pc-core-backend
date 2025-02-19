@@ -1,6 +1,7 @@
 package jwt
 
 import (
+	"strconv"
 	"time"
 
 	"github.com/Core-Mouse/cm-backend/internal/auth/jwt/jerrors"
@@ -126,4 +127,36 @@ func (a *JWTAuth) Authorize(data string) (interface{}, errors.PCCError) {
 	}
 
 	return access_claims, nil
+}
+
+func (a *JWTAuth) CheckAndReissue(token string) (string, errors.PCCError) {
+	tk, err := a.ValidateRefreshJWT(token)
+
+	if err != nil {
+		return "", err
+	}
+
+	exp, ierr := tk.Claims.GetExpirationTime()
+
+	if ierr != nil {
+		return "", jerrors.JwtErrorCaster(ierr)
+	}
+
+	if exp.Sub(time.Now()) > 1 * time.Minute {
+		return token, nil
+	}
+
+	sub, ierr := tk.Claims.GetSubject()
+
+	if ierr != nil {
+		return "", jerrors.JwtErrorCaster(ierr)
+	}
+
+	isub, ierr := strconv.Atoi(sub)
+
+	if ierr != nil {
+		return "", errors.NewAtoiError(ierr)
+	}
+
+	return a.CreateRefreshToken(isub, JWTRefreshLifeTime)
 }

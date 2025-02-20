@@ -216,6 +216,11 @@ definitions:
       stock:
         type: integer
     type: object
+  models.Profile:
+    properties:
+      user:
+        $ref: '#/definitions/models.PublicUser'
+    type: object
   models.PublicUser:
     properties:
       email:
@@ -237,9 +242,14 @@ definitions:
     - Temporary
     - Default
     - Admin
+  outputs.AuthMap:
+    additionalProperties:
+      type: string
+    type: object
   outputs.LoginResult:
     properties:
-      auth: {}
+      auth:
+        $ref: '#/definitions/outputs.AuthMap'
       user:
         $ref: '#/definitions/models.PublicUser'
     type: object
@@ -548,6 +558,34 @@ paths:
       summary: Get a single product by ID
       tags:
       - products
+  /profile/:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: access token for authorization
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Profile'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/errors.PublicPCCError'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/errors.PublicPCCError'
+      summary: Get user profile
+      tags:
+      - profile
   /users/login:
     get:
       consumes:

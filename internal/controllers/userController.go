@@ -66,7 +66,7 @@ func (c *UserController) registerUser(ctx *gin.Context) {
 		CheckErrorAndWriteBadRequest(ctx, errors.NewInternalSecretError())
 	}
 
-	sendAuthData(ctx, res, http.StatusCreated, models.NewPublicUserFromUser(user), input.Remember)
+	sendAuthData(ctx, res, http.StatusCreated, models.NewPublicUserFromUser(user), input.Remember, int(auth.AuthPrivateCookieLifetime.Seconds()))
 }
 
 // Login
@@ -99,14 +99,11 @@ func (c *UserController) loginUser(ctx *gin.Context) {
 		return
 	}
 
-	sendAuthData(ctx, res, http.StatusOK, models.NewPublicUserFromUser(user), input.Remember)
+	sendAuthData(ctx, res, http.StatusOK, models.NewPublicUserFromUser(user), input.Remember, int(auth.AuthPrivateCookieLifetime.Seconds()))
 }
 
-func sendAuthData(ctx *gin.Context, ad *models.AuthData, status int, user *models.PublicUser, remember *bool) {
-	if remember != nil && *remember {
-		ctx.SetSameSite(http.SameSiteNoneMode)
-		ctx.SetCookie(helpers.RefreshCookieName, ad.GetPrivate().String(), int(auth.AuthPrivateCookieLifetime.Seconds()), "/", "", CookieUseHttps, true)
-	}
+func sendAuthData(ctx *gin.Context, ad *models.AuthData, status int, user *models.PublicUser, remember *bool, maxtime int) {
+	setRefreshCookie(ctx, ad.GetPrivate().String(), remember, int(auth.AuthPrivateCookieLifetime.Seconds()))
 	ctx.JSON(status, outputs.NewLoginResult(user, outputs.TokensMap{"access": ad.GetPublic().String()}))
 }
 
@@ -120,6 +117,13 @@ func (c *UserController) createTempUser(ctx *gin.Context) {
 	ctx.JSON(http.StatusCreated, res)
 }
 
+func setRefreshCookie(ctx *gin.Context, refresh string, remember *bool, maxtime int) {
+	if remember != nil && *remember {
+		ctx.SetSameSite(http.SameSiteNoneMode)
+		ctx.SetCookie(helpers.RefreshCookieName, refresh, maxtime, "/", "", CookieUseHttps, true)
+	}
+}
+
 // Logout
 // @Summary      Logout
 // @Tags         users
@@ -128,6 +132,9 @@ func (c *UserController) createTempUser(ctx *gin.Context) {
 // @Success      200  {string}	ok
 // @Router       /users/logout [get]
 func (c *UserController) logoutUser(ctx *gin.Context) {
-	ctx.SetCookie(helpers.RefreshCookieName, "", -1, "/", "", CookieUseHttps, true)
+	remember := true
+	setRefreshCookie(ctx, "", &remember, -1)
+	// ctx.SetSameSite(http.SameSiteNoneMode)
+	// ctx.SetCookie(helpers.RefreshCookieName, "", -1, "/", "", CookieUseHttps, true)
 	ctx.JSON(http.StatusOK, "ok")
 }

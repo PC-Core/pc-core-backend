@@ -104,6 +104,7 @@ func (c *UserController) loginUser(ctx *gin.Context) {
 
 func sendAuthData(ctx *gin.Context, ad *models.AuthData, status int, user *models.PublicUser, remember *bool) {
 	if remember != nil && *remember {
+		ctx.SetSameSite(http.SameSiteNoneMode)
 		ctx.SetCookie(helpers.RefreshCookieName, ad.GetPrivate().String(), int(auth.AuthPrivateCookieLifetime.Seconds()), "/", "", CookieUseHttps, true)
 	}
 	ctx.JSON(status, outputs.NewLoginResult(user, outputs.TokensMap{"access": ad.GetPublic().String()}))

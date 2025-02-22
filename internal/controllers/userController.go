@@ -22,7 +22,7 @@ type UserController struct {
 	auth   auth.Auth
 }
 
-const CookieUseHttps = false
+const CookieUseHttps = true
 
 func NewUserController(engine *gin.Engine, db database.DbController, rctrl *redis.RedisController, auth auth.Auth) *UserController {
 	return &UserController{

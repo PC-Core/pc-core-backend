@@ -34,6 +34,7 @@ definitions:
     - 25
     - 26
     - 27
+    - 28
     type: integer
     x-enum-varnames:
     - EC_INTERNAL
@@ -64,6 +65,7 @@ definitions:
     - EC_JSON_SYNTAX_ERROR
     - EC_CTRLS_UNEXPECTED_EMPTY_BODY
     - EC_DB_LOGIN_ERROR
+    - EC_COOKIE_MISSING
   errors.ErrorKind:
     enum:
     - internal
@@ -75,6 +77,7 @@ definitions:
     - header
     - atoi
     - roles
+    - cookie
     type: string
     x-enum-varnames:
     - EK_INTERNAL
@@ -86,6 +89,7 @@ definitions:
     - EK_HEADER
     - EK_ATOI
     - EK_ROLES
+    - EK_COOKIE
   errors.PublicPCCError:
     properties:
       code:
@@ -242,16 +246,16 @@ definitions:
     - Temporary
     - Default
     - Admin
-  outputs.AuthMap:
-    additionalProperties:
-      type: string
-    type: object
   outputs.LoginResult:
     properties:
-      auth:
-        $ref: '#/definitions/outputs.AuthMap'
+      tokens:
+        $ref: '#/definitions/outputs.TokensMap'
       user:
         $ref: '#/definitions/models.PublicUser'
+    type: object
+  outputs.TokensMap:
+    additionalProperties:
+      type: string
     type: object
 info:
   contact: {}
@@ -261,9 +265,9 @@ paths:
       consumes:
       - application/json
       parameters:
-      - description: User's refresh token
+      - description: Refresh token cookie
         in: header
-        name: Authorization
+        name: refresh
         required: true
         type: string
       produces:
@@ -587,7 +591,7 @@ paths:
       tags:
       - profile
   /users/login:
-    get:
+    post:
       consumes:
       - application/json
       parameters:

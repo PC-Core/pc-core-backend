@@ -24,6 +24,8 @@ const (
 	EK_ATOI ErrorKind = "atoi"
 	// Error occured while working with roles
 	EK_ROLES ErrorKind = "roles"
+	// Error occured in cookies
+	EK_COOKIE ErrorKind = "cookie"
 )
 
 const (
@@ -84,6 +86,8 @@ const (
 	EC_CTRLS_UNEXPECTED_EMPTY_BODY
 	// Error code means that login data is invalid
 	EC_DB_LOGIN_ERROR
+	// Error code means that the required cookie is missing
+	EC_COOKIE_MISSING
 )
 
 // PCCError - minimal error interface used in the PC Core project

@@ -3,7 +3,7 @@ package helpers
 import "time"
 
 const (
-	RefreshCookieName = "refr-tk"
+	RefreshCookieName = "refresh"
 )
 
 const (

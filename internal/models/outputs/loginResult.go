@@ -2,16 +2,16 @@ package outputs
 
 import "github.com/Core-Mouse/cm-backend/internal/models"
 
-type AuthMap map[string]string
+type TokensMap map[string]string
 
 // Result of the login
 type LoginResult struct {
-	User *models.PublicUser `json:"user"`
-	Auth AuthMap            `json:"auth"`
+	User   *models.PublicUser `json:"user"`
+	Tokens TokensMap          `json:"tokens"`
 }
 
-func NewLoginResult(user *models.PublicUser, auth AuthMap) *LoginResult {
+func NewLoginResult(user *models.PublicUser, tokens TokensMap) *LoginResult {
 	return &LoginResult{
-		user, auth,
+		user, tokens,
 	}
 }

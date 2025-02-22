@@ -1,10 +1,10 @@
 package models
 
 type PublicUser struct {
-	ID    int
-	Name  string
-	Email string
-	Role  UserRole
+	ID    int      `json:"id"`
+	Name  string   `json:"name"`
+	Email string   `json:"email"`
+	Role  UserRole `json:"role"`
 }
 
 func NewPublicUser(id int, name string, email string, role UserRole) *PublicUser {

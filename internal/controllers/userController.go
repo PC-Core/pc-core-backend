@@ -32,7 +32,7 @@ func NewUserController(engine *gin.Engine, db database.DbController, rctrl *redi
 
 func (c *UserController) ApplyRoutes() {
 	c.engine.POST("/users/register", c.registerUser)
-	c.engine.GET("/users/login", c.loginUser)
+	c.engine.POST("/users/login", c.loginUser)
 	c.engine.POST("/users/temp/new", c.createTempUser)
 	c.engine.GET("/users/logout", c.logoutUser)
 }
@@ -77,12 +77,12 @@ func (c *UserController) registerUser(ctx *gin.Context) {
 // @Param 		 user	body inputs.LoginUserInput	true	"User data to login"
 // @Success      200  {object}  outputs.LoginResult
 // @Failure      400  {object}  errors.PublicPCCError
-// @Router       /users/login [get]
+// @Router       /users/login [post]
 func (c *UserController) loginUser(ctx *gin.Context) {
 	var input inputs.LoginUserInput
 	var err errors.PCCError
 
-	if berr := ctx.ShouldBindQuery(&input); berr != nil {
+	if berr := ctx.ShouldBindJSON(&input); berr != nil {
 		CheckErrorAndWriteBadRequest(ctx, conerrors.BindErrorCast(berr))
 		return
 	}
@@ -104,7 +104,7 @@ func (c *UserController) loginUser(ctx *gin.Context) {
 
 func sendAuthData(ctx *gin.Context, ad *models.AuthData, status int, user *models.PublicUser) {
 	ctx.SetCookie(helpers.RefreshCookieName, ad.GetPrivate().String(), int(auth.AuthPrivateCookieLifetime.Seconds()), "/", "", CookieUseHttps, true)
-	ctx.JSON(status, outputs.NewLoginResult(user, outputs.AuthMap{"access": ad.GetPublic().String()}))
+	ctx.JSON(status, outputs.NewLoginResult(user, outputs.TokensMap{"access": ad.GetPublic().String()}))
 }
 
 func (c *UserController) createTempUser(ctx *gin.Context) {

@@ -6,6 +6,7 @@ import (
 
 	"github.com/Core-Mouse/cm-backend/internal/auth"
 	"github.com/Core-Mouse/cm-backend/internal/auth/jwt"
+	"github.com/Core-Mouse/cm-backend/internal/controllers/conerrors"
 	"github.com/Core-Mouse/cm-backend/internal/database"
 	"github.com/Core-Mouse/cm-backend/internal/errors"
 	"github.com/Core-Mouse/cm-backend/internal/helpers"
@@ -38,13 +39,20 @@ func (c *JWTController) ApplyRoutes() {
 // @Tags         jwt
 // @Accept       json
 // @Produce      json
-// @Param 		 Authorization	header string	true	"User's refresh token"
-// @Success      200  {object}  SingleAccessToken
-// @Failure      401  {object}  errors.PublicPCCError
-// @Failure		 400  {object}  errors.PublicPCCError
+// @Param 		 refresh	header 		string	true	"Refresh token cookie"
+// @Success      200  		{object}  	SingleAccessToken
+// @Failure      401  		{object}  	errors.PublicPCCError
+// @Failure		 400  		{object}  	errors.PublicPCCError
 // @Router       /auth/jwt/update [post]
 func (c *JWTController) updateAccessToken(ctx *gin.Context) {
-	id, err := c.getUserIDFromRefreshHeader(ctx)
+	token, ierr := ctx.Cookie(helpers.RefreshCookieName)
+
+	if ierr != nil {
+		CheckErrorAndWriteUnauthorized(ctx, conerrors.NewMissingTokenCookieError(helpers.RefreshCookieName))
+		return
+	}
+
+	id, err := c.getUserIdFromRefreshToken(token)
 
 	if CheckErrorAndWriteUnauthorized(ctx, err) {
 		return
@@ -70,13 +78,7 @@ func (c *JWTController) updateAccessToken(ctx *gin.Context) {
 
 }
 
-func (c *JWTController) getUserIDFromRefreshHeader(ctx *gin.Context) (int, errors.PCCError) {
-	str_token, err := helpers.GetAutorizationToken(ctx, helpers.BearerPrefix)
-
-	if err != nil {
-		return -1, err
-	}
-
+func (c *JWTController) getUserIdFromRefreshToken(str_token string) (int, errors.PCCError) {
 	token, err := c.jwt_auth.ValidateRefreshJWT(str_token)
 
 	if err != nil {

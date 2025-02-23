@@ -66,7 +66,7 @@ func (c *UserController) registerUser(ctx *gin.Context) {
 		CheckErrorAndWriteBadRequest(ctx, errors.NewInternalSecretError())
 	}
 
-	sendAuthData(ctx, res, http.StatusCreated, models.NewPublicUserFromUser(user), input.Remember, int(auth.AuthPrivateCookieLifetime.Seconds()))
+	sendAuthData(ctx, res, http.StatusCreated, models.NewPublicUserFromUser(user), input.Remember)
 }
 
 // Login
@@ -99,10 +99,10 @@ func (c *UserController) loginUser(ctx *gin.Context) {
 		return
 	}
 
-	sendAuthData(ctx, res, http.StatusOK, models.NewPublicUserFromUser(user), input.Remember, int(auth.AuthPrivateCookieLifetime.Seconds()))
+	sendAuthData(ctx, res, http.StatusOK, models.NewPublicUserFromUser(user), input.Remember)
 }
 
-func sendAuthData(ctx *gin.Context, ad *models.AuthData, status int, user *models.PublicUser, remember *bool, maxtime int) {
+func sendAuthData(ctx *gin.Context, ad *models.AuthData, status int, user *models.PublicUser, remember *bool) {
 	setRefreshCookie(ctx, ad.GetPrivate().String(), remember, int(auth.AuthPrivateCookieLifetime.Seconds()))
 	ctx.JSON(status, outputs.NewLoginResult(user, outputs.TokensMap{"access": ad.GetPublic().String()}))
 }

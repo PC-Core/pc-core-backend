@@ -128,7 +128,7 @@ func (c *DPostgresDbController) LoadProductsRangeAsCartItem(tempCart []models.Te
 		}
 
 		product := models.NewProduct(id, name, price, selled, stock, chartablename, charid)
-		cartItem := models.NewCartItem(0, *product, quantity, time.Now())
+		cartItem := models.NewCartItem(*product, quantity, time.Now())
 
 		cartItems = append(cartItems, *cartItem)
 	}

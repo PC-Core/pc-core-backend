@@ -1,6 +1,8 @@
 package database
 
 import (
+	"database/sql"
+	"encoding/json"
 	"time"
 
 	"github.com/Core-Mouse/cm-backend/internal/database/dberrors"
@@ -9,8 +11,24 @@ import (
 	"github.com/lib/pq"
 )
 
+type TempProduct struct {
+	models.Product
+	JSONMedias string
+}
+
 func (c *DPostgresDbController) GetProducts(start uint64, count uint64) ([]models.Product, errors.PCCError) {
-	rows, err := c.db.Query("SELECT * FROM Products OFFSET $1 LIMIT $2", start, count)
+	query := `
+	SELECT p.*, 
+       COALESCE(json_agg(json_build_object('id', m.id, 'url', m.url, 'type', m.type))
+	   		FILTER (WHERE m.id IS NOT NULL), '[]') AS medias
+	FROM Products p
+	LEFT JOIN Medias m ON m.id = ANY(p.medias)
+	GROUP BY p.id
+	ORDER BY p.id
+	LIMIT $1 OFFSET $2;
+	`
+
+	rows, err := c.db.Query(query, count, start)
 
 	if err != nil {
 		return nil, dberrors.PQDbErrorCaster(c.db, err)
@@ -47,15 +65,34 @@ func (c *DPostgresDbController) ScanProduct(rows RowLike) (*models.Product, erro
 		price         float64
 		selled        uint64
 		stock         uint64
+		ids           pq.Int64Array
+		jsonMedia     string
 		charTableName string
 		charId        uint64
 	)
 
-	if err := rows.Scan(&rid, &name, &price, &selled, &stock, &charTableName, &charId); err != nil {
+	if err := rows.Scan(&rid, &name, &price, &selled, &stock, &charTableName, &charId, &ids, &jsonMedia); err != nil {
 		return nil, dberrors.PQDbErrorCaster(c.db, err)
 	}
 
-	return models.NewProduct(rid, name, price, selled, stock, charTableName, charId), nil
+	medias, err := c.MediasFromJson(jsonMedia)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return models.NewProduct(rid, name, price, selled, stock, medias, charTableName, charId), nil
+}
+
+func (c *DPostgresDbController) MediasFromJson(jss string) ([]models.Media, errors.PCCError) {
+	var medias []models.Media
+	err := json.Unmarshal([]byte(jss), &medias)
+
+	if err != nil {
+		return nil, errors.NewJsonUnmarshalError()
+	}
+
+	return medias, nil
 }
 
 func (c *DPostgresDbController) GetProductById(id uint64) (*models.Product, errors.PCCError) {
@@ -107,33 +144,39 @@ func (c *DPostgresDbController) LoadProductsRangeAsCartItem(tempCart []models.Te
 
 	cartItems := make([]models.CartItem, 0)
 	for rows.Next() {
-		var (
-			id            uint64
-			name          string
-			price         float64
-			selled        uint64
-			stock         uint64
-			chartablename string
-			charid        uint64
-		)
+		p, err := c.ScanProduct(rows)
 
-		err := rows.Scan(&id, &name, &price, &selled, &stock, &chartablename, &charid)
 		if err != nil {
-			return nil, dberrors.PQDbErrorCaster(c.db, err)
+			return nil, err
 		}
 
-		quantity, exists := quantityMap[id]
+		quantity, exists := quantityMap[p.ID]
 		if !exists {
 			return nil, errors.NewInternalSecretError()
 		}
-
-		product := models.NewProduct(id, name, price, selled, stock, chartablename, charid)
-		cartItem := models.NewCartItem(*product, quantity, time.Now())
+		cartItem := models.NewCartItem(*p, quantity, time.Now())
 
 		cartItems = append(cartItems, *cartItem)
 	}
 
 	return cartItems, nil
+}
+
+func (c *DPostgresDbController) AddProduct(tx *sql.Tx, name string, price float64, selled uint64, stock uint64, medias []models.InputMedia, charTable string, charID uint64) (uint64, []models.Media, errors.PCCError) {
+	meds, aerr := c.AddMedias(medias)
+
+	if aerr != nil {
+		return 0, nil, aerr
+	}
+
+	var productId uint64
+	err := tx.QueryRow("INSERT INTO Products (name, price, selled, stock, medias, chars_table_name, chars_id) VALUES ($1, $2, $3, $4, $5, $6, $7) returning id", name, price, selled, stock, pq.Array(c.IDsFromMedias(meds)), charTable, charID).Scan(&productId)
+
+	if err != nil {
+		return 0, nil, dberrors.PQDbErrorCaster(c.db, err)
+	}
+
+	return productId, meds, nil
 }
 
 // func (c *DbController) LoadProductsRangeAsCartItem(rng []models.TempCartItem) ([]models.CartItem, error) {

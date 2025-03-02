@@ -27,7 +27,7 @@ func (c *DPostgresDbController) GetLaptopChars(charId uint64) (*models.LaptopCha
 	return models.NewLaptopChars(id, cpu, ram, gpu), nil
 }
 
-func (c *DPostgresDbController) AddLaptop(name string, price float64, selled uint64, stock uint64, cpu string, ram int16, gpu string) (*models.Product, *models.LaptopChars, errors.PCCError) {
+func (c *DPostgresDbController) AddLaptop(name string, price float64, selled uint64, stock uint64, cpu string, ram int16, gpu string, imedias []models.InputMedia) (*models.Product, *models.LaptopChars, errors.PCCError) {
 	var (
 		charId    uint64
 		productId uint64
@@ -47,7 +47,7 @@ func (c *DPostgresDbController) AddLaptop(name string, price float64, selled uin
 		return nil, nil, dberrors.PQDbErrorCaster(c.db, err)
 	}
 
-	err = tx.QueryRow("INSERT INTO Products (name, price, selled, stock, chars_table_name, chars_id) VALUES ($1, $2, $3, $4, $5, $6) returning id", name, price, selled, stock, LaptopCharsTable, charId).Scan(&productId)
+	productId, medias, err := c.AddProduct(tx, name, price, selled, stock, imedias, LaptopCharsTable, charId)
 
 	if err != nil {
 		return nil, nil, dberrors.PQDbErrorCaster(c.db, err)
@@ -57,7 +57,7 @@ func (c *DPostgresDbController) AddLaptop(name string, price float64, selled uin
 		return nil, nil, dberrors.PQDbErrorCaster(c.db, err)
 	}
 
-	return models.NewProduct(productId, name, price, selled, stock, LaptopCharsTable, charId),
+	return models.NewProduct(productId, name, price, selled, stock, medias, LaptopCharsTable, charId),
 		models.NewLaptopChars(charId, cpu, ram, gpu),
 		nil
 }

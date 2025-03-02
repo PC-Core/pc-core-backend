@@ -53,7 +53,7 @@ func (c *LaptopController) addLaptop(ctx *gin.Context) {
 		return
 	}
 
-	product, chars, err := c.db.AddLaptop(input.Name, input.Price, 0, input.Stock, input.Cpu, input.Ram, input.Gpu)
+	product, chars, err := c.db.AddLaptop(input.Name, input.Price, 0, input.Stock, input.Cpu, input.Ram, input.Gpu, input.Medias)
 
 	if CheckErrorAndWriteBadRequest(ctx, err) {
 		return

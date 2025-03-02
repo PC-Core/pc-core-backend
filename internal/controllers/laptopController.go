@@ -4,13 +4,13 @@ import (
 	"net/http"
 	"strconv"
 
-	_ "github.com/Core-Mouse/cm-backend/docs"
-	"github.com/Core-Mouse/cm-backend/internal/database"
-	"github.com/Core-Mouse/cm-backend/internal/errors"
-	"github.com/Core-Mouse/cm-backend/internal/helpers"
-	"github.com/Core-Mouse/cm-backend/internal/middlewares"
-	"github.com/Core-Mouse/cm-backend/internal/models"
-	"github.com/Core-Mouse/cm-backend/internal/models/inputs"
+	_ "github.com/PC-Core/pc-core-backend/docs"
+	"github.com/PC-Core/pc-core-backend/internal/database"
+	"github.com/PC-Core/pc-core-backend/internal/errors"
+	"github.com/PC-Core/pc-core-backend/internal/helpers"
+	"github.com/PC-Core/pc-core-backend/internal/middlewares"
+	"github.com/PC-Core/pc-core-backend/internal/models"
+	"github.com/PC-Core/pc-core-backend/internal/models/inputs"
 	"github.com/gin-gonic/gin"
 )
 

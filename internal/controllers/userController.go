@@ -3,15 +3,15 @@ package controllers
 import (
 	"net/http"
 
-	"github.com/Core-Mouse/cm-backend/internal/auth"
-	"github.com/Core-Mouse/cm-backend/internal/controllers/conerrors"
-	"github.com/Core-Mouse/cm-backend/internal/database"
-	"github.com/Core-Mouse/cm-backend/internal/errors"
-	"github.com/Core-Mouse/cm-backend/internal/helpers"
-	"github.com/Core-Mouse/cm-backend/internal/models"
-	"github.com/Core-Mouse/cm-backend/internal/models/inputs"
-	"github.com/Core-Mouse/cm-backend/internal/models/outputs"
-	"github.com/Core-Mouse/cm-backend/internal/redis"
+	"github.com/PC-Core/pc-core-backend/internal/auth"
+	"github.com/PC-Core/pc-core-backend/internal/controllers/conerrors"
+	"github.com/PC-Core/pc-core-backend/internal/database"
+	"github.com/PC-Core/pc-core-backend/internal/errors"
+	"github.com/PC-Core/pc-core-backend/internal/helpers"
+	"github.com/PC-Core/pc-core-backend/internal/models"
+	"github.com/PC-Core/pc-core-backend/internal/models/inputs"
+	"github.com/PC-Core/pc-core-backend/internal/models/outputs"
+	"github.com/PC-Core/pc-core-backend/internal/redis"
 	"github.com/gin-gonic/gin"
 )
 

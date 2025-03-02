@@ -3,7 +3,7 @@ package controllers
 import (
 	"net/http"
 
-	"github.com/Core-Mouse/cm-backend/internal/database"
+	"github.com/PC-Core/pc-core-backend/internal/database"
 	"github.com/gin-gonic/gin"
 )
 

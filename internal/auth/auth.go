@@ -3,8 +3,8 @@ package auth
 import (
 	"time"
 
-	"github.com/Core-Mouse/cm-backend/internal/errors"
-	"github.com/Core-Mouse/cm-backend/internal/models"
+	"github.com/PC-Core/pc-core-backend/internal/errors"
+	"github.com/PC-Core/pc-core-backend/internal/models"
 )
 
 type Auth interface {
@@ -14,6 +14,6 @@ type Auth interface {
 }
 
 const (
-	AuthPublicLifetime  = 15 * time.Minute
+	AuthPublicLifetime        = 15 * time.Minute
 	AuthPrivateCookieLifetime = 24 * 30 * time.Hour
 )

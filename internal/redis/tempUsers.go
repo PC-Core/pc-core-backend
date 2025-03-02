@@ -6,10 +6,10 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/Core-Mouse/cm-backend/internal/auth"
-	"github.com/Core-Mouse/cm-backend/internal/errors"
-	"github.com/Core-Mouse/cm-backend/internal/models"
-	"github.com/Core-Mouse/cm-backend/internal/redis/rerrors"
+	"github.com/PC-Core/pc-core-backend/internal/auth"
+	"github.com/PC-Core/pc-core-backend/internal/errors"
+	"github.com/PC-Core/pc-core-backend/internal/models"
+	"github.com/PC-Core/pc-core-backend/internal/redis/rerrors"
 	"github.com/redis/go-redis/v9"
 )
 

@@ -3,8 +3,8 @@ package database
 import (
 	"database/sql"
 
-	"github.com/Core-Mouse/cm-backend/internal/errors"
-	"github.com/Core-Mouse/cm-backend/internal/models"
+	"github.com/PC-Core/pc-core-backend/internal/errors"
+	"github.com/PC-Core/pc-core-backend/internal/models"
 )
 
 const (

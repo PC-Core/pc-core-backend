@@ -3,13 +3,13 @@ package dberrors
 import (
 	"database/sql"
 
-	"github.com/Core-Mouse/cm-backend/internal/errors"
+	"github.com/PC-Core/pc-core-backend/internal/errors"
 	"github.com/lib/pq"
 )
 
 const (
-	PQE_UNIQUE_VIOLATION = "Unique constraint violation"
-	PQE_OTHER_ERROR = "Unknown error"
+	PQE_UNIQUE_VIOLATION         = "Unique constraint violation"
+	PQE_OTHER_ERROR              = "Unknown error"
 	PQE_LOGIN_INVALID_DATA_ERROR = "Email or password is invalid"
 )
 
@@ -68,30 +68,29 @@ func dbUniqueFailDetails(db *sql.DB, err *pq.Error) (*DbUniqueDetails, error) {
 
 // getConstraintColumns gets column name from Constraint
 func getConstraintColumns(db *sql.DB, tableName, constraintName string) ([]string, error) {
-    query := `
+	query := `
         SELECT a.attname
         FROM   pg_index i
         JOIN   pg_attribute a ON a.attrelid = i.indrelid AND a.attnum = ANY(i.indkey)
         WHERE  i.indrelid = $1::regclass
         AND    i.indexrelid = $2::regclass;
     `
-    rows, err := db.Query(query, tableName, constraintName)
-    if err != nil {
-        return nil, err
-    }
-    defer rows.Close()
+	rows, err := db.Query(query, tableName, constraintName)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
 
-    var columns []string
-    for rows.Next() {
-        var col string
-        if err := rows.Scan(&col); err != nil {
-            return nil, err
-        }
-        columns = append(columns, col)
-    }
-    return columns, nil
+	var columns []string
+	for rows.Next() {
+		var col string
+		if err := rows.Scan(&col); err != nil {
+			return nil, err
+		}
+		columns = append(columns, col)
+	}
+	return columns, nil
 }
-
 
 // PQDbError represents the inner Postgres error from the github.com/lib/pq driver
 // This error struct is private so it can contain secret data and should NEVER go beyond the server
@@ -101,7 +100,7 @@ type PQDbError struct {
 	// code contains the error code in terms of this project
 	code errors.ErrorCode
 	// kind contains the error kind in terms of this project
-	kind errors.ErrorKind
+	kind    errors.ErrorKind
 	details any
 	message string
 }

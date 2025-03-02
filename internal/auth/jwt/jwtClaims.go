@@ -4,7 +4,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/Core-Mouse/cm-backend/internal/models"
+	"github.com/PC-Core/pc-core-backend/internal/models"
 	"github.com/golang-jwt/jwt/v5"
 )
 

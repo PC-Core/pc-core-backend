@@ -1,6 +1,6 @@
 package conerrors
 
-import "github.com/Core-Mouse/cm-backend/internal/errors"
+import "github.com/PC-Core/pc-core-backend/internal/errors"
 
 const (
 	// GCE_BIND_ERROR_MESSAGE contains the error message means that input data is invalid

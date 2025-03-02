@@ -3,7 +3,7 @@ package jerrors
 import (
 	"errors"
 
-	ierrors "github.com/Core-Mouse/cm-backend/internal/errors"
+	ierrors "github.com/PC-Core/pc-core-backend/internal/errors"
 	"github.com/golang-jwt/jwt/v5"
 )
 

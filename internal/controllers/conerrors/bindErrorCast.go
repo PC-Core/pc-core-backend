@@ -5,7 +5,7 @@ import (
 	"errors"
 	"io"
 
-	inerrors "github.com/Core-Mouse/cm-backend/internal/errors"
+	inerrors "github.com/PC-Core/pc-core-backend/internal/errors"
 	"github.com/go-playground/validator/v10"
 )
 

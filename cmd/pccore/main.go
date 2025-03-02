@@ -7,14 +7,14 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/Core-Mouse/cm-backend/docs"
-	"github.com/Core-Mouse/cm-backend/internal/auth/jwt"
-	"github.com/Core-Mouse/cm-backend/internal/config"
-	"github.com/Core-Mouse/cm-backend/internal/controllers"
-	"github.com/Core-Mouse/cm-backend/internal/database"
-	"github.com/Core-Mouse/cm-backend/internal/helpers"
-	"github.com/Core-Mouse/cm-backend/internal/middlewares"
-	inredis "github.com/Core-Mouse/cm-backend/internal/redis"
+	"github.com/PC-Core/pc-core-backend/docs"
+	"github.com/PC-Core/pc-core-backend/internal/auth/jwt"
+	"github.com/PC-Core/pc-core-backend/internal/config"
+	"github.com/PC-Core/pc-core-backend/internal/controllers"
+	"github.com/PC-Core/pc-core-backend/internal/database"
+	"github.com/PC-Core/pc-core-backend/internal/helpers"
+	"github.com/PC-Core/pc-core-backend/internal/middlewares"
+	inredis "github.com/PC-Core/pc-core-backend/internal/redis"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
@@ -24,9 +24,10 @@ import (
 )
 
 const (
-	ENV_POSTGRES       = "POSTGRES_IBYTE_CONN"
+	ENV_POSTGRES       = "PCCORE_POSTGRES_CONN"
 	ENV_JWT_KEY        = "PCCORE_JWT_KEY"
 	ENV_REDIS_PASSWORD = "PCCORE_REDIS_PASSWORD"
+	ENV_CFG_PATH       = "CFG_PATH"
 )
 
 const SWAGGER_KEY = "swagger"
@@ -84,7 +85,7 @@ func main() {
 
 	r := gin.Default()
 
-	config, err := config.ParseConfig("../../cfg.yml")
+	config, err := config.ParseConfig(os.Getenv(ENV_CFG_PATH))
 
 	if err != nil {
 		panic(err)

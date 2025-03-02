@@ -1,4 +1,4 @@
-module github.com/Core-Mouse/cm-backend
+module github.com/PC-Core/pc-core-backend
 
 go 1.23.3
 

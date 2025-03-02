@@ -1,6 +1,6 @@
 package outputs
 
-import "github.com/Core-Mouse/cm-backend/internal/models"
+import "github.com/PC-Core/pc-core-backend/internal/models"
 
 type TokensMap map[string]string
 

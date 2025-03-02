@@ -1,8 +1,8 @@
 package controllers
 
 import (
-	"github.com/Core-Mouse/cm-backend/internal/helpers"
-	"github.com/Core-Mouse/cm-backend/internal/models"
+	"github.com/PC-Core/pc-core-backend/internal/helpers"
+	"github.com/PC-Core/pc-core-backend/internal/models"
 	"github.com/gin-gonic/gin"
 )
 

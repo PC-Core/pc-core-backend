@@ -1,9 +1,9 @@
 package database
 
 import (
-	"github.com/Core-Mouse/cm-backend/internal/database/dberrors"
-	"github.com/Core-Mouse/cm-backend/internal/errors"
-	"github.com/Core-Mouse/cm-backend/internal/models"
+	"github.com/PC-Core/pc-core-backend/internal/database/dberrors"
+	"github.com/PC-Core/pc-core-backend/internal/errors"
+	"github.com/PC-Core/pc-core-backend/internal/models"
 )
 
 func (c *DPostgresDbController) GetCartByUserID(userID uint64) (*models.Cart, errors.PCCError) {

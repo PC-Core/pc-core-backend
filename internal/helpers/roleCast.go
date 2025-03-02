@@ -3,8 +3,8 @@ package helpers
 import (
 	"fmt"
 
-	"github.com/Core-Mouse/cm-backend/internal/auth/jwt"
-	"github.com/Core-Mouse/cm-backend/internal/models"
+	"github.com/PC-Core/pc-core-backend/internal/auth/jwt"
+	"github.com/PC-Core/pc-core-backend/internal/models"
 )
 
 type RoleCastFunc = func(data interface{}) (models.UserRole, error)

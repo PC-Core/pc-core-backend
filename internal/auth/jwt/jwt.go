@@ -4,18 +4,18 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/Core-Mouse/cm-backend/internal/auth"
-	"github.com/Core-Mouse/cm-backend/internal/auth/jwt/jerrors"
-	"github.com/Core-Mouse/cm-backend/internal/errors"
-	"github.com/Core-Mouse/cm-backend/internal/models"
-	"github.com/Core-Mouse/cm-backend/internal/models/outputs"
+	"github.com/PC-Core/pc-core-backend/internal/auth"
+	"github.com/PC-Core/pc-core-backend/internal/auth/jwt/jerrors"
+	"github.com/PC-Core/pc-core-backend/internal/errors"
+	"github.com/PC-Core/pc-core-backend/internal/models"
+	"github.com/PC-Core/pc-core-backend/internal/models/outputs"
 	"github.com/golang-jwt/jwt/v5"
 )
 
-type StrWrapper string;
+type StrWrapper string
 
 func (s StrWrapper) String() string {
-	return string(s);
+	return string(s)
 }
 
 type JWTAuth struct {
@@ -149,7 +149,7 @@ func (a *JWTAuth) CheckAndReissue(token string) (string, errors.PCCError) {
 		return "", jerrors.JwtErrorCaster(ierr)
 	}
 
-	if time.Until(exp.Time) > 1 * time.Minute {
+	if time.Until(exp.Time) > 1*time.Minute {
 		return token, nil
 	}
 

@@ -239,7 +239,7 @@ func main() {
 		panic(err)
 	}
 
-	db, err := sql.Open("postgres", os.Getenv("POSTGRES_IBYTE_CONN"))
+	db, err := sql.Open("postgres", os.Getenv("PCCORE_POSTGRES_CONN"))
 
 	if err != nil {
 		fmt.Println("Error while connecting the db: ", err)

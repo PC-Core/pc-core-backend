@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"log"
 	"os"
@@ -15,6 +16,7 @@ import (
 	"github.com/PC-Core/pc-core-backend/internal/helpers"
 	"github.com/PC-Core/pc-core-backend/internal/middlewares"
 	inredis "github.com/PC-Core/pc-core-backend/internal/redis"
+	"github.com/PC-Core/pc-core-backend/internal/static"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
@@ -27,7 +29,8 @@ const (
 	ENV_POSTGRES       = "PCCORE_POSTGRES_CONN"
 	ENV_JWT_KEY        = "PCCORE_JWT_KEY"
 	ENV_REDIS_PASSWORD = "PCCORE_REDIS_PASSWORD"
-	ENV_CFG_PATH       = "CFG_PATH"
+	ENV_MINIO_ACCESS   = "MINIO_ACCESS"
+	ENV_MINIO_SECRET   = "MINIO_SECRET"
 )
 
 const SWAGGER_KEY = "swagger"
@@ -76,8 +79,32 @@ func setupRedis(cfg *config.Config) *redis.Client {
 	})
 }
 
+func setupMinio(config *config.Config) *static.MinIOClient {
+	client, err := static.NewMinIOClient(config.MinIOConn.Ep, os.Getenv(ENV_MINIO_ACCESS), os.Getenv(ENV_MINIO_SECRET), config.MinIOConn.Secure, config.MinIOConn.Bucket)
+
+	if err != nil {
+		panic(err)
+	}
+
+	return client
+}
+
+func setupWorkingDir() *string {
+	dir := flag.String("working-dir", "./", "The directory containing config files.")
+
+	flag.Parse()
+
+	return dir
+}
+
 func main() {
-	err := godotenv.Load("../../.env")
+	wd := setupWorkingDir()
+
+	if wd == nil {
+		panic("No working directory specified")
+	}
+
+	err := godotenv.Load(fmt.Sprintf("%s/.env", *wd))
 
 	if err != nil {
 		log.Fatal("Error loading .env file!")
@@ -85,7 +112,7 @@ func main() {
 
 	r := gin.Default()
 
-	config, err := config.ParseConfig(os.Getenv(ENV_CFG_PATH))
+	config, err := config.ParseConfig(fmt.Sprintf("%s/cfg.yml", *wd))
 
 	if err != nil {
 		panic(err)
@@ -109,6 +136,8 @@ func main() {
 		panic(err)
 	}
 
+	staticDataController := setupMinio(config)
+
 	redis := inredis.NewRedisController(setupRedis(config))
 
 	uc := controllers.NewUserController(r, db, redis, auth)
@@ -118,6 +147,7 @@ func main() {
 	jc := controllers.NewJWTController(r, db, auth)
 	cc := controllers.NewCartController(r, db, redis, helpers.JWTPublicUserCaster(auth), middlewares.JWTAuthorize(auth))
 	prc := controllers.NewProfileController(r, helpers.JWTPublicUserCaster(auth), middlewares.JWTAuthorize(auth))
+	mc := controllers.NewStaticController(r, staticDataController)
 
 	uc.ApplyRoutes()
 	lc.ApplyRoutes()
@@ -126,6 +156,7 @@ func main() {
 	jc.ApplyRoutes()
 	cc.ApplyRoutes()
 	prc.ApplyRoutes()
+	mc.ApplyRoutes()
 
 	r.Run(config.Addr + ":" + strconv.Itoa(config.Port))
 }

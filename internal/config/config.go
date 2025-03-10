@@ -12,6 +12,7 @@ type Config struct {
 	DbDriver  string   `yaml:"dbdriver"`
 	AllowCors []string `yaml:"allowcors"`
 	RedisConn `yaml:"redisConn"`
+	MinIOConn `yaml:"minioConn"`
 }
 
 func ParseConfig(path string) (*Config, error) {

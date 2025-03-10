@@ -9,3 +9,7 @@ allowcors:
 redisConn:
   addr: localhost
   port: 6379
+minioConn:
+  ep: localhost:9000
+  secure: false
+  bucket: pccore

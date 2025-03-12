@@ -62,49 +62,59 @@ func setupCors(r *gin.Engine, cfg *config.Config) {
 	}))
 }
 
-func loadJWTAuth(path string) (*jwt.JWTAuth, error) {
+func MustLoadJWTAuth(path string) *jwt.JWTAuth {
 	key, err := os.ReadFile(path)
 
 	if err != nil {
-		return nil, err
+		panic(err)
 	}
 
-	return jwt.NewJWTAuth(key), nil
+	return jwt.NewJWTAuth(key)
 }
 
-func setupRedis(cfg *config.Config) *redis.Client {
+func MustSetupRedis(cfg *config.Config) *redis.Client {
 	return redis.NewClient(&redis.Options{
 		Addr:     fmt.Sprintf("%s:%d", cfg.RedisConn.Addr, cfg.RedisConn.Port),
 		Password: os.Getenv(ENV_REDIS_PASSWORD),
 	})
 }
 
-func setupMinio(config *config.Config) *static.MinIOClient {
-	client, err := static.NewMinIOClient(config.MinIOConn.Ep, os.Getenv(ENV_MINIO_ACCESS), os.Getenv(ENV_MINIO_SECRET), config.MinIOConn.Secure, config.MinIOConn.Bucket)
+func MustSetupMinio(config *config.MinIOConn) *static.MinIOClient {
+	client, err := static.NewMinIOClient(config.Ep, os.Getenv(ENV_MINIO_ACCESS), os.Getenv(ENV_MINIO_SECRET), config.Secure, config.Bucket)
 
 	if err != nil {
 		panic(err)
 	}
 
+	exist, err := client.BucketExists()
+
+	if err != nil {
+		panic(err)
+	}
+
+	if !exist {
+		panic("The bucket does not exist")
+	}
+
 	return client
 }
 
-func setupWorkingDir() *string {
+func MustSetupWorkingDir() string {
 	dir := flag.String("working-dir", "./", "The directory containing config files.")
 
 	flag.Parse()
 
-	return dir
+	if dir == nil {
+		panic("The required arg is not provided")
+	}
+
+	return *dir
 }
 
 func main() {
-	wd := setupWorkingDir()
+	wd := MustSetupWorkingDir()
 
-	if wd == nil {
-		panic("No working directory specified")
-	}
-
-	err := godotenv.Load(fmt.Sprintf("%s/.env", *wd))
+	err := godotenv.Load(fmt.Sprintf("%s/.env", wd))
 
 	if err != nil {
 		log.Fatal("Error loading .env file!")
@@ -112,7 +122,7 @@ func main() {
 
 	r := gin.Default()
 
-	config, err := config.ParseConfig(fmt.Sprintf("%s/cfg.yml", *wd))
+	config, err := config.ParseConfig(fmt.Sprintf("%s/cfg.yml", wd))
 
 	if err != nil {
 		panic(err)
@@ -130,15 +140,11 @@ func main() {
 		configureSwagger(r, config.Addr)
 	}
 
-	auth, err := loadJWTAuth(os.Getenv(ENV_JWT_KEY))
+	auth := MustLoadJWTAuth(os.Getenv(ENV_JWT_KEY))
 
-	if err != nil {
-		panic(err)
-	}
+	staticDataController := MustSetupMinio(&config.MinIOConn)
 
-	staticDataController := setupMinio(config)
-
-	redis := inredis.NewRedisController(setupRedis(config))
+	redis := inredis.NewRedisController(MustSetupRedis(config))
 
 	uc := controllers.NewUserController(r, db, redis, auth)
 	lc := controllers.NewLaptopController(r, db, middlewares.JWTAuthorize(auth), helpers.JWTRoleCast)

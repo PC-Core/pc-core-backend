@@ -49,3 +49,13 @@ func (c *MinIOClient) UploadFiles(files []StaticFile) ([]string, errors.PCCError
 
 	return locs, nil
 }
+
+func (c *MinIOClient) BucketExists() (bool, errors.PCCError) {
+	exist, err := c.client.BucketExists(context.Background(), c.bucket)
+
+	if err != nil {
+		return exist, serrors.MinIOCast(err)
+	}
+
+	return exist, nil
+}

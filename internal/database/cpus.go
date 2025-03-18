@@ -6,6 +6,7 @@ import (
 	"github.com/PC-Core/pc-core-backend/internal/database/dberrors"
 	"github.com/PC-Core/pc-core-backend/internal/errors"
 	"github.com/PC-Core/pc-core-backend/internal/models"
+	"github.com/PC-Core/pc-core-backend/internal/models/inputs"
 )
 
 func (c *DPostgresDbController) GetCpuChars(charId uint64) (*models.CpuChars, errors.PCCError) {
@@ -22,7 +23,7 @@ func (c *DPostgresDbController) GetCpuChars(charId uint64) (*models.CpuChars, er
 	return &chars, nil
 }
 
-func (c *DPostgresDbController) AddCpu(name string, price float64, selled uint64, stock uint64, pcores, ecores, threads, bfmhz, mfmhz uint64, socket models.CpuSocket, l1, l2, l3, tpnm, tdp, ry uint64, imedias []models.InputMedia) (*models.Product, *models.CpuChars, errors.PCCError) {
+func (c *DPostgresDbController) AddCpu(cpu *inputs.AddCpuInput) (*models.Product, *models.CpuChars, errors.PCCError) {
 	var (
 		charId    uint64
 		productId uint64
@@ -36,13 +37,13 @@ func (c *DPostgresDbController) AddCpu(name string, price float64, selled uint64
 
 	defer tx.Rollback()
 
-	err = tx.QueryRow(fmt.Sprintf("INSERT INTO %s (name, pcores, ecores, threads, base_freq_mhz, max_freq_mhz, socket, l1_kb, l2_kb, l3_kb, tecproc_nm, tdp_watt, release_year) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) returning id", CpuCharsTable), name, pcores, ecores, threads, bfmhz, mfmhz, socket, l1, l2, l3, tpnm, tdp, ry).Scan(&charId)
+	err = tx.QueryRow(fmt.Sprintf("INSERT INTO %s (name, pcores, ecores, threads, base_freq_mhz, max_freq_mhz, socket, l1_kb, l2_kb, l3_kb, tecproc_nm, tdp_watt, release_year) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) returning id", CpuCharsTable), cpu.CpuName, cpu.PCores, cpu.ECores, cpu.Threads, cpu.BaseFreqMHz, cpu.MaxFreqMHz, cpu.Socket, cpu.L1KB, cpu.L2KB, cpu.L3KB, cpu.TecProcNM, cpu.TDPWatt, cpu.ReleaseYear).Scan(&charId)
 
 	if err != nil {
 		return nil, nil, dberrors.PQDbErrorCaster(c.db, err)
 	}
 
-	productId, medias, err := c.AddProduct(tx, name, price, selled, stock, imedias, CpuCharsTable, charId)
+	productId, medias, err := c.AddProduct(tx, cpu.Name, cpu.Price, 0, cpu.Stock, cpu.Medias, CpuCharsTable, charId)
 
 	if err != nil {
 		return nil, nil, dberrors.PQDbErrorCaster(c.db, err)
@@ -52,7 +53,7 @@ func (c *DPostgresDbController) AddCpu(name string, price float64, selled uint64
 		return nil, nil, dberrors.PQDbErrorCaster(c.db, err)
 	}
 
-	return models.NewProduct(productId, name, price, selled, stock, medias, CpuCharsTable, charId),
-		models.NewCpuChars(charId, name, pcores, ecores, threads, bfmhz, mfmhz, socket, l1, l2, l3, tpnm, tdp, ry),
+	return models.NewProduct(productId, cpu.Name, cpu.Price, 0, cpu.Stock, medias, CpuCharsTable, charId),
+		models.NewCpuChars(charId, cpu.CpuName, cpu.PCores, cpu.ECores, cpu.Threads, cpu.BaseFreqMHz, cpu.MaxFreqMHz, cpu.Socket, cpu.L1KB, cpu.L2KB, cpu.L3KB, cpu.TecProcNM, cpu.TDPWatt, cpu.ReleaseYear),
 		nil
 }

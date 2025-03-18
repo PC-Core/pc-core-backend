@@ -20,3 +20,6 @@ CREATE TABLE IF NOT EXISTS CpuChars(
     tdp_watt integer NOT NULL,
     release_year integer NOT NULL
 );
+
+ALTER TABLE LaptopChars ALTER COLUMN cpu integer;
+ALTER TABLE LaptopChars RENAME COLUMN cpu cpu_id;

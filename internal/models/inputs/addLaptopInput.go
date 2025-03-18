@@ -4,7 +4,7 @@ import "github.com/PC-Core/pc-core-backend/internal/models"
 
 type AddLaptopInput struct {
 	Name   string              `json:"name"`
-	Cpu    string              `json:"cpu"`
+	CpuID  uint64              `json:"cpu"`
 	Ram    int16               `json:"ram"`
 	Gpu    string              `json:"gpu"`
 	Price  float64             `json:"price"`

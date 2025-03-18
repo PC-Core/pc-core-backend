@@ -54,7 +54,7 @@ func (c *UserController) registerUser(ctx *gin.Context) {
 		return
 	}
 
-	user, err := c.db.RegisterUser(input.Name, input.Email, input.Password)
+	user, err := c.db.RegisterUser(&input)
 
 	if CheckErrorAndWriteBadRequest(ctx, err) {
 		return
@@ -87,7 +87,7 @@ func (c *UserController) loginUser(ctx *gin.Context) {
 		return
 	}
 
-	user, err := c.db.LoginUser(input.Email, input.Password)
+	user, err := c.db.LoginUser(&input)
 
 	if CheckErrorAndWriteBadRequest(ctx, err) {
 		return

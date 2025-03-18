@@ -118,6 +118,8 @@ func (c *DPostgresDbController) GetProductCharsByProductID(productId uint64) (Pr
 	switch p.CharTableName {
 	case LaptopCharsTable:
 		return c.GetLaptopChars(p.CharId)
+	case CpuCharsTable:
+		return c.GetCpuChars(p.CharId)
 	default:
 		return nil, errors.NewInternalSecretError()
 	}

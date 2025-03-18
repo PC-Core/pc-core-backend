@@ -1,0 +1,2 @@
+DROP TYPE CpuSocket;
+DROP TABLE CpuChars;

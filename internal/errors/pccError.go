@@ -26,6 +26,8 @@ const (
 	EK_ROLES ErrorKind = "roles"
 	// Error occured in cookies
 	EK_COOKIE ErrorKind = "cookie"
+	// Error occired in minio
+	EK_MINIO ErrorKind = "minio"
 )
 
 const (
@@ -88,6 +90,10 @@ const (
 	EC_DB_LOGIN_ERROR
 	// Error code means that the required cookie is missing
 	EC_COOKIE_MISSING
+	// Error code means that the unknown minio error is happened
+	EC_UNKNOWN_MINIO_ERROR
+	// Error code means that the required minio file was not found
+	EC_MINIO_NOT_FOUNT
 )
 
 // PCCError - minimal error interface used in the PC Core project

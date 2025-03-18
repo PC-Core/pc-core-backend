@@ -1,4 +1,11 @@
 definitions:
+  controllers.Locations:
+    properties:
+      locations:
+        items:
+          type: string
+        type: array
+    type: object
   controllers.SingleAccessToken:
     properties:
       access_token:
@@ -545,6 +552,32 @@ paths:
       summary: Get laptop chars
       tags:
       - laptops
+  /media/upload:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: files to upload
+        in: formData
+        name: uploads[]
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/controllers.Locations'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/errors.PublicPCCError'
+      summary: Upload media
+      tags:
+      - media
   /products/:
     get:
       consumes:

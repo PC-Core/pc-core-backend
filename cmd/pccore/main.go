@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"log"
 	"os"
@@ -15,6 +16,7 @@ import (
 	"github.com/PC-Core/pc-core-backend/internal/helpers"
 	"github.com/PC-Core/pc-core-backend/internal/middlewares"
 	inredis "github.com/PC-Core/pc-core-backend/internal/redis"
+	"github.com/PC-Core/pc-core-backend/internal/static"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
@@ -27,7 +29,8 @@ const (
 	ENV_POSTGRES       = "PCCORE_POSTGRES_CONN"
 	ENV_JWT_KEY        = "PCCORE_JWT_KEY"
 	ENV_REDIS_PASSWORD = "PCCORE_REDIS_PASSWORD"
-	ENV_CFG_PATH       = "CFG_PATH"
+	ENV_MINIO_ACCESS   = "MINIO_ACCESS"
+	ENV_MINIO_SECRET   = "MINIO_SECRET"
 )
 
 const SWAGGER_KEY = "swagger"
@@ -59,25 +62,59 @@ func setupCors(r *gin.Engine, cfg *config.Config) {
 	}))
 }
 
-func loadJWTAuth(path string) (*jwt.JWTAuth, error) {
+func MustLoadJWTAuth(path string) *jwt.JWTAuth {
 	key, err := os.ReadFile(path)
 
 	if err != nil {
-		return nil, err
+		panic(err)
 	}
 
-	return jwt.NewJWTAuth(key), nil
+	return jwt.NewJWTAuth(key)
 }
 
-func setupRedis(cfg *config.Config) *redis.Client {
+func MustSetupRedis(cfg *config.Config) *redis.Client {
 	return redis.NewClient(&redis.Options{
 		Addr:     fmt.Sprintf("%s:%d", cfg.RedisConn.Addr, cfg.RedisConn.Port),
 		Password: os.Getenv(ENV_REDIS_PASSWORD),
 	})
 }
 
+func MustSetupMinio(config *config.MinIOConn) *static.MinIOClient {
+	client, err := static.NewMinIOClient(config.Ep, os.Getenv(ENV_MINIO_ACCESS), os.Getenv(ENV_MINIO_SECRET), config.Secure, config.Bucket)
+
+	if err != nil {
+		panic(err)
+	}
+
+	exist, err := client.BucketExists()
+
+	if err != nil {
+		panic(err)
+	}
+
+	if !exist {
+		panic("The bucket does not exist")
+	}
+
+	return client
+}
+
+func MustSetupWorkingDir() string {
+	dir := flag.String("working-dir", "./", "The directory containing config files.")
+
+	flag.Parse()
+
+	if dir == nil {
+		panic("The required arg is not provided")
+	}
+
+	return *dir
+}
+
 func main() {
-	err := godotenv.Load("../../.env")
+	wd := MustSetupWorkingDir()
+
+	err := godotenv.Load(fmt.Sprintf("%s/.env", wd))
 
 	if err != nil {
 		log.Fatal("Error loading .env file!")
@@ -85,7 +122,7 @@ func main() {
 
 	r := gin.Default()
 
-	config, err := config.ParseConfig(os.Getenv(ENV_CFG_PATH))
+	config, err := config.ParseConfig(fmt.Sprintf("%s/cfg.yml", wd))
 
 	if err != nil {
 		panic(err)
@@ -103,13 +140,11 @@ func main() {
 		configureSwagger(r, config.Addr)
 	}
 
-	auth, err := loadJWTAuth(os.Getenv(ENV_JWT_KEY))
+	auth := MustLoadJWTAuth(os.Getenv(ENV_JWT_KEY))
 
-	if err != nil {
-		panic(err)
-	}
+	staticDataController := MustSetupMinio(&config.MinIOConn)
 
-	redis := inredis.NewRedisController(setupRedis(config))
+	redis := inredis.NewRedisController(MustSetupRedis(config))
 
 	uc := controllers.NewUserController(r, db, redis, auth)
 	lc := controllers.NewLaptopController(r, db, middlewares.JWTAuthorize(auth), helpers.JWTRoleCast)
@@ -118,6 +153,7 @@ func main() {
 	jc := controllers.NewJWTController(r, db, auth)
 	cc := controllers.NewCartController(r, db, redis, helpers.JWTPublicUserCaster(auth), middlewares.JWTAuthorize(auth))
 	prc := controllers.NewProfileController(r, helpers.JWTPublicUserCaster(auth), middlewares.JWTAuthorize(auth))
+	mc := controllers.NewStaticController(r, staticDataController)
 
 	uc.ApplyRoutes()
 	lc.ApplyRoutes()
@@ -126,6 +162,7 @@ func main() {
 	jc.ApplyRoutes()
 	cc.ApplyRoutes()
 	prc.ApplyRoutes()
+	mc.ApplyRoutes()
 
 	r.Run(config.Addr + ":" + strconv.Itoa(config.Port))
 }

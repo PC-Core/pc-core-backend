@@ -7,6 +7,7 @@
 - PostgreSQL
 - Redis
 - Go
+- MinIO
 - Required Go packages:
     - `gin` - `go get github.com/gin-gonic/gin`
     - `lib/pq` - `go get github.com/lib/pq`
@@ -17,17 +18,25 @@
     - `godotenv` - `go get github.com/joho/godotenv`
     - `swag` - `go get github.com/swaggo/swag`
     - `jwt` - `go get github.com/golang-jwt/jwt/v5`
+    - `headers` - `go get -u github.com/go-http-utils/headers`
+    - `minio` - `go get github.com/minio/minio-go/v7`
 
 ### How to run
 1. Create the Postgres database
 2. Migrate the database (sql/migrations)
-3. Create an ENV variable named 'PCCORE_POSTGRES_CONN' with Postgres Connection String
-4. Generate a secret key for JWT in file
-5. Create an ENV variable named 'PCCORE_JWT_KEY' and put the path to the secret key file in it
-6. Initialize Redis by starting `init_redis.sh` script
-7. Create an ENV variable named 'PCCORE_REDIS_PASSWORD' and put the Redis password in it
-8. Create an ENV variable named 'CFG_PATH' and put the absolute path to the `cfg.yml` file in it
-9. Start the /cmd/pccore/main.go file
+3. Setup the [environment](#env-variables)
+4. Initialize Redis by starting `init_redis.sh` script
+5. Start the /cmd/pccore/main.go file with [arguments](#cli-arguments)
+
+### ENV Variables
+- `PCCORE_POSTGRES_CONN` - Postgres connection string
+- `PCCORE_JWT_KEY` - JWT secret key file path
+- `PCCORE_REDIS_PASSWORD` - Redis password
+- `MINIO_ACCESS` - MinIO login
+- `MINIO_SECRET` - MinIO password
+
+### CLI Arguments
+- `--working-dir` - The directory containing the config files. The default value is './'
 
 ### Swagger
 To open the Swagger page:

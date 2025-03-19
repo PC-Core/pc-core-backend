@@ -1,4 +1,3 @@
-DROP TYPE CpuSocket;
 DROP TABLE CpuChars;
 
 ALTER TABLE LaptopChars RENAME COLUMN cpu_id cpu;

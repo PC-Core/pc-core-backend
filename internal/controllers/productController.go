@@ -105,7 +105,8 @@ func (c *ProductController) getProductChars(ctx *gin.Context) {
 
 	id, err := strconv.ParseUint(ids, 10, 64)
 
-	if CheckErrorAndWriteBadRequest(ctx, errors.NewAtoiError(err)) {
+	if err != nil {
+		CheckErrorAndWriteBadRequest(ctx, errors.NewAtoiError(err))
 		return
 	}
 

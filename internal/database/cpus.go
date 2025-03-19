@@ -14,7 +14,7 @@ func (c *DPostgresDbController) GetCpuChars(charId uint64) (*models.CpuChars, er
 
 	row := c.db.QueryRow(fmt.Sprintf("SELECT * FROM %s WHERE id = $1", CpuCharsTable), charId)
 
-	err := row.Scan(&chars.ID, &chars.Name, &chars.PCores, &chars.ECores, &chars.Threads, &chars.BaseFreqMHz, &chars.MaxFreqMHz, &chars.Socket, &chars.L1KB, &chars.L2KB, &chars.L3KB, &chars.TecProcNM, &chars.TDPWatt, &chars.ReleaseYear)
+	err := row.Scan(&chars.ID, &chars.Name, &chars.PCores, &chars.ECores, &chars.Threads, &chars.BasePFreqMHz, &chars.MaxPFreqMHz, &chars.BaseEFreqMHz, &chars.MaxEFreqMHz, &chars.Socket, &chars.L1KB, &chars.L2KB, &chars.L3KB, &chars.TecProcNM, &chars.TDPWatt, &chars.ReleaseYear)
 
 	if err != nil {
 		return nil, dberrors.PQDbErrorCaster(c.db, err)
@@ -37,7 +37,7 @@ func (c *DPostgresDbController) AddCpu(cpu *inputs.AddCpuInput) (*models.Product
 
 	defer tx.Rollback()
 
-	err = tx.QueryRow(fmt.Sprintf("INSERT INTO %s (name, pcores, ecores, threads, base_freq_mhz, max_freq_mhz, socket, l1_kb, l2_kb, l3_kb, tecproc_nm, tdp_watt, release_year) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) returning id", CpuCharsTable), cpu.CpuName, cpu.PCores, cpu.ECores, cpu.Threads, cpu.BaseFreqMHz, cpu.MaxFreqMHz, cpu.Socket, cpu.L1KB, cpu.L2KB, cpu.L3KB, cpu.TecProcNM, cpu.TDPWatt, cpu.ReleaseYear).Scan(&charId)
+	err = tx.QueryRow(fmt.Sprintf("INSERT INTO %s (name, pcores, ecores, threads, base_p_freq_mhz, max_p_freq_mhz, base_e_freq_mhz, max_e_freq_mhz, socket, l1_kb, l2_kb, l3_kb, tecproc_nm, tdp_watt, release_year) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15) returning id", CpuCharsTable), cpu.CpuName, cpu.PCores, cpu.ECores, cpu.Threads, cpu.BasePFreqMHz, cpu.MaxPFreqMHz, cpu.BaseEFreqMHz, cpu.MaxEFreqMHz, cpu.Socket, cpu.L1KB, cpu.L2KB, cpu.L3KB, cpu.TecProcNM, cpu.TDPWatt, cpu.ReleaseYear).Scan(&charId)
 
 	if err != nil {
 		return nil, nil, dberrors.PQDbErrorCaster(c.db, err)
@@ -54,6 +54,6 @@ func (c *DPostgresDbController) AddCpu(cpu *inputs.AddCpuInput) (*models.Product
 	}
 
 	return models.NewProduct(productId, cpu.Name, cpu.Price, 0, cpu.Stock, medias, CpuCharsTable, charId),
-		models.NewCpuChars(charId, cpu.CpuName, cpu.PCores, cpu.ECores, cpu.Threads, cpu.BaseFreqMHz, cpu.MaxFreqMHz, cpu.Socket, cpu.L1KB, cpu.L2KB, cpu.L3KB, cpu.TecProcNM, cpu.TDPWatt, cpu.ReleaseYear),
+		models.NewCpuChars(charId, cpu.CpuName, cpu.PCores, cpu.ECores, cpu.Threads, cpu.BasePFreqMHz, cpu.MaxPFreqMHz, cpu.BaseEFreqMHz, cpu.MaxEFreqMHz, cpu.Socket, cpu.L1KB, cpu.L2KB, cpu.L3KB, cpu.TecProcNM, cpu.TDPWatt, cpu.ReleaseYear),
 		nil
 }

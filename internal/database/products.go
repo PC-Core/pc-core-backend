@@ -96,7 +96,17 @@ func (c *DPostgresDbController) MediasFromJson(jss string) ([]models.Media, erro
 }
 
 func (c *DPostgresDbController) GetProductById(id uint64) (*models.Product, errors.PCCError) {
-	row := c.db.QueryRow("SELECT * FROM Products WHERE id = $1", id)
+	query := `
+	SELECT p.*, 
+       COALESCE(json_agg(json_build_object('id', m.id, 'url', m.url, 'type', m.type))
+	   		FILTER (WHERE m.id IS NOT NULL), '[]') AS medias
+	FROM Products p
+	LEFT JOIN Medias m ON m.id = ANY(p.medias)
+	WHERE p.id = $1
+	GROUP BY p.id;
+	`
+
+	row := c.db.QueryRow(query, id)
 
 	p, err := c.ScanProduct(row)
 

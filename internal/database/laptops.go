@@ -26,7 +26,7 @@ func (c *DPostgresDbController) GetLaptopChars(charId uint64) (*models.LaptopCha
 
 	row := c.db.QueryRow(query, charId)
 
-	err := row.Scan(&id, &cpu.ID, &cpu.Name, &cpu.PCores, &cpu.ECores, &cpu.Threads, &cpu.BaseFreqMHz, &cpu.MaxFreqMHz, &cpu.Socket, &cpu.L1KB, &cpu.L2KB, &cpu.L3KB, &cpu.TecProcNM, &cpu.TDPWatt, &cpu.ReleaseYear, &ram, &gpu)
+	err := row.Scan(&id, &cpu.ID, &cpu.Name, &cpu.PCores, &cpu.ECores, &cpu.Threads, &cpu.BasePFreqMHz, &cpu.MaxPFreqMHz, &cpu.BaseEFreqMHz, &cpu.MaxEFreqMHz, &cpu.Socket, &cpu.L1KB, &cpu.L2KB, &cpu.L3KB, &cpu.TecProcNM, &cpu.TDPWatt, &cpu.ReleaseYear, &gpu, &ram)
 
 	if err != nil {
 		return nil, dberrors.PQDbErrorCaster(c.db, err)

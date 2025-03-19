@@ -7,7 +7,7 @@ import (
 
 	"github.com/PC-Core/pc-core-backend/internal/database/dberrors"
 	"github.com/PC-Core/pc-core-backend/internal/errors"
-	"github.com/PC-Core/pc-core-backend/internal/models"
+	"github.com/PC-Core/pc-core-backend/pkg/models"
 	"github.com/lib/pq"
 )
 
@@ -96,7 +96,17 @@ func (c *DPostgresDbController) MediasFromJson(jss string) ([]models.Media, erro
 }
 
 func (c *DPostgresDbController) GetProductById(id uint64) (*models.Product, errors.PCCError) {
-	row := c.db.QueryRow("SELECT * FROM Products WHERE id = $1", id)
+	query := `
+	SELECT p.*, 
+       COALESCE(json_agg(json_build_object('id', m.id, 'url', m.url, 'type', m.type))
+	   		FILTER (WHERE m.id IS NOT NULL), '[]') AS medias
+	FROM Products p
+	LEFT JOIN Medias m ON m.id = ANY(p.medias)
+	WHERE p.id = $1
+	GROUP BY p.id;
+	`
+
+	row := c.db.QueryRow(query, id)
 
 	p, err := c.ScanProduct(row)
 
@@ -118,6 +128,8 @@ func (c *DPostgresDbController) GetProductCharsByProductID(productId uint64) (Pr
 	switch p.CharTableName {
 	case LaptopCharsTable:
 		return c.GetLaptopChars(p.CharId)
+	case CpuCharsTable:
+		return c.GetCpuChars(p.CharId)
 	default:
 		return nil, errors.NewInternalSecretError()
 	}

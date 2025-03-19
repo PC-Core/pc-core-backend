@@ -8,8 +8,8 @@ import (
 
 	"github.com/PC-Core/pc-core-backend/internal/auth"
 	"github.com/PC-Core/pc-core-backend/internal/errors"
-	"github.com/PC-Core/pc-core-backend/internal/models"
 	"github.com/PC-Core/pc-core-backend/internal/redis/rerrors"
+	"github.com/PC-Core/pc-core-backend/pkg/models"
 	"github.com/redis/go-redis/v9"
 )
 

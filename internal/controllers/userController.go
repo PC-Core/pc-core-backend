@@ -8,10 +8,10 @@ import (
 	"github.com/PC-Core/pc-core-backend/internal/database"
 	"github.com/PC-Core/pc-core-backend/internal/errors"
 	"github.com/PC-Core/pc-core-backend/internal/helpers"
-	"github.com/PC-Core/pc-core-backend/internal/models"
-	"github.com/PC-Core/pc-core-backend/internal/models/inputs"
-	"github.com/PC-Core/pc-core-backend/internal/models/outputs"
 	"github.com/PC-Core/pc-core-backend/internal/redis"
+	"github.com/PC-Core/pc-core-backend/pkg/models"
+	"github.com/PC-Core/pc-core-backend/pkg/models/inputs"
+	"github.com/PC-Core/pc-core-backend/pkg/models/outputs"
 	"github.com/gin-gonic/gin"
 )
 
@@ -54,7 +54,7 @@ func (c *UserController) registerUser(ctx *gin.Context) {
 		return
 	}
 
-	user, err := c.db.RegisterUser(input.Name, input.Email, input.Password)
+	user, err := c.db.RegisterUser(&input)
 
 	if CheckErrorAndWriteBadRequest(ctx, err) {
 		return
@@ -87,7 +87,7 @@ func (c *UserController) loginUser(ctx *gin.Context) {
 		return
 	}
 
-	user, err := c.db.LoginUser(input.Email, input.Password)
+	user, err := c.db.LoginUser(&input)
 
 	if CheckErrorAndWriteBadRequest(ctx, err) {
 		return

@@ -7,7 +7,7 @@ import (
 	"github.com/PC-Core/pc-core-backend/internal/controllers/conerrors"
 	"github.com/PC-Core/pc-core-backend/internal/database"
 	"github.com/PC-Core/pc-core-backend/internal/errors"
-	"github.com/PC-Core/pc-core-backend/internal/models/inputs"
+	"github.com/PC-Core/pc-core-backend/pkg/models/inputs"
 	"github.com/gin-gonic/gin"
 )
 
@@ -25,6 +25,7 @@ func NewProductController(engine *gin.Engine, db database.DbController) *Product
 func (c *ProductController) ApplyRoutes() {
 	c.engine.GET("/products/", c.getProducts)
 	c.engine.GET("/products/:id", c.getProductById)
+	c.engine.GET("/products/chars/:id", c.getProductChars)
 }
 
 // Get products from page N in quantity M
@@ -85,5 +86,37 @@ func (c *ProductController) getProductById(ctx *gin.Context) {
 
 	ctx.JSON(http.StatusOK, gin.H{
 		"product": product,
+	})
+}
+
+// Get product 	characteristics
+// @Summary 	Get product chars
+// @Tags 		products
+// @Accept 		json
+// @Produce 	json
+// @Param		id	path	 int	true		"Product id"
+// @Success 	200	{object} interface{}
+// @Failure 	400 {object}  errors.PublicPCCError
+// @Failure 	400 {object}  errors.PublicPCCError
+// @Failure		400 {object}  errors.PublicPCCError
+// @Router		/products/chars/{id} [get]
+func (c *ProductController) getProductChars(ctx *gin.Context) {
+	ids := ctx.Param("id")
+
+	id, err := strconv.ParseUint(ids, 10, 64)
+
+	if err != nil {
+		CheckErrorAndWriteBadRequest(ctx, errors.NewAtoiError(err))
+		return
+	}
+
+	chars, perr := c.db.GetProductCharsByProductID(id)
+
+	if CheckErrorAndWriteBadRequest(ctx, perr) {
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"chars": chars,
 	})
 }

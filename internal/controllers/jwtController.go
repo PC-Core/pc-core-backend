@@ -10,7 +10,7 @@ import (
 	"github.com/PC-Core/pc-core-backend/internal/database"
 	"github.com/PC-Core/pc-core-backend/internal/errors"
 	"github.com/PC-Core/pc-core-backend/internal/helpers"
-	"github.com/PC-Core/pc-core-backend/internal/models"
+	"github.com/PC-Core/pc-core-backend/pkg/models"
 	"github.com/gin-gonic/gin"
 )
 

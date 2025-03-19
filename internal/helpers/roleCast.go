@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/PC-Core/pc-core-backend/internal/auth/jwt"
-	"github.com/PC-Core/pc-core-backend/internal/models"
+	"github.com/PC-Core/pc-core-backend/pkg/models"
 )
 
 type RoleCastFunc = func(data interface{}) (models.UserRole, error)

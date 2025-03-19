@@ -1,6 +1,6 @@
 package outputs
 
-import "github.com/PC-Core/pc-core-backend/internal/models"
+import "github.com/PC-Core/pc-core-backend/pkg/models"
 
 type TokensMap map[string]string
 

@@ -42,6 +42,8 @@ definitions:
     - 26
     - 27
     - 28
+    - 29
+    - 30
     type: integer
     x-enum-varnames:
     - EC_INTERNAL
@@ -73,6 +75,8 @@ definitions:
     - EC_CTRLS_UNEXPECTED_EMPTY_BODY
     - EC_DB_LOGIN_ERROR
     - EC_COOKIE_MISSING
+    - EC_UNKNOWN_MINIO_ERROR
+    - EC_MINIO_NOT_FOUNT
   errors.ErrorKind:
     enum:
     - internal
@@ -85,6 +89,7 @@ definitions:
     - atoi
     - roles
     - cookie
+    - minio
     type: string
     x-enum-varnames:
     - EK_INTERNAL
@@ -97,6 +102,7 @@ definitions:
     - EK_ATOI
     - EK_ROLES
     - EK_COOKIE
+    - EK_MINIO
   errors.PublicPCCError:
     properties:
       code:
@@ -118,10 +124,53 @@ definitions:
         description: SafeMessage contains the summary message that should be safe
         type: string
     type: object
+  inputs.AddCpuInput:
+    properties:
+      base_e_freq_mhz:
+        type: integer
+      base_p_freq_mhz:
+        type: integer
+      cpu_name:
+        type: string
+      ecores:
+        type: integer
+      l1_kb:
+        type: integer
+      l2_kb:
+        type: integer
+      l3_kb:
+        type: integer
+      max_e_freq_mhz:
+        type: integer
+      max_p_freq_mhz:
+        type: integer
+      medias:
+        items:
+          $ref: '#/definitions/models.InputMedia'
+        type: array
+      name:
+        type: string
+      pcores:
+        type: integer
+      price:
+        type: number
+      release_year:
+        type: integer
+      socket:
+        $ref: '#/definitions/models.CpuSocket'
+      stock:
+        type: integer
+      tdp_watt:
+        type: integer
+      tecproc_nm:
+        type: integer
+      threads:
+        type: integer
+    type: object
   inputs.AddLaptopInput:
     properties:
       cpu:
-        type: string
+        type: integer
       gpu:
         type: string
       medias:
@@ -209,23 +258,48 @@ definitions:
       title:
         type: string
     type: object
+  models.CpuSocket:
+    enum:
+    - AM4
+    - AM5
+    - LGA775
+    - LGA1156
+    - LGA1155
+    - LGA1150
+    - LGA1151
+    - LGA1151v2
+    - LGA1200
+    - LGA1700
+    - LGA1851
+    - BGA1964
+    - FL1
+    - BGA2049
+    - BGA2833
+    - UNKNOWN
+    type: string
+    x-enum-varnames:
+    - SOCKET_AM4
+    - SOCKET_AM5
+    - SOCKET_LGA775
+    - SOCKET_LGA1156
+    - SOCKET_LGA1155
+    - SOCKET_LGA1150
+    - SOCKET_LGA1151
+    - SOCKET_LGA1151v2
+    - SOCKET_LGA1200
+    - SOCKET_LGA1700
+    - SOCKET_LGA1851
+    - SOCKET_BGA1964
+    - SOCKET_FL1
+    - SOCKET_BGA2049
+    - SOCKET_BGA2833
+    - SOCKET_UNKNOWN
   models.InputMedia:
     properties:
       type:
         $ref: '#/definitions/models.MediaType'
       url:
         type: string
-    type: object
-  models.LaptopChars:
-    properties:
-      cpu:
-        type: string
-      gpu:
-        type: string
-      id:
-        type: integer
-      ram:
-        type: integer
     type: object
   models.Media:
     properties:
@@ -493,6 +567,41 @@ paths:
       summary: Get all categories
       tags:
       - categories
+  /cpus/add:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Cpu data
+        in: body
+        name: laptop
+        required: true
+        schema:
+          $ref: '#/definitions/inputs.AddCpuInput'
+      - description: access token for user with Admin role
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/errors.PublicPCCError'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/errors.PublicPCCError'
+      summary: Add a new cpu
+      tags:
+      - cpus
   /laptops/add:
     post:
       consumes:
@@ -526,30 +635,6 @@ paths:
           schema:
             $ref: '#/definitions/errors.PublicPCCError'
       summary: Add a new laptop
-      tags:
-      - laptops
-  /laptops/chars/{id}:
-    get:
-      consumes:
-      - application/json
-      parameters:
-      - description: Laptop id
-        in: path
-        name: id
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/models.LaptopChars'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/errors.PublicPCCError'
-      summary: Get laptop chars
       tags:
       - laptops
   /media/upload:
@@ -627,6 +712,29 @@ paths:
           schema:
             $ref: '#/definitions/errors.PublicPCCError'
       summary: Get a single product by ID
+      tags:
+      - products
+  /products/chars/{id}:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: Product id
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema: {}
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/errors.PublicPCCError'
+      summary: Get product chars
       tags:
       - products
   /profile/:

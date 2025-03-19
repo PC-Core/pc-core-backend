@@ -28,17 +28,17 @@ func (c *CpuController) ApplyRoutes() {
 	c.engine.POST("/cpus/add", c.auth_middleware, middlewares.RoleCheck(models.Admin, c.db, c.caster), c.addCpu)
 }
 
-// Add laptop
-// @Summary      Add a new laptop
-// @Tags         laptops
+// Add cpu
+// @Summary      Add a new cpu
+// @Tags         cpus
 // @Accept       json
 // @Produce      json
-// @Param 		 laptop 		body	inputs.AddCpuInput	true	"Laptop data"
+// @Param 		 laptop 		body	inputs.AddCpuInput	true	"Cpu data"
 // @Param		 Authorization  header	string					true	"access token for user with Admin role"
 // @Success      201  {object}  map[string]interface{}
 // @Failure      400  {object}  errors.PublicPCCError
 // @Failure      403  {object}  errors.PublicPCCError
-// @Router       /laptops/add [post]
+// @Router       /cpus/add [post]
 func (c *CpuController) addCpu(ctx *gin.Context) {
 	var input inputs.AddCpuInput
 

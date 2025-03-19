@@ -7,8 +7,8 @@ import (
 	"github.com/PC-Core/pc-core-backend/internal/auth"
 	"github.com/PC-Core/pc-core-backend/internal/auth/jwt/jerrors"
 	"github.com/PC-Core/pc-core-backend/internal/errors"
-	"github.com/PC-Core/pc-core-backend/internal/models"
-	"github.com/PC-Core/pc-core-backend/internal/models/outputs"
+	"github.com/PC-Core/pc-core-backend/pkg/models"
+	"github.com/PC-Core/pc-core-backend/pkg/models/outputs"
 	"github.com/golang-jwt/jwt/v5"
 )
 

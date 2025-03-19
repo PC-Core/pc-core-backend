@@ -4,7 +4,7 @@ import (
 	"github.com/PC-Core/pc-core-backend/internal/auth"
 	"github.com/PC-Core/pc-core-backend/internal/auth/jwt"
 	"github.com/PC-Core/pc-core-backend/internal/errors"
-	"github.com/PC-Core/pc-core-backend/internal/models"
+	"github.com/PC-Core/pc-core-backend/pkg/models"
 )
 
 const (

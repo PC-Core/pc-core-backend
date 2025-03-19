@@ -7,8 +7,8 @@ import (
 	"github.com/PC-Core/pc-core-backend/internal/database"
 	"github.com/PC-Core/pc-core-backend/internal/helpers"
 	"github.com/PC-Core/pc-core-backend/internal/middlewares"
-	"github.com/PC-Core/pc-core-backend/internal/models"
-	"github.com/PC-Core/pc-core-backend/internal/models/inputs"
+	"github.com/PC-Core/pc-core-backend/pkg/models"
+	"github.com/PC-Core/pc-core-backend/pkg/models/inputs"
 	"github.com/gin-gonic/gin"
 )
 

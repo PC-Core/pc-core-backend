@@ -7,7 +7,7 @@ import (
 	"github.com/PC-Core/pc-core-backend/internal/controllers/conerrors"
 	"github.com/PC-Core/pc-core-backend/internal/database"
 	"github.com/PC-Core/pc-core-backend/internal/errors"
-	"github.com/PC-Core/pc-core-backend/internal/models/inputs"
+	"github.com/PC-Core/pc-core-backend/pkg/models/inputs"
 	"github.com/gin-gonic/gin"
 )
 

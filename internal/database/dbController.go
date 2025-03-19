@@ -4,8 +4,8 @@ import (
 	"database/sql"
 
 	"github.com/PC-Core/pc-core-backend/internal/errors"
-	"github.com/PC-Core/pc-core-backend/internal/models"
-	"github.com/PC-Core/pc-core-backend/internal/models/inputs"
+	"github.com/PC-Core/pc-core-backend/pkg/models"
+	"github.com/PC-Core/pc-core-backend/pkg/models/inputs"
 )
 
 const (

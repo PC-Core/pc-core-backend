@@ -1,6 +1,6 @@
 package inputs
 
-import "github.com/PC-Core/pc-core-backend/internal/models"
+import "github.com/PC-Core/pc-core-backend/pkg/models"
 
 type AddLaptopInput struct {
 	Name   string              `json:"name"`

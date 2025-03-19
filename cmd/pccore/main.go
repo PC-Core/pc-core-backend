@@ -154,6 +154,7 @@ func main() {
 	cc := controllers.NewCartController(r, db, redis, helpers.JWTPublicUserCaster(auth), middlewares.JWTAuthorize(auth))
 	prc := controllers.NewProfileController(r, helpers.JWTPublicUserCaster(auth), middlewares.JWTAuthorize(auth))
 	mc := controllers.NewStaticController(r, staticDataController)
+	cpc := controllers.NewCpuController(r, db, middlewares.JWTAuthorize(auth), helpers.JWTRoleCast)
 
 	uc.ApplyRoutes()
 	lc.ApplyRoutes()
@@ -163,6 +164,7 @@ func main() {
 	cc.ApplyRoutes()
 	prc.ApplyRoutes()
 	mc.ApplyRoutes()
+	cpc.ApplyRoutes()
 
 	r.Run(config.Addr + ":" + strconv.Itoa(config.Port))
 }

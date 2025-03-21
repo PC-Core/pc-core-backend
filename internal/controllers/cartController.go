@@ -70,7 +70,7 @@ func (c *CartController) getTempCart(pu *models.PublicUser) (*models.Cart, error
 		return nil, err
 	}
 
-	return models.NewCart(0, uint64(pu.ID), products), nil
+	return models.NewCart(uint64(pu.ID), products), nil
 }
 
 func (c *CartController) getDefaultCart(pu *models.PublicUser) (*models.Cart, errors.PCCError) {

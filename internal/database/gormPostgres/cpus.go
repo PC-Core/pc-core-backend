@@ -1,43 +1,81 @@
 package gormpostgres
 
-// func (c *GormPostgresController) GetCpuChars(charId uint64) (*models.CpuChars, errors.PCCError) {
-// 	var chars DbCpuChars
+import (
+	"github.com/PC-Core/pc-core-backend/internal/database"
+	"github.com/PC-Core/pc-core-backend/internal/errors"
+	"github.com/PC-Core/pc-core-backend/pkg/models"
+	"github.com/PC-Core/pc-core-backend/pkg/models/inputs"
+)
 
-// 	err := c.db.Where("id = ?", charId).First(&chars).Error
+func (c *GormPostgresController) GetCpuChars(charId uint64) (*models.CpuChars, errors.PCCError) {
+	var chars DbCpuChars
 
-// 	if err != nil {
-// 		// TODO: error type
-// 		return nil, errors.NewInternalSecretError()
-// 	}
+	err := c.db.Where("id = ?", charId).First(&chars).Error
 
-// 	return chars.IntoCpuChars(), nil
-// }
+	if err != nil {
+		// TODO: error type
+		return nil, errors.NewInternalSecretError()
+	}
 
-// func (c *GormPostgresController) AddCpu(cpu *inputs.AddCpuInput) (*models.Product, *models.CpuChars, errors.PCCError) {
-// 	chars := DbCpuChars{
-// 		Name:         cpu.CpuName,
-// 		PCores:       cpu.PCores,
-// 		ECores:       cpu.ECores,
-// 		Threads:      cpu.Threads,
-// 		BasePFreqMHz: cpu.BasePFreqMHz,
-// 		MaxPFreqMHz:  cpu.MaxPFreqMHz,
-// 		BaseEFreqMHz: cpu.BaseEFreqMHz,
-// 		MaxEFreqMHz:  cpu.MaxEFreqMHz,
-// 		Socket:       cpu.Socket,
-// 		L1KB:         cpu.L1KB,
-// 		L2KB:         cpu.L2KB,
-// 		L3KB:         cpu.L3KB,
-// 		TecProcNM:    cpu.TecProcNM,
-// 		TDPWatt:      cpu.TDPWatt,
-// 		ReleaseYear:  cpu.ReleaseYear,
-// 	}
+	return chars.IntoCpuChars(), nil
+}
 
-// 	err := c.db.Create(chars).Error
+func (c *GormPostgresController) AddCpu(cpu *inputs.AddCpuInput) (*models.Product, *models.CpuChars, errors.PCCError) {
+	tx := c.db.Begin()
 
-// 	if err != nil {
-// 		// TODO: error type
-// 		return nil, nil, errors.NewInternalSecretError()
-// 	}
+	if tx.Error != nil {
+		return nil, nil, errors.NewInternalSecretError()
+	}
 
-// 	// TODO:
-// }
+	defer tx.Rollback()
+
+	chars := DbCpuChars{
+		Name:         cpu.CpuName,
+		PCores:       cpu.PCores,
+		ECores:       cpu.ECores,
+		Threads:      cpu.Threads,
+		BasePFreqMHz: cpu.BasePFreqMHz,
+		MaxPFreqMHz:  cpu.MaxPFreqMHz,
+		BaseEFreqMHz: cpu.BaseEFreqMHz,
+		MaxEFreqMHz:  cpu.MaxEFreqMHz,
+		Socket:       cpu.Socket,
+		L1KB:         cpu.L1KB,
+		L2KB:         cpu.L2KB,
+		L3KB:         cpu.L3KB,
+		TecProcNM:    cpu.TecProcNM,
+		TDPWatt:      cpu.TDPWatt,
+		ReleaseYear:  cpu.ReleaseYear,
+	}
+
+	err := tx.Create(chars).Error
+
+	if err != nil {
+		// TODO: error type
+		return nil, nil, errors.NewInternalSecretError()
+	}
+
+	medias, err := c.AddMedias(tx, cpu.Medias)
+
+	if err != nil {
+		return nil, nil, errors.NewInternalSecretError()
+	}
+
+	product := DbProduct{
+		Name:           cpu.Name,
+		Price:          cpu.Price,
+		Selled:         0,
+		Stock:          cpu.Stock,
+		CharsTableName: database.CpuCharsTable,
+		CharsID:        chars.ID,
+	}
+
+	err = tx.Create(&product).Error
+
+	if err != nil {
+		return nil, nil, errors.NewInternalSecretError()
+	}
+
+	tx.Commit()
+
+	return product.WithMediasIntoProduct(medias), chars.IntoCpuChars(), nil
+}

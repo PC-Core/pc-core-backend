@@ -1,6 +1,8 @@
 package gormpostgres
 
 import (
+	"time"
+
 	"github.com/PC-Core/pc-core-backend/internal/database"
 	"github.com/PC-Core/pc-core-backend/internal/errors"
 	"github.com/PC-Core/pc-core-backend/pkg/models"
@@ -10,14 +12,11 @@ func (c *GormPostgresController) GetProducts(start uint64, count uint64) ([]mode
 	var dbproducts []DbProductWithMedias
 
 	err := c.db.
-		Select("p.*, COALESCE(json_agg(json_build_object('id', m.id, 'url', m.url, 'type', m.type)), '[]') AS medias").
-		Table("products AS p").
-		Joins("LEFT JOIN medias m ON m.id = ANY(p.medias)").
-		Group("p.id").
-		Order("p.id").
+		Preload("Medias").
+		Order("id").
 		Limit(int(count)).
 		Offset(int(start)).
-		Scan(&dbproducts).Error
+		Find(&dbproducts).Error
 
 	if err != nil {
 		return nil, errors.NewInternalSecretError()
@@ -36,12 +35,10 @@ func (c *GormPostgresController) GetProductById(id uint64) (*models.Product, err
 	var dbproduct DbProductWithMedias
 
 	err := c.db.
-		Select("p.*, COALESCE(json_agg(json_build_object('id', m.id, 'url', m.url, 'type', m.type)), '[]') AS medias").
-		Table("products AS p").
-		Joins("LEFT JOIN medias m ON m.id = ANY(p.medias)").
-		Where("p.id = ?", id).
-		Group("p.id").
-		Scan(&dbproduct).Error
+		Preload("Medias").
+		Where("id = ?", id).
+		First(&dbproduct).
+		Error
 
 	if err != nil {
 		return nil, errors.NewInternalSecretError()
@@ -65,4 +62,37 @@ func (c *GormPostgresController) GetProductCharsByProductID(productId uint64) (d
 	default:
 		return nil, errors.NewInternalSecretError()
 	}
+}
+
+func (c *GormPostgresController) LoadProductsRangeAsCartItem(tempCart []models.TempCartItem) ([]models.CartItem, errors.PCCError) {
+	productIDs := make([]uint64, len(tempCart))
+	quantityMap := make(map[uint64]uint)
+
+	for i, item := range tempCart {
+		productIDs[i] = item.ProductID
+		quantityMap[item.ProductID] = item.Quantity
+	}
+
+	var products []DbProductWithMedias
+
+	err := c.db.
+		Preload("Medias").
+		Where("id IN ?", productIDs).
+		Find(&products).Error
+
+	if err != nil {
+		return nil, errors.NewInternalSecretError()
+	}
+
+	cartItems := make([]models.CartItem, 0, len(products))
+	for _, p := range products {
+		quantity, exists := quantityMap[p.ID]
+		if !exists {
+			return nil, errors.NewInternalSecretError()
+		}
+		cartItem := models.NewCartItem(*p.IntoProduct(), quantity, time.Now())
+		cartItems = append(cartItems, *cartItem)
+	}
+
+	return cartItems, nil
 }

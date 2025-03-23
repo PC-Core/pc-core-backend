@@ -13,7 +13,8 @@ func (c *GormPostgresController) GetCartByUserID(userID uint64) (*models.Cart, e
 	err := c.db.
 		Joins("JOIN products ON products.id = cart.product_id").
 		Where("cart.user_id = ?", userID).
-		Find(&cart)
+		Preload("Product.Medias").
+		Find(&cart).Error
 
 	if err != nil {
 		// TODO: type
@@ -34,7 +35,7 @@ func (c *GormPostgresController) AddToCart(product_id, user_id, quantity uint64)
 		Clauses(clause.OnConflict{
 			Columns: []clause.Column{{Name: "user_id"}, {Name: "product_id"}},
 			DoUpdates: clause.Assignments(map[string]interface{}{
-				"quantity": gorm.Expr("quantity + ?", quantity),
+				"quantity": gorm.Expr("cart.quantity + ?", quantity),
 			}),
 		}).
 		Create(&cartItem).Error

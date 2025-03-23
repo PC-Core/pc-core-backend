@@ -1,0 +1,7 @@
+ALTER TABLE medias ADD COLUMN product_id INTEGER;
+
+ALTER TABLE medias ALTER COLUMN product_id SET NOT NULL;
+
+ALTER TABLE medias ADD CONSTRAINT fk_product FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE;
+
+ALTER TABLE products DROP COLUMN medias;

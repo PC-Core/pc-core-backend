@@ -12,7 +12,7 @@ import (
 	"github.com/PC-Core/pc-core-backend/internal/auth/jwt"
 	"github.com/PC-Core/pc-core-backend/internal/config"
 	"github.com/PC-Core/pc-core-backend/internal/controllers"
-	"github.com/PC-Core/pc-core-backend/internal/database"
+	gormpostgres "github.com/PC-Core/pc-core-backend/internal/database/gormPostgres"
 	"github.com/PC-Core/pc-core-backend/internal/helpers"
 	"github.com/PC-Core/pc-core-backend/internal/middlewares"
 	inredis "github.com/PC-Core/pc-core-backend/internal/redis"
@@ -130,7 +130,8 @@ func main() {
 
 	setupCors(r, config)
 
-	db, err := database.NewDPostgresDbController(config.DbDriver, os.Getenv(ENV_POSTGRES))
+	//db, err := database.NewDPostgresDbController(config.DbDriver, os.Getenv(ENV_POSTGRES))
+	db, err := gormpostgres.NewGormPostgresController(os.Getenv(ENV_POSTGRES))
 
 	if err != nil {
 		panic(err)

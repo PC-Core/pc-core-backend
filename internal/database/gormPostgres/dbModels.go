@@ -7,16 +7,16 @@ import (
 )
 
 type DbCart struct {
-	ID        uint64         `gorm:"primaryKey"`
-	UserID    uint64         `gorm:"column:user_id"`
-	ProductID uint64         `gorm:"column:product_id"`
-	Product   models.Product `gorm:"foreignKey:ProductID"`
-	Quantity  uint           `gorm:"not null"`
-	AddedAt   time.Time      `gorm:"autoCreateTime"`
+	ID        uint64              `gorm:"primaryKey"`
+	UserID    uint64              `gorm:"column:user_id"`
+	ProductID uint64              `gorm:"column:product_id"`
+	Product   DbProductWithMedias `gorm:"foreignKey:ProductID"`
+	Quantity  uint                `gorm:"not null"`
+	AddedAt   time.Time           `gorm:"autoCreateTime"`
 }
 
 func (DbCart) TableName() string {
-	return "Cart"
+	return "cart"
 }
 
 func DbCartIntoCart(cart []DbCart) *models.Cart {
@@ -25,7 +25,7 @@ func DbCartIntoCart(cart []DbCart) *models.Cart {
 
 	for _, c := range cart {
 		user_id = c.UserID
-		items = append(items, *models.NewCartItem(c.Product, c.Quantity, c.AddedAt))
+		items = append(items, *models.NewCartItem(*c.Product.IntoProduct(), c.Quantity, c.AddedAt))
 	}
 
 	return models.NewCart(user_id, items)
@@ -43,7 +43,7 @@ type DbProducts struct {
 }
 
 func (DbProducts) TableName() string {
-	return "Products"
+	return "products"
 }
 
 type DbCategories struct {
@@ -55,7 +55,7 @@ type DbCategories struct {
 }
 
 func (DbCategories) TableName() string {
-	return "Categories"
+	return "categories"
 }
 
 type DbCpuChars struct {
@@ -99,23 +99,50 @@ func (chars *DbCpuChars) IntoCpuChars() *models.CpuChars {
 }
 
 func (DbCpuChars) TableName() string {
-	return "CpuChars"
+	return "cpuchars"
 }
 
-// type MediasType struct {
-// 	ID  uint64 `json:"id"`
-// 	Url string `json:"url"`
-// }
+type DbMedia struct {
+	ID        uint64           `gorm:"primaryKey"`
+	Url       string           `gorm:"column:url"`
+	Type      models.MediaType `gorm:"column:type"`
+	ProductID uint64           `gorm:"column:product_id"`
+}
+
+func (DbMedia) TableName() string {
+	return "medias"
+}
+
+func (m *DbMedia) IntoMedia() *models.Media {
+	return models.NewMedia(
+		m.ID,
+		m.Url,
+		m.Type,
+		m.ProductID,
+	)
+}
+
+type DbMedias []DbMedia
+
+func (ms DbMedias) IntoMedias() models.Medias {
+	medias := make(models.Medias, 0, len(ms))
+
+	for _, m := range ms {
+		medias = append(medias, *m.IntoMedia())
+	}
+
+	return medias
+}
 
 type DbProductWithMedias struct {
-	ID             uint64         `gorm:"column:id"`
-	Name           string         `gorm:"column:name"`
-	Price          float64        `gorm:"column:price"`
-	Selled         uint64         `gorm:"column:selled"`
-	Stock          uint64         `gorm:"column:stock"`
-	CharsTableName string         `gorm:"column:chars_table_name"`
-	CharsID        uint64         `gorm:"column:chars_id"`
-	Medias         []models.Media `gorm:"column:medias;type:json"`
+	ID             uint64   `gorm:"column:id"`
+	Name           string   `gorm:"column:name"`
+	Price          float64  `gorm:"column:price"`
+	Selled         uint64   `gorm:"column:selled"`
+	Stock          uint64   `gorm:"column:stock"`
+	CharsTableName string   `gorm:"column:chars_table_name"`
+	CharsID        uint64   `gorm:"column:chars_id"`
+	Medias         DbMedias `gorm:"foreignKey:ProductID"`
 }
 
 func (p *DbProductWithMedias) IntoProduct() *models.Product {
@@ -125,19 +152,76 @@ func (p *DbProductWithMedias) IntoProduct() *models.Product {
 		p.Price,
 		p.Selled,
 		p.Stock,
-		p.Medias,
+		p.Medias.IntoMedias(),
 		p.CharsTableName,
-		p.CharsID)
+		p.CharsID,
+	)
+}
 
+func (DbProductWithMedias) TableName() string {
+	return "products"
 }
 
 type DbProduct struct {
-	ID             uint64         `gorm:"primaryKey"`
-	Name           string         `gorm:"column:name"`
-	Price          float64        `gorm:"column:price"`
-	Selled         uint64         `gorm:"column:selled"`
-	Stock          uint64         `gorm:"column:stock"`
-	CharsTableName string         `gorm:"column:chars_table_name"`
-	CharsID        uint64         `gorm:"column:chars_id"`
-	Medias         [] `gorm:"column:medias;type:json"`
+	ID             uint64  `gorm:"primaryKey"`
+	Name           string  `gorm:"column:name"`
+	Price          float64 `gorm:"column:price"`
+	Selled         uint64  `gorm:"column:selled"`
+	Stock          uint64  `gorm:"column:stock"`
+	CharsTableName string  `gorm:"column:chars_table_name"`
+	CharsID        uint64  `gorm:"column:chars_id"`
+}
+
+func (DbProduct) TableName() string {
+	return "products"
+}
+
+func (p *DbProduct) WithMediasIntoProduct(medias models.Medias) *models.Product {
+	return models.NewProduct(
+		p.ID,
+		p.Name,
+		p.Price,
+		p.Selled,
+		p.Stock,
+		medias,
+		p.CharsTableName,
+		p.CharsID,
+	)
+}
+
+type DbLaptopChars struct {
+	ID    uint64     `gorm:"primaryKey"`
+	CpuID uint64     `gorm:"column:cpu_id"`
+	Cpu   DbCpuChars `gorm:"foreignKey:CpuID"`
+	Ram   int16      `gorm:"column:ram"`
+	Gpu   string     `gorm:"column:gpu"`
+}
+
+func (DbLaptopChars) TableName() string {
+	return "laptopchars"
+}
+
+func (c *DbLaptopChars) IntoLaptopChars() *models.LaptopChars {
+	return models.NewLaptopChars(
+		c.ID,
+		*c.Cpu.IntoCpuChars(),
+		c.Ram,
+		c.Gpu,
+	)
+}
+
+type DbUser struct {
+	ID           int             `gorm:"primaryKey"`
+	Name         string          `gorm:"column:name"`
+	Email        string          `gorm:"column:email"`
+	Role         models.UserRole `gorm:"column:role;default:'Default'"`
+	PasswordHash string          `gorm:"column:passwordhash"`
+}
+
+func (DbUser) TableName() string {
+	return "users"
+}
+
+func (u *DbUser) IntoUser() *models.User {
+	return models.NewUser(u.ID, u.Name, u.Email, u.Role, u.PasswordHash)
 }

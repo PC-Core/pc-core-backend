@@ -1,0 +1,1 @@
+CREATE TYPE UserRole AS ENUM ('Default', 'Admin')

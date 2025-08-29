@@ -1,1 +1,0 @@
-DROP TRIGGER check_cart_quantity ON Cart;

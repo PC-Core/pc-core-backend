@@ -3,10 +3,9 @@ package models
 type UserRole string
 
 const (
-	Temporary UserRole = "Temporary"
-	Default   UserRole = "Default"
+	Default UserRole = "Default"
 
-	Admin UserRole = "Admin"
+	Admin = "Admin"
 )
 
 type User struct {
@@ -14,7 +13,7 @@ type User struct {
 	Name       string   `json:"name"`
 	Email      string   `json:"email"`
 	Role       UserRole `json:"user_role"`
-	PasswdHash string   `json:"-"`
+	passwdHash string
 }
 
 func NewUser(id int, name string, email string, role UserRole, passwdHash string) *User {

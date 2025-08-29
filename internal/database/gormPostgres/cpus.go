@@ -2,6 +2,7 @@ package gormpostgres
 
 import (
 	"github.com/PC-Core/pc-core-backend/internal/database"
+	gormerrors "github.com/PC-Core/pc-core-backend/internal/database/gormPostgres/gormErrors"
 	"github.com/PC-Core/pc-core-backend/internal/errors"
 	"github.com/PC-Core/pc-core-backend/pkg/models"
 	"github.com/PC-Core/pc-core-backend/pkg/models/inputs"
@@ -13,8 +14,7 @@ func (c *GormPostgresController) GetCpuChars(charId uint64) (*models.CpuChars, e
 	err := c.db.Where("id = ?", charId).First(&chars).Error
 
 	if err != nil {
-		// TODO: error type
-		return nil, errors.NewInternalSecretError()
+		return nil, gormerrors.GormErrorCast(err)
 	}
 
 	return chars.IntoCpuChars(), nil
@@ -50,14 +50,13 @@ func (c *GormPostgresController) AddCpu(cpu *inputs.AddCpuInput) (*models.Produc
 	err := tx.Create(chars).Error
 
 	if err != nil {
-		// TODO: error type
-		return nil, nil, errors.NewInternalSecretError()
+		return nil, nil, gormerrors.GormErrorCast(err)
 	}
 
 	medias, err := c.AddMedias(tx, cpu.Medias)
 
 	if err != nil {
-		return nil, nil, errors.NewInternalSecretError()
+		return nil, nil, gormerrors.GormErrorCast(err)
 	}
 
 	product := DbProduct{
@@ -72,7 +71,7 @@ func (c *GormPostgresController) AddCpu(cpu *inputs.AddCpuInput) (*models.Produc
 	err = tx.Create(&product).Error
 
 	if err != nil {
-		return nil, nil, errors.NewInternalSecretError()
+		return nil, nil, gormerrors.GormErrorCast(err)
 	}
 
 	tx.Commit()

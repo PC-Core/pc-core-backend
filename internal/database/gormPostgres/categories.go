@@ -1,6 +1,7 @@
 package gormpostgres
 
 import (
+	gormerrors "github.com/PC-Core/pc-core-backend/internal/database/gormPostgres/gormErrors"
 	"github.com/PC-Core/pc-core-backend/internal/errors"
 	"github.com/PC-Core/pc-core-backend/pkg/models"
 )
@@ -10,8 +11,7 @@ func (c *GormPostgresController) GetCategories() ([]models.Category, errors.PCCE
 
 	err := c.db.Find(&dbcats).Error
 	if err != nil {
-		// TODO: error type
-		return nil, errors.NewInternalSecretError()
+		return nil, gormerrors.GormErrorCast(err)
 	}
 
 	cats := make([]models.Category, len(dbcats))

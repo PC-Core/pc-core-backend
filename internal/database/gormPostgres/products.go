@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/PC-Core/pc-core-backend/internal/database"
+	gormerrors "github.com/PC-Core/pc-core-backend/internal/database/gormPostgres/gormErrors"
 	"github.com/PC-Core/pc-core-backend/internal/errors"
 	"github.com/PC-Core/pc-core-backend/pkg/models"
 )
@@ -19,7 +20,7 @@ func (c *GormPostgresController) GetProducts(start uint64, count uint64) ([]mode
 		Find(&dbproducts).Error
 
 	if err != nil {
-		return nil, errors.NewInternalSecretError()
+		return nil, gormerrors.GormErrorCast(err)
 	}
 
 	products := make([]models.Product, 0, len(dbproducts))
@@ -41,7 +42,7 @@ func (c *GormPostgresController) GetProductById(id uint64) (*models.Product, err
 		Error
 
 	if err != nil {
-		return nil, errors.NewInternalSecretError()
+		return nil, gormerrors.GormErrorCast(err)
 	}
 
 	return dbproduct.IntoProduct(), nil
@@ -60,7 +61,7 @@ func (c *GormPostgresController) GetProductCharsByProductID(productId uint64) (d
 	case database.CpuCharsTable:
 		return c.GetCpuChars(p.CharId)
 	default:
-		return nil, errors.NewInternalSecretError()
+		return nil, gormerrors.GormErrorCast(err)
 	}
 }
 
@@ -81,14 +82,14 @@ func (c *GormPostgresController) LoadProductsRangeAsCartItem(tempCart []models.T
 		Find(&products).Error
 
 	if err != nil {
-		return nil, errors.NewInternalSecretError()
+		return nil, gormerrors.GormErrorCast(err)
 	}
 
 	cartItems := make([]models.CartItem, 0, len(products))
 	for _, p := range products {
 		quantity, exists := quantityMap[p.ID]
 		if !exists {
-			return nil, errors.NewInternalSecretError()
+			return nil, gormerrors.GormErrorCast(err)
 		}
 		cartItem := models.NewCartItem(*p.IntoProduct(), quantity, time.Now())
 		cartItems = append(cartItems, *cartItem)

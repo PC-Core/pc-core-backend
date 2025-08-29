@@ -2,6 +2,7 @@ package gormpostgres
 
 import (
 	"github.com/PC-Core/pc-core-backend/internal/database"
+	gormerrors "github.com/PC-Core/pc-core-backend/internal/database/gormPostgres/gormErrors"
 	"github.com/PC-Core/pc-core-backend/internal/errors"
 	"github.com/PC-Core/pc-core-backend/pkg/models"
 	"github.com/PC-Core/pc-core-backend/pkg/models/inputs"
@@ -16,7 +17,7 @@ func (c *GormPostgresController) GetLaptopChars(charId uint64) (*models.LaptopCh
 		First(&chars).Error
 
 	if err != nil {
-		return nil, errors.NewInternalSecretError()
+		return nil, gormerrors.GormErrorCast(err)
 	}
 
 	return chars.IntoLaptopChars(), nil
@@ -26,7 +27,7 @@ func (c *GormPostgresController) AddLaptop(laptop *inputs.AddLaptopInput) (*mode
 	tx := c.db.Begin()
 
 	if tx.Error != nil {
-		return nil, nil, errors.NewInternalSecretError()
+		return nil, nil, gormerrors.GormErrorCast(tx.Error)
 	}
 
 	defer tx.Rollback()
@@ -42,13 +43,13 @@ func (c *GormPostgresController) AddLaptop(laptop *inputs.AddLaptopInput) (*mode
 		Error
 
 	if err != nil {
-		return nil, nil, errors.NewInternalSecretError()
+		return nil, nil, gormerrors.GormErrorCast(err)
 	}
 
 	medias, err := c.AddMedias(tx, laptop.Medias)
 
 	if err != nil {
-		return nil, nil, errors.NewInternalSecretError()
+		return nil, nil, gormerrors.GormErrorCast(err)
 	}
 
 	product := DbProduct{
@@ -63,7 +64,7 @@ func (c *GormPostgresController) AddLaptop(laptop *inputs.AddLaptopInput) (*mode
 	err = tx.Create(&product).Error
 
 	if err != nil {
-		return nil, nil, errors.NewInternalSecretError()
+		return nil, nil, gormerrors.GormErrorCast(err)
 	}
 
 	tx.Commit()

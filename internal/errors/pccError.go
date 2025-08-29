@@ -94,6 +94,8 @@ const (
 	EC_UNKNOWN_MINIO_ERROR
 	// Error code means that the required minio file was not found
 	EC_MINIO_NOT_FOUNT
+	// Error code means that there are less products then you want to add to the cart
+	EC_DB_CART_QUANTITY_ERROR
 )
 
 // PCCError - minimal error interface used in the PC Core project

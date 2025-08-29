@@ -1,6 +1,7 @@
 package gormpostgres
 
 import (
+	gormerrors "github.com/PC-Core/pc-core-backend/internal/database/gormPostgres/gormErrors"
 	"github.com/PC-Core/pc-core-backend/internal/errors"
 	"github.com/PC-Core/pc-core-backend/pkg/models"
 	"gorm.io/gorm"
@@ -14,7 +15,7 @@ func (c *GormPostgresController) AddMedias(tx *gorm.DB, imedias []models.InputMe
 	}
 
 	if err := tx.Create(&medias).Error; err != nil {
-		return nil, errors.NewInternalSecretError()
+		return nil, gormerrors.GormErrorCast(err)
 	}
 
 	return medias, nil

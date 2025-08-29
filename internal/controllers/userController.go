@@ -22,7 +22,7 @@ type UserController struct {
 	auth   auth.Auth
 }
 
-const CookieUseHttps = true
+const CookieUseHttps = false
 
 func NewUserController(engine *gin.Engine, db database.DbController, rctrl *redis.RedisController, auth auth.Auth) *UserController {
 	return &UserController{
@@ -119,7 +119,7 @@ func (c *UserController) createTempUser(ctx *gin.Context) {
 
 func setRefreshCookie(ctx *gin.Context, refresh string, remember *bool, maxtime int) {
 	if remember != nil && *remember {
-		ctx.SetSameSite(http.SameSiteNoneMode)
+		ctx.SetSameSite(http.SameSiteLaxMode)
 		ctx.SetCookie(helpers.RefreshCookieName, refresh, maxtime, "/", "", CookieUseHttps, true)
 	}
 }

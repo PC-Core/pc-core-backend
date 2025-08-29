@@ -1,6 +1,7 @@
 package gormpostgres
 
 import (
+	gormerrors "github.com/PC-Core/pc-core-backend/internal/database/gormPostgres/gormErrors"
 	"github.com/PC-Core/pc-core-backend/internal/errors"
 	"github.com/PC-Core/pc-core-backend/internal/helpers"
 	"github.com/PC-Core/pc-core-backend/pkg/models"
@@ -19,7 +20,7 @@ func (c *GormPostgresController) RegisterUser(register *inputs.RegisterUserInput
 	err := c.db.Create(&user).Error
 
 	if err != nil {
-		return nil, errors.NewInternalSecretError()
+		return nil, gormerrors.GormErrorCast(err)
 	}
 
 	return user.IntoUser(), nil
@@ -36,14 +37,14 @@ func (c *GormPostgresController) LoginUser(login *inputs.LoginUserInput) (*model
 		Error
 
 	if err != nil {
-		return nil, errors.NewInternalSecretError()
+		return nil, gormerrors.GormErrorCast(err)
 	}
 
 	return user.IntoUser(), nil
 }
 
 func (c *GormPostgresController) GetUserByID(id int) (*models.User, errors.PCCError) {
-	var user DbUser;
+	var user DbUser
 
 	err := c.db.
 		Where("id = ?", id).
@@ -51,7 +52,7 @@ func (c *GormPostgresController) GetUserByID(id int) (*models.User, errors.PCCEr
 		Error
 
 	if err != nil {
-		return nil, errors.NewInternalSecretError()
+		return nil, gormerrors.GormErrorCast(err)
 	}
 
 	return user.IntoUser(), nil

@@ -1,6 +1,7 @@
 package gormpostgres
 
 import (
+	gormerrors "github.com/PC-Core/pc-core-backend/internal/database/gormPostgres/gormErrors"
 	"github.com/PC-Core/pc-core-backend/internal/errors"
 	"github.com/PC-Core/pc-core-backend/pkg/models"
 	"gorm.io/gorm"
@@ -17,8 +18,7 @@ func (c *GormPostgresController) GetCartByUserID(userID uint64) (*models.Cart, e
 		Find(&cart).Error
 
 	if err != nil {
-		// TODO: type
-		return nil, errors.NewInternalSecretError()
+		return nil, gormerrors.GormErrorCast(err)
 	}
 
 	return DbCartIntoCart(cart), nil
@@ -41,8 +41,7 @@ func (c *GormPostgresController) AddToCart(product_id, user_id, quantity uint64)
 		Create(&cartItem).Error
 
 	if err != nil {
-		// TODO: error type
-		return product_id, errors.NewInternalSecretError()
+		return product_id, gormerrors.GormErrorCast(err)
 	}
 
 	return product_id, nil
@@ -53,10 +52,9 @@ func (c *GormPostgresController) RemoveFromCart(productID, userID uint64) (uint6
 		Delete(&models.CartItem{}).Error
 
 	if err != nil {
-		return productID, errors.NewInternalSecretError()
+		return productID, gormerrors.GormErrorCast(err)
 	}
 
-	// TODO: type
 	return productID, nil
 }
 
@@ -66,8 +64,7 @@ func (c *GormPostgresController) ChangeQuantity(productID, userID uint64, val in
 		Update("quantity", gorm.Expr("GREATEST(quantity + ?, 1)", val)).Error
 
 	if err != nil {
-		// TODO: error type
-		return productID, errors.NewInternalSecretError()
+		return productID, gormerrors.GormErrorCast(err)
 	}
 
 	return productID, nil

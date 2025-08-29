@@ -1,0 +1,15 @@
+addr: 127.0.0.1
+port: 8080
+dbdriver: postgres
+allowcors: 
+  - http://127.0.0.1:5500
+  - http://127.0.0.1:3000
+  - http://127.0.0.1:4000
+  - http://localhost:3000
+redisConn:
+  addr: localhost
+  port: 6379
+minioConn:
+  ep: localhost:9000
+  secure: false
+  bucket: pccore

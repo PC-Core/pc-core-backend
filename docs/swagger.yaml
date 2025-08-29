@@ -1,0 +1,832 @@
+definitions:
+  controllers.Locations:
+    properties:
+      locations:
+        items:
+          type: string
+        type: array
+    type: object
+  controllers.SingleAccessToken:
+    properties:
+      access_token:
+        type: string
+    type: object
+  errors.ErrorCode:
+    enum:
+    - 0
+    - 1
+    - 2
+    - 3
+    - 4
+    - 5
+    - 6
+    - 7
+    - 8
+    - 9
+    - 10
+    - 11
+    - 12
+    - 13
+    - 14
+    - 15
+    - 16
+    - 17
+    - 18
+    - 19
+    - 20
+    - 21
+    - 22
+    - 23
+    - 24
+    - 25
+    - 26
+    - 27
+    - 28
+    - 29
+    - 30
+    type: integer
+    x-enum-varnames:
+    - EC_INTERNAL
+    - EC_DB_UNIQUE_FAIL
+    - EC_DB_NOT_FOUND_ERROR
+    - EC_DB_WRONG_CHARS_TABLE_NAME
+    - EC_DB_ROLE_ERROR
+    - EC_DB_OTHER
+    - EC_CTRLS_INPUT_ERROR
+    - EC_CTRLS_NO_USER_DATA_ERROR
+    - EC_REDIS_NIL
+    - EC_REDIS_OTHER
+    - EC_REDIS_WRONG_VALUE
+    - EC_JSON_MARSHAL_ERROR
+    - EC_JSON_UNMARSHAL_ERROR
+    - EC_JWT_TOKEN_MALFORMED
+    - EC_JWT_TOKEN_EXPIRED
+    - EC_JWT_TOKEN_NOT_VALID_YET
+    - EC_UNKNOWN_JWT_TOKEN_ERROR
+    - EC_JWT_ERROR_TOKEN_TYPE
+    - EC_HEADER_MISSING
+    - EC_ATOI_NOT_AN_UINT
+    - EC_ATOI_RANGE_ERROR
+    - EC_ATOI_UNKNOWN
+    - EC_ROLE_LOWER
+    - EC_BIND_EMAIL_VALIDATION_ERROR
+    - EC_BIND_OTHER_VALIDATION_ERROR
+    - EC_JSON_SYNTAX_ERROR
+    - EC_CTRLS_UNEXPECTED_EMPTY_BODY
+    - EC_DB_LOGIN_ERROR
+    - EC_COOKIE_MISSING
+    - EC_UNKNOWN_MINIO_ERROR
+    - EC_MINIO_NOT_FOUNT
+  errors.ErrorKind:
+    enum:
+    - internal
+    - database
+    - jwt
+    - controllers
+    - redis
+    - json
+    - header
+    - atoi
+    - roles
+    - cookie
+    - minio
+    type: string
+    x-enum-varnames:
+    - EK_INTERNAL
+    - EK_DATABASE
+    - EK_JWT
+    - EK_CTRLS
+    - EK_REDIS
+    - EK_JSON
+    - EK_HEADER
+    - EK_ATOI
+    - EK_ROLES
+    - EK_COOKIE
+    - EK_MINIO
+  errors.PublicPCCError:
+    properties:
+      code:
+        allOf:
+        - $ref: '#/definitions/errors.ErrorCode'
+        description: |-
+          Code represents the error code in terms of this project
+          It should NEVER contain the inner code from the database drive or something similar
+      details:
+        description: |-
+          Details may provide more details about the error but should NEVER contain the secret or
+          sensetive data
+      kind:
+        allOf:
+        - $ref: '#/definitions/errors.ErrorKind'
+        description: Kind represents the information about the module or the step
+          on which the error occured
+      message:
+        description: SafeMessage contains the summary message that should be safe
+        type: string
+    type: object
+  inputs.AddCpuInput:
+    properties:
+      base_e_freq_mhz:
+        type: integer
+      base_p_freq_mhz:
+        type: integer
+      cpu_name:
+        type: string
+      ecores:
+        type: integer
+      l1_kb:
+        type: integer
+      l2_kb:
+        type: integer
+      l3_kb:
+        type: integer
+      max_e_freq_mhz:
+        type: integer
+      max_p_freq_mhz:
+        type: integer
+      medias:
+        items:
+          $ref: '#/definitions/models.InputMedia'
+        type: array
+      name:
+        type: string
+      pcores:
+        type: integer
+      price:
+        type: number
+      release_year:
+        type: integer
+      socket:
+        $ref: '#/definitions/models.CpuSocket'
+      stock:
+        type: integer
+      tdp_watt:
+        type: integer
+      tecproc_nm:
+        type: integer
+      threads:
+        type: integer
+    type: object
+  inputs.AddLaptopInput:
+    properties:
+      cpu:
+        type: integer
+      gpu:
+        type: string
+      medias:
+        items:
+          $ref: '#/definitions/models.InputMedia'
+        type: array
+      name:
+        type: string
+      price:
+        type: number
+      ram:
+        type: integer
+      stock:
+        type: integer
+    type: object
+  inputs.AddToCartInput:
+    properties:
+      product_id:
+        type: integer
+      quantity:
+        type: integer
+    type: object
+  inputs.LoginUserInput:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+      remember:
+        type: boolean
+    required:
+    - email
+    - password
+    type: object
+  inputs.RegisterUserInput:
+    properties:
+      email:
+        type: string
+      name:
+        type: string
+      password:
+        type: string
+      remember:
+        type: boolean
+    required:
+    - email
+    - name
+    - password
+    type: object
+  inputs.RemoveFromCartInput:
+    properties:
+      product_id:
+        type: integer
+    type: object
+  models.Cart:
+    properties:
+      id:
+        type: integer
+      items:
+        items:
+          $ref: '#/definitions/models.CartItem'
+        type: array
+      user_id:
+        type: integer
+    type: object
+  models.CartItem:
+    properties:
+      added_at:
+        type: string
+      product:
+        $ref: '#/definitions/models.Product'
+      quantity:
+        type: integer
+    type: object
+  models.Category:
+    properties:
+      description:
+        type: string
+      icon:
+        type: string
+      id:
+        type: integer
+      slug:
+        type: string
+      title:
+        type: string
+    type: object
+  models.CpuSocket:
+    enum:
+    - AM4
+    - AM5
+    - LGA775
+    - LGA1156
+    - LGA1155
+    - LGA1150
+    - LGA1151
+    - LGA1151v2
+    - LGA1200
+    - LGA1700
+    - LGA1851
+    - BGA1964
+    - FL1
+    - BGA2049
+    - BGA2833
+    - UNKNOWN
+    type: string
+    x-enum-varnames:
+    - SOCKET_AM4
+    - SOCKET_AM5
+    - SOCKET_LGA775
+    - SOCKET_LGA1156
+    - SOCKET_LGA1155
+    - SOCKET_LGA1150
+    - SOCKET_LGA1151
+    - SOCKET_LGA1151v2
+    - SOCKET_LGA1200
+    - SOCKET_LGA1700
+    - SOCKET_LGA1851
+    - SOCKET_BGA1964
+    - SOCKET_FL1
+    - SOCKET_BGA2049
+    - SOCKET_BGA2833
+    - SOCKET_UNKNOWN
+  models.InputMedia:
+    properties:
+      type:
+        $ref: '#/definitions/models.MediaType'
+      url:
+        type: string
+    type: object
+  models.Media:
+    properties:
+      id:
+        type: integer
+      type:
+        $ref: '#/definitions/models.MediaType'
+      url:
+        type: string
+    type: object
+  models.MediaType:
+    enum:
+    - Image
+    - Video
+    type: string
+    x-enum-varnames:
+    - MediaImage
+    - MediaVideo
+  models.Product:
+    properties:
+      id:
+        type: integer
+      medias:
+        items:
+          $ref: '#/definitions/models.Media'
+        type: array
+      name:
+        type: string
+      price:
+        type: number
+      selled:
+        type: integer
+      stock:
+        type: integer
+    type: object
+  models.Profile:
+    properties:
+      user:
+        $ref: '#/definitions/models.PublicUser'
+    type: object
+  models.PublicUser:
+    properties:
+      email:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      role:
+        $ref: '#/definitions/models.UserRole'
+    type: object
+  models.UserRole:
+    enum:
+    - Temporary
+    - Default
+    - Admin
+    type: string
+    x-enum-varnames:
+    - Temporary
+    - Default
+    - Admin
+  outputs.LoginResult:
+    properties:
+      tokens:
+        $ref: '#/definitions/outputs.TokensMap'
+      user:
+        $ref: '#/definitions/models.PublicUser'
+    type: object
+  outputs.TokensMap:
+    additionalProperties:
+      type: string
+    type: object
+info:
+  contact: {}
+paths:
+  /auth/jwt/update:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Refresh token cookie
+        in: header
+        name: refresh
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/controllers.SingleAccessToken'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/errors.PublicPCCError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/errors.PublicPCCError'
+      summary: Update Access JWT token
+      tags:
+      - jwt
+  /cart/:
+    delete:
+      consumes:
+      - application/json
+      parameters:
+      - description: access token for authorization
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: info about a product to remove
+        in: body
+        name: obj
+        required: true
+        schema:
+          $ref: '#/definitions/inputs.RemoveFromCartInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: integer
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/errors.PublicPCCError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/errors.PublicPCCError'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/errors.PublicPCCError'
+      summary: Remove the product from the cart
+      tags:
+      - cart
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: access token for authorization
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Cart'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/errors.PublicPCCError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/errors.PublicPCCError'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/errors.PublicPCCError'
+      summary: Get user's cart
+      tags:
+      - cart
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: access token for authorization
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: info about a product to add
+        in: body
+        name: obj
+        required: true
+        schema:
+          $ref: '#/definitions/inputs.AddToCartInput'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            type: integer
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/errors.PublicPCCError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/errors.PublicPCCError'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/errors.PublicPCCError'
+      summary: Add product to a cart
+      tags:
+      - cart
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: access token for authorization
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: info about a product to add
+        in: body
+        name: obj
+        required: true
+        schema:
+          $ref: '#/definitions/inputs.AddToCartInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: integer
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/errors.PublicPCCError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/errors.PublicPCCError'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/errors.PublicPCCError'
+      summary: Update product's quantity
+      tags:
+      - cart
+  /categories/:
+    get:
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Category'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Get all categories
+      tags:
+      - categories
+  /cpus/add:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Cpu data
+        in: body
+        name: laptop
+        required: true
+        schema:
+          $ref: '#/definitions/inputs.AddCpuInput'
+      - description: access token for user with Admin role
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/errors.PublicPCCError'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/errors.PublicPCCError'
+      summary: Add a new cpu
+      tags:
+      - cpus
+  /laptops/add:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Laptop data
+        in: body
+        name: laptop
+        required: true
+        schema:
+          $ref: '#/definitions/inputs.AddLaptopInput'
+      - description: access token for user with Admin role
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/errors.PublicPCCError'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/errors.PublicPCCError'
+      summary: Add a new laptop
+      tags:
+      - laptops
+  /media/upload:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: files to upload
+        in: formData
+        name: uploads[]
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/controllers.Locations'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/errors.PublicPCCError'
+      summary: Upload media
+      tags:
+      - media
+  /products/:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - in: query
+        name: count
+        type: integer
+      - in: query
+        name: page
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Product'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/errors.PublicPCCError'
+      summary: Get products from page N in quantity M
+      tags:
+      - products
+  /products/{id}:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: Product ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Product'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/errors.PublicPCCError'
+      summary: Get a single product by ID
+      tags:
+      - products
+  /products/chars/{id}:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: Product id
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema: {}
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/errors.PublicPCCError'
+      summary: Get product chars
+      tags:
+      - products
+  /profile/:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: access token for authorization
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Profile'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/errors.PublicPCCError'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/errors.PublicPCCError'
+      summary: Get user profile
+      tags:
+      - profile
+  /users/login:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: User data to login
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/inputs.LoginUserInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/outputs.LoginResult'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/errors.PublicPCCError'
+      summary: Login
+      tags:
+      - users
+  /users/logout:
+    get:
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+      summary: Logout
+      tags:
+      - users
+  /users/register:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: User data to register
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/inputs.RegisterUserInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/outputs.LoginResult'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/errors.PublicPCCError'
+      summary: Register a new User
+      tags:
+      - users
+swagger: "2.0"

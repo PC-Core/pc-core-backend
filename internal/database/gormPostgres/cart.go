@@ -25,6 +25,18 @@ func (c *GormPostgresController) GetCartByUserID(userID uint64) (*models.Cart, e
 }
 
 func (c *GormPostgresController) AddToCart(product_id, user_id, quantity uint64) (uint64, errors.PCCError) {
+	return c.addOrSetToCart(product_id, user_id, quantity, clause.Assignments(map[string]interface{}{
+		"quantity": gorm.Expr("cart.quantity + ?", quantity),
+	}))
+}
+
+func (c *GormPostgresController) SetToCart(product_id, user_id, quantity uint64) (uint64, errors.PCCError) {
+	return c.addOrSetToCart(product_id, user_id, quantity, clause.Assignments(map[string]interface{}{
+		"quantity": quantity,
+	}))
+}
+
+func (c *GormPostgresController) addOrSetToCart(product_id, user_id, quantity uint64, on_conflict clause.Set) (uint64, errors.PCCError) {
 	cartItem := DbCart{
 		UserID:    user_id,
 		ProductID: product_id,
@@ -33,10 +45,8 @@ func (c *GormPostgresController) AddToCart(product_id, user_id, quantity uint64)
 
 	err := c.db.
 		Clauses(clause.OnConflict{
-			Columns: []clause.Column{{Name: "user_id"}, {Name: "product_id"}},
-			DoUpdates: clause.Assignments(map[string]interface{}{
-				"quantity": gorm.Expr("cart.quantity + ?", quantity),
-			}),
+			Columns:   []clause.Column{{Name: "user_id"}, {Name: "product_id"}},
+			DoUpdates: on_conflict,
 		}).
 		Create(&cartItem).Error
 

@@ -9,8 +9,15 @@ import (
 	"github.com/PC-Core/pc-core-backend/pkg/models"
 )
 
-func (c *GormPostgresController) GetProducts(start uint64, count uint64) ([]models.Product, errors.PCCError) {
-	var dbproducts []DbProductWithMedias
+func (c *GormPostgresController) GetProducts(start uint64, count uint64) ([]models.Product, uint64, errors.PCCError) {
+	var (
+		dbproducts []DbProductWithMedias
+		totalCount int64
+	)
+
+	if err := c.db.Model(&DbProductWithMedias{}).Count(&totalCount).Error; err != nil {
+		return nil, 0, gormerrors.GormErrorCast(err)
+	}
 
 	err := c.db.
 		Preload("Medias").
@@ -20,7 +27,7 @@ func (c *GormPostgresController) GetProducts(start uint64, count uint64) ([]mode
 		Find(&dbproducts).Error
 
 	if err != nil {
-		return nil, gormerrors.GormErrorCast(err)
+		return nil, 0, gormerrors.GormErrorCast(err)
 	}
 
 	products := make([]models.Product, 0, len(dbproducts))
@@ -29,7 +36,7 @@ func (c *GormPostgresController) GetProducts(start uint64, count uint64) ([]mode
 		products = append(products, *product.IntoProduct())
 	}
 
-	return products, nil
+	return products, uint64(totalCount), nil
 }
 
 func (c *GormPostgresController) GetProductById(id uint64) (*models.Product, errors.PCCError) {

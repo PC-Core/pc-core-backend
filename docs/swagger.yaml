@@ -44,6 +44,7 @@ definitions:
     - 28
     - 29
     - 30
+    - 31
     type: integer
     x-enum-varnames:
     - EC_INTERNAL
@@ -77,6 +78,7 @@ definitions:
     - EC_COOKIE_MISSING
     - EC_UNKNOWN_MINIO_ERROR
     - EC_MINIO_NOT_FOUNT
+    - EC_DB_CART_QUANTITY_ERROR
   errors.ErrorKind:
     enum:
     - internal
@@ -188,8 +190,6 @@ definitions:
     type: object
   inputs.AddToCartInput:
     properties:
-      product_id:
-        type: integer
       quantity:
         type: integer
     type: object
@@ -227,8 +227,6 @@ definitions:
     type: object
   models.Cart:
     properties:
-      id:
-        type: integer
       items:
         items:
           $ref: '#/definitions/models.CartItem'
@@ -305,6 +303,8 @@ definitions:
     properties:
       id:
         type: integer
+      product_id:
+        type: integer
       type:
         $ref: '#/definitions/models.MediaType'
       url:
@@ -361,6 +361,17 @@ definitions:
     - Temporary
     - Default
     - Admin
+  outputs.GetProductsResult:
+    properties:
+      amount:
+        type: integer
+      page:
+        type: integer
+      products:
+        items:
+          $ref: '#/definitions/models.Product'
+        type: array
+    type: object
   outputs.LoginResult:
     properties:
       tokens:
@@ -425,6 +436,7 @@ paths:
         "200":
           description: OK
           schema:
+            format: int64
             type: integer
         "400":
           description: Bad Request
@@ -472,7 +484,8 @@ paths:
       summary: Get user's cart
       tags:
       - cart
-    post:
+  /cart/item/:id:
+    delete:
       consumes:
       - application/json
       parameters:
@@ -490,9 +503,10 @@ paths:
       produces:
       - application/json
       responses:
-        "201":
-          description: Created
+        "200":
+          description: OK
           schema:
+            format: int64
             type: integer
         "400":
           description: Bad Request
@@ -506,7 +520,50 @@ paths:
           description: Forbidden
           schema:
             $ref: '#/definitions/errors.PublicPCCError'
-      summary: Add product to a cart
+      summary: Remove the requested quantity of items from the cart
+      tags:
+      - cart
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: access token for authorization
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: info about a product to add
+        in: body
+        name: obj
+        required: true
+        schema:
+          $ref: '#/definitions/inputs.AddToCartInput'
+      - description: id of the product to add to cart
+        in: query
+        name: ID
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            format: int64
+            type: integer
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/errors.PublicPCCError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/errors.PublicPCCError'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/errors.PublicPCCError'
+      summary: Set the product with the provided quantity to a cart
       tags:
       - cart
     put:
@@ -530,6 +587,7 @@ paths:
         "200":
           description: OK
           schema:
+            format: int64
             type: integer
         "400":
           description: Bad Request
@@ -543,7 +601,7 @@ paths:
           description: Forbidden
           schema:
             $ref: '#/definitions/errors.PublicPCCError'
-      summary: Update product's quantity
+      summary: Add the requested quantity of items to the cart
       tags:
       - cart
   /categories/:
@@ -680,9 +738,7 @@ paths:
         "200":
           description: OK
           schema:
-            items:
-              $ref: '#/definitions/models.Product'
-            type: array
+            $ref: '#/definitions/outputs.GetProductsResult'
         "400":
           description: Bad Request
           schema:
@@ -696,6 +752,7 @@ paths:
       - application/json
       parameters:
       - description: Product ID
+        format: int64
         in: path
         name: id
         required: true

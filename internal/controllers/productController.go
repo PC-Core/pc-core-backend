@@ -8,6 +8,7 @@ import (
 	"github.com/PC-Core/pc-core-backend/internal/database"
 	"github.com/PC-Core/pc-core-backend/internal/errors"
 	"github.com/PC-Core/pc-core-backend/pkg/models/inputs"
+	"github.com/PC-Core/pc-core-backend/pkg/models/outputs"
 	"github.com/gin-gonic/gin"
 )
 
@@ -34,7 +35,7 @@ func (c *ProductController) ApplyRoutes() {
 // @Accept       json
 // @Produce      json
 // @Param 		 product query	inputs.GetProductsInput	true	"Page and count"
-// @Success      200  {array}  models.Product
+// @Success      200  {object}  outputs.GetProductsResult
 // @Failure      400  {object}  errors.PublicPCCError
 // @Router       /products/ [get]
 func (c *ProductController) getProducts(ctx *gin.Context) {
@@ -49,15 +50,13 @@ func (c *ProductController) getProducts(ctx *gin.Context) {
 
 	start := (input.Page * input.Count) - input.Count
 
-	products, err := c.db.GetProducts(start, input.Count)
+	products, amount, err := c.db.GetProducts(start, input.Count)
 
 	if CheckErrorAndWriteBadRequest(ctx, err) {
 		return
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{
-		"products": products,
-	})
+	ctx.JSON(http.StatusOK, outputs.NewGetProductsResult(products, amount, input.Page))
 }
 
 // Get a single product by ID

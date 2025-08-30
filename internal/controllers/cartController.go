@@ -1,7 +1,9 @@
 package controllers
 
 import (
+	"math"
 	"net/http"
+	"strconv"
 
 	"github.com/PC-Core/pc-core-backend/internal/controllers/conerrors"
 	"github.com/PC-Core/pc-core-backend/internal/database"
@@ -51,9 +53,10 @@ func (c *CartController) ApplyRoutes() {
 	gr := c.engine.Group("/cart", c.auth_middleware)
 	{
 		gr.GET("/", c.getCart)
-		gr.POST("/", c.addToCart)
-		gr.DELETE("/", c.removeFromCart)
-		gr.PUT("/", c.changeQuantity)
+		gr.POST("/item/:id", func(ctx *gin.Context) { c.setToCart(ctx) })
+		gr.DELETE("/:id", c.removeFromCart)
+		gr.DELETE("/item/:id", c.removeQuantity)
+		gr.PUT("/item/:id", c.addQuantity)
 	}
 }
 
@@ -77,8 +80,8 @@ func (c *CartController) getDefaultCart(pu *models.PublicUser) (*models.Cart, er
 	return c.db.GetCartByUserID(uint64(pu.ID))
 }
 
-func (c *CartController) addToTempCart(pu *models.PublicUser, input inputs.AddToCartInput) (uint64, errors.PCCError) {
-	id, err := c.rctrl.AddToCart(uint64(pu.ID), input.ProductID, uint(input.Quantity))
+func (c *CartController) addToTempCart(pu *models.PublicUser, productID int, input inputs.AddToCartInput) (uint64, errors.PCCError) {
+	id, err := c.rctrl.AddToCart(uint64(pu.ID), uint64(productID), uint(input.Quantity))
 
 	if err != nil {
 		return 0, err
@@ -87,8 +90,12 @@ func (c *CartController) addToTempCart(pu *models.PublicUser, input inputs.AddTo
 	return id, nil
 }
 
-func (c *CartController) addToDefaultCart(pu *models.PublicUser, input inputs.AddToCartInput) (uint64, errors.PCCError) {
-	return c.db.AddToCart(input.ProductID, uint64(pu.ID), uint64(input.Quantity))
+func (c *CartController) addToDefaultCart(pu *models.PublicUser, productID int, input inputs.AddToCartInput) (uint64, errors.PCCError) {
+	return c.db.AddToCart(uint64(productID), uint64(pu.ID), uint64(input.Quantity))
+}
+
+func (c *CartController) setToDefaultCart(pu *models.PublicUser, productID int, input inputs.AddToCartInput) (uint64, errors.PCCError) {
+	return c.db.SetToCart(uint64(productID), uint64(pu.ID), uint64(input.Quantity))
 }
 
 // Get user's cart
@@ -125,22 +132,30 @@ func (c *CartController) getCart(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, cart)
 }
 
-// Add product to a cart
-// @Summary      Add product to a cart
+// Set the product with the provided quantity to a cart
+// @Summary      Set the product with the provided quantity to a cart
 // @Tags         cart
 // @Accept       json
 // @Produce      json
 // @Param 		 Authorization	header	string					true	"access token for authorization"
 // @Param		 obj  			body  	inputs.AddToCartInput	true	"info about a product to add"
+// @Param		 Product ID		query	int						true	"id of the product to add to cart"
 // @Success      201  {object}  uint64
 // @Failure      400  {object}  errors.PublicPCCError
 // @Failure      401  {object}  errors.PublicPCCError
 // @Failure      403  {object}  errors.PublicPCCError
-// @Router       /cart/ [post]
-func (c *CartController) addToCart(ctx *gin.Context) {
+// @Router       /cart/item/:id [post]
+func (c *CartController) setToCart(ctx *gin.Context) {
 	pu, err := c.GetPubUser(ctx)
 
 	if CheckErrorAndWriteUnauthorized(ctx, err) {
+		return
+	}
+
+	idStr := ctx.Param("id")
+	productID, eerr := strconv.Atoi(idStr)
+	if err != nil {
+		CheckErrorAndWriteBadRequest(ctx, conerrors.BindErrorCast(eerr))
 		return
 	}
 
@@ -155,9 +170,9 @@ func (c *CartController) addToCart(ctx *gin.Context) {
 
 	switch pu.Role {
 	case models.Temporary:
-		product_id, err = c.addToTempCart(pu, input)
+		product_id, err = c.addToTempCart(pu, productID, input)
 	default:
-		product_id, err = c.addToDefaultCart(pu, input)
+		product_id, err = c.setToDefaultCart(pu, productID, input)
 	}
 
 	if CheckErrorAndWriteBadRequest(ctx, err) {
@@ -186,14 +201,14 @@ func (c *CartController) removeFromCart(ctx *gin.Context) {
 		return
 	}
 
-	var input inputs.RemoveFromCartInput
-
-	if berr := ctx.ShouldBindBodyWithJSON(&input); berr != nil {
-		CheckErrorAndWriteBadRequest(ctx, conerrors.BindErrorCast(berr))
+	idStr := ctx.Param("id")
+	id, eerr := strconv.Atoi(idStr)
+	if err != nil {
+		CheckErrorAndWriteBadRequest(ctx, conerrors.BindErrorCast(eerr))
 		return
 	}
 
-	product_id, err := c.db.RemoveFromCart(input.ProductID, uint64(pu.ID))
+	product_id, err := c.db.RemoveFromCart(uint64(id), uint64(pu.ID))
 
 	if CheckErrorAndWriteBadRequest(ctx, err) {
 		return
@@ -202,22 +217,25 @@ func (c *CartController) removeFromCart(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{"product_id": product_id})
 }
 
-// Update product's quantity
-// @Summary      Update product's quantity
-// @Tags         cart
-// @Accept       json
-// @Produce      json
-// @Param 		 Authorization	header	string					true	"access token for authorization"
-// @Param		 obj  			body  	inputs.AddToCartInput	true	"info about a product to add"
-// @Success      200  {object}  uint64
-// @Failure      400  {object}  errors.PublicPCCError
-// @Failure      401  {object}  errors.PublicPCCError
-// @Failure      403  {object}  errors.PublicPCCError
-// @Router       /cart/ [put]
-func (c *CartController) changeQuantity(ctx *gin.Context) {
+func (c *CartController) changeQuantity(productID int, pu *models.PublicUser, quantity int) (uint64, errors.PCCError) {
+	return c.db.ChangeQuantity(uint64(productID), uint64(pu.ID), int64(quantity))
+}
+
+func (c *CartController) reqChangeQuantity(ctx *gin.Context, sign int) {
+	if sign != 1 && sign != -1 {
+		ctx.JSON(http.StatusInternalServerError, errors.NewInternalSecretError())
+	}
+
 	pu, err := c.GetPubUser(ctx)
 
 	if CheckErrorAndWriteUnauthorized(ctx, err) {
+		return
+	}
+
+	idStr := ctx.Param("id")
+	id, eerr := strconv.Atoi(idStr)
+	if err != nil {
+		CheckErrorAndWriteBadRequest(ctx, conerrors.BindErrorCast(eerr))
 		return
 	}
 
@@ -228,11 +246,43 @@ func (c *CartController) changeQuantity(ctx *gin.Context) {
 		return
 	}
 
-	product_id, err := c.db.ChangeQuantity(input.ProductID, uint64(pu.ID), int64(input.Quantity))
+	product_id, err := c.changeQuantity(id, pu, sign*int(math.Abs(float64(input.Quantity))))
 
 	if CheckErrorAndWriteBadRequest(ctx, err) {
 		return
 	}
 
 	ctx.JSON(http.StatusOK, gin.H{"product_id": product_id})
+}
+
+// Remove the requested quantity of items from the cart
+// @Summary      Remove the requested quantity of items from the cart
+// @Tags         cart
+// @Accept       json
+// @Produce      json
+// @Param 		 Authorization	header	string					true	"access token for authorization"
+// @Param		 obj  			body  	inputs.AddToCartInput	true	"info about a product to add"
+// @Success      200  {object}  uint64
+// @Failure      400  {object}  errors.PublicPCCError
+// @Failure      401  {object}  errors.PublicPCCError
+// @Failure      403  {object}  errors.PublicPCCError
+// @Router       /cart/item/:id [delete]
+func (c *CartController) removeQuantity(ctx *gin.Context) {
+	c.reqChangeQuantity(ctx, -1)
+}
+
+// Add the requested quantity of items to the cart
+// @Summary      Add the requested quantity of items to the cart
+// @Tags         cart
+// @Accept       json
+// @Produce      json
+// @Param 		 Authorization	header	string					true	"access token for authorization"
+// @Param		 obj  			body  	inputs.AddToCartInput	true	"info about a product to add"
+// @Success      200  {object}  uint64
+// @Failure      400  {object}  errors.PublicPCCError
+// @Failure      401  {object}  errors.PublicPCCError
+// @Failure      403  {object}  errors.PublicPCCError
+// @Router       /cart/item/:id [put]
+func (c *CartController) addQuantity(ctx *gin.Context) {
+	c.reqChangeQuantity(ctx, 1)
 }

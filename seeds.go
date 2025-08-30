@@ -11,7 +11,7 @@ import (
 
 	"github.com/PC-Core/pc-core-backend/pkg/models"
 	"github.com/joho/godotenv"
-	"github.com/lib/pq"
+	_ "github.com/lib/pq"
 )
 
 const (
@@ -49,33 +49,33 @@ func InsertUsers(db *sql.DB) {
 
 var media_ids []uint64
 
-func InsertMedias(db *sql.DB) {
+func InsertMedias(db *sql.DB, ids []uint64) {
 	medias := []models.Media{
-		{0, "C:\\2.png", "Image"},
-		{0, "C:\\3.mp4", "Video"},
-		{0, "C:\\4.png", "Image"},
-		{0, "C:\\5.mp4", "Video"},
-		{0, "C:\\6.png", "Image"},
-		{0, "C:\\7.png", "Image"},
-		{0, "C:\\8.png", "Image"},
-		{0, "C:\\9.png", "Image"},
-		{0, "C:\\10.mp4", "Video"},
-		{0, "C:\\1.png", "Image"},
-		{0, "C:\\11.png", "Image"},
-		{0, "C:\\12.mp4", "Video"},
-		{0, "C:\\13.png", "Image"},
-		{0, "C:\\14.mp4", "Video"},
-		{0, "C:\\15.mp4", "Video"},
-		{0, "C:\\16.png", "Image"},
-		{0, "C:\\17.png", "Image"},
-		{0, "C:\\18.mp4", "Video"},
-		{0, "C:\\19.mp4", "Video"},
-		{0, "C:\\20.png", "Image"},
+		{0, "C:\\2.png", "Image", ids[0]},
+		{0, "C:\\3.mp4", "Video", ids[0]},
+		{0, "C:\\4.png", "Image", ids[2]},
+		{0, "C:\\5.mp4", "Video", ids[2]},
+		{0, "C:\\6.png", "Image", ids[3]},
+		{0, "C:\\7.png", "Image", ids[3]},
+		{0, "C:\\8.png", "Image", ids[4]},
+		{0, "C:\\9.png", "Image", ids[4]},
+		{0, "C:\\10.mp4", "Video", ids[5]},
+		{0, "C:\\1.png", "Image", ids[5]},
+		{0, "C:\\11.png", "Image", ids[6]},
+		{0, "C:\\12.mp4", "Video", ids[6]},
+		{0, "C:\\13.png", "Image", ids[6]},
+		{0, "C:\\14.mp4", "Video", ids[6]},
+		{0, "C:\\15.mp4", "Video", ids[7]},
+		{0, "C:\\16.png", "Image", ids[8]},
+		{0, "C:\\17.png", "Image", ids[8]},
+		{0, "C:\\18.mp4", "Video", ids[8]},
+		{0, "C:\\19.mp4", "Video", ids[9]},
+		{0, "C:\\20.png", "Image", ids[10]},
 	}
 
 	for _, media := range medias {
 		var id uint64
-		err := db.QueryRow("INSERT INTO Medias (url, type) VALUES ($1, $2) returning id", media.Url, media.Type).Scan(&id)
+		err := db.QueryRow("INSERT INTO Medias (url, type, product_id) VALUES ($1, $2, $3) returning id", media.Url, media.Type, media.ProductID).Scan(&id)
 
 		media_ids = append(media_ids, id)
 
@@ -86,8 +86,6 @@ func InsertMedias(db *sql.DB) {
 }
 
 func InsertLaptops(db *sql.DB) {
-	InsertMedias(db)
-
 	cpus := []models.CpuChars{
 		{
 			Name:         "i9-14900HX",
@@ -228,6 +226,7 @@ func InsertLaptops(db *sql.DB) {
 	}
 
 	ids := make([]uint64, 0, len(cpus))
+	laptop_ids := make([]uint64, 0, len(cpus))
 
 	for _, cpu := range cpus {
 		var (
@@ -248,22 +247,21 @@ func InsertLaptops(db *sql.DB) {
 		Price  float64
 		Selled uint64
 		Stock  uint64
-		medias []uint64
 		CpuID  uint64
 		Ram    int16
 		Gpu    string
 	}{
-		{"MSI Titan 18", 614999, 0, 13, media_ids[0:2], ids[0], 32, "RTX 4090"},
-		{"Lenovo Legion Y9000P", 425999, 32, 28, media_ids[2:4], ids[0], 32, "RTX 4090"},
-		{"Apple Macbook Pro", 421599, 3, 83, media_ids[4:6], ids[1], 48, "Apple M3 Max"},
-		{"MSI Raider 18", 417999, 10, 38, media_ids[6:8], ids[0], 32, "RTX 4090"},
-		{"ASUS ROG Zephyrus Duo 16", 389999, 5, 47, media_ids[8:10], ids[2], 32, "RTX 4090"},
-		{"MSI Vector 17", 374999, 5, 123, media_ids[10:12], ids[0], 32, "RTX 4080"},
-		{"ASUS VivoBook Pro 15", 179999, 42, 82, []uint64{}, ids[3], 24, "RTX 4060"},
-		{"MSI Sword 17 HX", 179999, 6, 35, media_ids[12:14], ids[4], 16, "RTX 4070"},
-		{"MSI Summit 13 AI+ Evo", 179999, 0, 4, media_ids[14:16], ids[5], 32, "Intel Arc Graphics"},
-		{"Honor MagicBook Art 14", 149999, 2, 64, media_ids[16:18], ids[6], 32, "Intel Arc Graphics"},
-		{"Apple MacBook Air", 179499, 30, 32, media_ids[18:20], ids[7], 16, "Apple M3"},
+		{"MSI Titan 18", 614999, 0, 13, ids[0], 32, "RTX 4090"},
+		{"Lenovo Legion Y9000P", 425999, 32, 28, ids[0], 32, "RTX 4090"},
+		{"Apple Macbook Pro", 421599, 3, 83, ids[1], 48, "Apple M3 Max"},
+		{"MSI Raider 18", 417999, 10, 38, ids[0], 32, "RTX 4090"},
+		{"ASUS ROG Zephyrus Duo 16", 389999, 5, 47, ids[2], 32, "RTX 4090"},
+		{"MSI Vector 17", 374999, 5, 123, ids[0], 32, "RTX 4080"},
+		{"ASUS VivoBook Pro 15", 179999, 42, 82, ids[3], 24, "RTX 4060"},
+		{"MSI Sword 17 HX", 179999, 6, 35, ids[4], 16, "RTX 4070"},
+		{"MSI Summit 13 AI+ Evo", 179999, 0, 4, ids[5], 32, "Intel Arc Graphics"},
+		{"Honor MagicBook Art 14", 149999, 2, 64, ids[6], 32, "Intel Arc Graphics"},
+		{"Apple MacBook Air", 179499, 30, 32, ids[7], 16, "Apple M3"},
 	}
 
 	for _, laptop := range laptops {
@@ -288,7 +286,7 @@ func InsertLaptops(db *sql.DB) {
 			return
 		}
 
-		err = tx.QueryRow("INSERT INTO Products (name, price, selled, stock, chars_table_name, chars_id, medias) VALUES ($1, $2, $3, $4, $5, $6, $7) returning id", laptop.Name, laptop.Price, laptop.Selled, laptop.Stock, "LaptopChars", charId, pq.Array(laptop.medias)).Scan(&productId)
+		err = tx.QueryRow("INSERT INTO Products (name, price, selled, stock, chars_table_name, chars_id) VALUES ($1, $2, $3, $4, $5, $6) returning id", laptop.Name, laptop.Price, laptop.Selled, laptop.Stock, "LaptopChars", charId).Scan(&productId)
 
 		if err != nil {
 			fmt.Println("Error while inserting laptops: ", err)
@@ -299,7 +297,11 @@ func InsertLaptops(db *sql.DB) {
 			fmt.Println("Error on commiting laptops: ", err)
 			return
 		}
+
+		laptop_ids = append(laptop_ids, productId)
 	}
+
+	InsertMedias(db, laptop_ids)
 }
 
 func InsertCategories(db *sql.DB) {

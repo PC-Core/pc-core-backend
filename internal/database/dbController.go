@@ -29,20 +29,20 @@ type DbController interface {
 	GetLaptopChars(charId uint64) (*models.LaptopChars, errors.PCCError)
 	AddLaptop(laptop *inputs.AddLaptopInput) (*models.Product, *models.LaptopChars, errors.PCCError)
 	GetProducts(start uint64, count uint64) ([]models.Product, errors.PCCError)
-	ScanProduct(rows RowLike) (*models.Product, errors.PCCError)
+	//ScanProduct(rows RowLike) (*models.Product, errors.PCCError)
 	GetProductCharsByProductID(productId uint64) (ProductChars, errors.PCCError)
 	GetProductById(id uint64) (*models.Product, errors.PCCError)
 	LoadProductsRangeAsCartItem(tempCart []models.TempCartItem) ([]models.CartItem, errors.PCCError)
 	RegisterUser(register *inputs.RegisterUserInput) (*models.User, errors.PCCError)
 	LoginUser(login *inputs.LoginUserInput) (*models.User, errors.PCCError)
 	GetUserByID(id int) (*models.User, errors.PCCError)
-	AddProduct(tx *sql.Tx, name string, price float64, selled uint64, stock uint64, medias []models.InputMedia, charTable string, charID uint64) (uint64, []models.Media, errors.PCCError)
-	AddMedias(imedias []models.InputMedia) ([]models.Media, errors.PCCError)
+	//AddMedias(imedias []models.InputMedia) (models.Medias, errors.PCCError)
 	GetCpuChars(charId uint64) (*models.CpuChars, errors.PCCError)
 	AddCpu(cpu *inputs.AddCpuInput) (*models.Product, *models.CpuChars, errors.PCCError)
 }
 
 // Database controller
+// Deprecated. Use GormPostgresController instead
 type DPostgresDbController struct {
 	db *sql.DB
 }
@@ -68,31 +68,3 @@ func NewDPostgresDbController(driver string, conn string) (*DPostgresDbControlle
 		db,
 	}, nil
 }
-
-// func (c *DbController) AddLaptop(name string, cpu string, ram int16, gpu string, price string, discount int16) (*models.LaptopChars, error) {
-// 	var id int
-
-// 	err := c.db.QueryRow("INSERT INTO laptops (Name, Cpu, Ram, Gpu, Price, Discount) VALUES ($1, $2, $3, $4, $5, $6) returning id", name, cpu, ram, gpu, price, discount).Scan(&id)
-
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-// 	bfPrice, err := helpers.StringToBigFloat(price)
-
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-// 	return models.NewLaptop(id, name, cpu, ram, gpu, *bfPrice, discount), nil
-// }
-
-// func (c *DbController) RemoveLaptop(id int) (error) {
-// 	_, err := c.db.Exec("DELETE FROM laptops WHERE id = $1", id)
-
-// 	if err != nil {
-// 		return err;
-// 	}
-
-// 	return nil
-// }

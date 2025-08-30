@@ -38,7 +38,7 @@ func (c *DPostgresDbController) AddMedias(imedias []models.InputMedia) ([]models
 		if err := rows.Scan(&id); err != nil {
 			return nil, dberrors.PQDbErrorCaster(c.db, err)
 		}
-		medias = append(medias, *models.NewMediaFromInput(id, &imedias[i]))
+		medias = append(medias, *models.NewMediaFromInput(id, 0, &imedias[i]))
 		i += 1
 	}
 

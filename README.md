@@ -10,7 +10,8 @@
 - MinIO
 - Required Go packages:
     - `gin` - `go get github.com/gin-gonic/gin`
-    - `lib/pq` - `go get github.com/lib/pq`
+    - `gorm` - `go get gorm.io/gorm`
+    - `gorm-postgres` - `go get gorm.io/driver/postgres`
     - `gin-cors` - `go get github.com/gin-contrib/cors`
     - `gin-swagger` - `go get github.com/swaggo/gin-swagger`
     - `swagger-files` - `go get github.com/swaggo/files`

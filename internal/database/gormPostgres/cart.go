@@ -49,7 +49,7 @@ func (c *GormPostgresController) AddToCart(product_id, user_id, quantity uint64)
 
 func (c *GormPostgresController) RemoveFromCart(productID, userID uint64) (uint64, errors.PCCError) {
 	err := c.db.Where("user_id = ? AND product_id = ?", userID, productID).
-		Delete(&models.CartItem{}).Error
+		Delete(&DbCart{}).Error
 
 	if err != nil {
 		return productID, gormerrors.GormErrorCast(err)
@@ -59,7 +59,7 @@ func (c *GormPostgresController) RemoveFromCart(productID, userID uint64) (uint6
 }
 
 func (c *GormPostgresController) ChangeQuantity(productID, userID uint64, val int64) (uint64, errors.PCCError) {
-	err := c.db.Model(&models.CartItem{}).
+	err := c.db.Model(&DbCart{}).
 		Where("user_id = ? AND product_id = ?", userID, productID).
 		Update("quantity", gorm.Expr("GREATEST(quantity + ?, 1)", val)).Error
 

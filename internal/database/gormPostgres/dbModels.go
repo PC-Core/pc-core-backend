@@ -225,3 +225,25 @@ func (DbUser) TableName() string {
 func (u *DbUser) IntoUser() *models.User {
 	return models.NewUser(u.ID, u.Name, u.Email, u.Role, u.PasswordHash)
 }
+
+type DbComment struct {
+	ID          int64      `gorm:"column:id;primaryKey"`
+	UserID      int64      `gorm:"column:user_id"`
+	ProductID   int64      `gorm:"column:product_id"`
+	CommentText string     `gorm:"column:comment_text"`
+	AnswerOn    *int64     `gorm:"column:answer_on"`
+	Rating      int16      `gorm:"column:rating"`
+	CreatedAt   time.Time  `gorm:"column:created_at"`
+	UpdatedAt   *time.Time `gorm:"column:updated_at"`
+	MediaIDs    []int64    `gorm:"column:media_ids"`
+
+	User    DbUser    `gorm:"foreignKey:UserID;references:ID"`
+	Product DbProduct `gorm:"foreignKey:ProductID;references:ID"`
+}
+
+type DbCommentReaction struct {
+	UserID    int64               `gorm:"column:user_id"`
+	CommentID int64               `gorm:"column:comment_id"`
+	Type      models.ReactionType `gorm:"column:ty"`
+	AddedAt   time.Time           `gorm:"column:added_at"`
+}

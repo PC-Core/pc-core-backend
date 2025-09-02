@@ -40,6 +40,7 @@ type DbController interface {
 	//AddMedias(imedias []models.InputMedia) (models.Medias, errors.PCCError)
 	GetCpuChars(charId uint64) (*models.CpuChars, errors.PCCError)
 	AddCpu(cpu *inputs.AddCpuInput) (*models.Product, *models.CpuChars, errors.PCCError)
+	GetRootCommentsForProduct(product_id int64, userID *int64) ([]models.Comment, errors.PCCError)
 }
 
 // Database controller

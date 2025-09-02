@@ -65,7 +65,7 @@ func (c *ProductController) getProducts(ctx *gin.Context) {
 // @Accept       json
 // @Produce      json
 // @Param 		 id		path	uint64	true	"Product ID"
-// @Success      200  {object}  models.Product
+// @Success      200  {object}  outputs.ProductWithChars
 // @Failure      400  {object} errors.PublicPCCError
 // @Router       /products/{id} [get]
 func (c *ProductController) getProductById(ctx *gin.Context) {
@@ -83,9 +83,19 @@ func (c *ProductController) getProductById(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{
-		"product": product,
-	})
+	chars, perr := c.db.GetProductCharsByProductID(product.ID)
+
+	if CheckErrorAndWriteBadRequest(ctx, perr) {
+		return
+	}
+
+	charsDesc, perr := GetRestCharsObject(chars)
+
+	if CheckErrorAndWriteBadRequest(ctx, perr) {
+		return
+	}
+
+	ctx.JSON(http.StatusOK, outputs.NewProductWithChars(product, charsDesc))
 }
 
 // Get product 	characteristics

@@ -204,7 +204,7 @@ func (DbLaptopChars) TableName() string {
 func (c *DbLaptopChars) IntoLaptopChars() *models.LaptopChars {
 	return models.NewLaptopChars(
 		c.ID,
-		*c.Cpu.IntoCpuChars(),
+		c.Cpu.IntoCpuChars(),
 		c.Ram,
 		c.Gpu,
 	)

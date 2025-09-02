@@ -32,7 +32,7 @@ func (c *DPostgresDbController) GetLaptopChars(charId uint64) (*models.LaptopCha
 		return nil, dberrors.PQDbErrorCaster(c.db, err)
 	}
 
-	return models.NewLaptopChars(id, cpu, ram, gpu), nil
+	return models.NewLaptopChars(id, &cpu, ram, gpu), nil
 }
 
 func (c *DPostgresDbController) AddLaptop(laptop *inputs.AddLaptopInput) (*models.Product, *models.LaptopChars, errors.PCCError) {
@@ -72,6 +72,6 @@ func (c *DPostgresDbController) AddLaptop(laptop *inputs.AddLaptopInput) (*model
 	}
 
 	return models.NewProduct(productId, laptop.Name, laptop.Price, 0, laptop.Stock, medias, LaptopCharsTable, charId),
-		models.NewLaptopChars(charId, *cpu, laptop.Ram, laptop.Gpu),
+		models.NewLaptopChars(charId, cpu, laptop.Ram, laptop.Gpu),
 		nil
 }

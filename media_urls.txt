@@ -6,8 +6,123 @@ https://cdn1.ozone.ru/s3/multimedia-2/6714764426.jpg | laptops/msi-titan-1.jpg |
 https://www.ixbt.com/img/r30/00/02/56/91/msi-titan-gt77-12uhs-big.jpg | laptops/msi-titan-2.jpg | 1 | Image
 https://rutube.ru/video/24f70de9c47c9df1be60adfbd6b3d3db/?ysclid=mf7837kqg3115263121| laptops/msi-titan-review.mp4 | 1 | Video
 
-https://n.cdn.cdek.shopping/images/shopping/9257a5ea990e4f7fb298cf575b4dd336.jpg?v=1 | laptops/macbook-pro-1.jpg | 2 | Image
-https://appgreatstore.ru/upload/iblock/1e9/ndvccnc38q1a2l6i3yzdn45jdkkysxe5.jpg | laptops/macbook-pro-2.jpg | 2 | Image
+https://i.ebayimg.com/images/g/IUoAAeSwPG5oMKqS/s-l500.jpg | laptops/lenovo-legion-1.jpg | 2 | Image
+https://cdn1.youla.io/files/images/780_780/65/df/65df0a0dc3773b77740cf344-2.jpg | laptops/lenovo-legion-2.jpg | 2 | Image
 
-https://i.ebayimg.com/images/g/IUoAAeSwPG5oMKqS/s-l500.jpg | laptops/lenovo-legion-1.jpg | 3 | Image
-https://cdn1.youla.io/files/images/780_780/65/df/65df0a0dc3773b77740cf344-2.jpg | laptops/lenovo-legion-2.jpg | 3 | Image
+https://n.cdn.cdek.shopping/images/shopping/9257a5ea990e4f7fb298cf575b4dd336.jpg?v=1 | laptops/macbook-pro-1.jpg | 3 | Image
+https://appgreatstore.ru/upload/iblock/1e9/ndvccnc38q1a2l6i3yzdn45jdkkysxe5.jpg | laptops/macbook-pro-2.jpg | 3 | Image
+
+https://images.unsplash.com/photo-1541807084-5c52b6b3adef | laptops/MSI-Raider-18 | 4 | Image
+https://images.unsplash.com/photo-1541807084-5c52b6b3adef | laptops/MSI-Raider-18 | 4 | Image
+
+https://images.unsplash.com/photo-1541807084-5c52b6b3adef | laptops/ASUS-ROG-Zephyrus-Duo-16 | 5 | Image
+https://images.unsplash.com/photo-1541807084-5c52b6b3adef | laptops/ASUS-ROG-Zephyrus-Duo-16 | 5 | Image
+
+https://images.unsplash.com/photo-1541807084-5c52b6b3adef | laptops/MSI-Vector-17 | 6 | Image
+https://images.unsplash.com/photo-1541807084-5c52b6b3adef | laptops/MSI-Vector-17 | 6 | Image
+
+https://images.unsplash.com/photo-1541807084-5c52b6b3adef | laptops/ASUS-VivoBook-Pro-15 | 7 | Image
+https://images.unsplash.com/photo-1541807084-5c52b6b3adef | laptops/ASUS-VivoBook-Pro-15 | 7 | Image
+
+https://images.unsplash.com/photo-1541807084-5c52b6b3adef | laptops/MSI-Sword-17-HX | 8 | Image
+https://images.unsplash.com/photo-1541807084-5c52b6b3adef | laptops/MSI-Sword-17-HX | 8 | Image
+
+https://images.unsplash.com/photo-1541807084-5c52b6b3adef | laptops/MSI-Summit-13-AI+-Evo | 9 | Image
+https://images.unsplash.com/photo-1541807084-5c52b6b3adef | laptops/MSI-Summit-13-AI+-Evo | 9 | Image
+
+https://images.unsplash.com/photo-1541807084-5c52b6b3adef | laptops/Apple-MacBook-Air | 10 | Image
+https://images.unsplash.com/photo-1541807084-5c52b6b3adef | laptops/Apple-MacBook-Air | 10 | Image
+
+https://images.unsplash.com/photo-1541807084-5c52b6b3adef | laptops/Dell-XPS-17 | 11 | Image
+https://images.unsplash.com/photo-1541807084-5c52b6b3adef | laptops/Dell-XPS-17 | 11 | Image
+
+https://images.unsplash.com/photo-1541807084-5c52b6b3adef | laptops/Dell-XPS-15 | 12 | Image
+https://images.unsplash.com/photo-1541807084-5c52b6b3adef | laptops/Dell-XPS-15 | 12 | Image
+
+https://images.unsplash.com/photo-1541807084-5c52b6b3adef | laptops/HP-Omen-17 | 13 | Image
+https://images.unsplash.com/photo-1541807084-5c52b6b3adef | laptops/HP-Omen-17 | 13 | Image
+
+https://images.unsplash.com/photo-1541807084-5c52b6b3adef | laptops/HP-Spectre-x360-14 | 14 | Image
+https://images.unsplash.com/photo-1541807084-5c52b6b3adef | laptops/HP-Spectre-x360-14 | 14 | Image
+
+https://images.unsplash.com/photo-1541807084-5c52b6b3adef | laptops/Razer-Blade-18 | 15 | Image
+https://images.unsplash.com/photo-1541807084-5c52b6b3adef | laptops/Razer-Blade-18 | 15 | Image
+
+https://images.unsplash.com/photo-1541807084-5c52b6b3adef | laptops/Razer-Blade-18 | 16 | Image
+https://images.unsplash.com/photo-1541807084-5c52b6b3adef | laptops/Razer-Blade-18 | 16 | Image
+
+https://images.unsplash.com/photo-1541807084-5c52b6b3adef | laptops/Gigabyte-Aorus-17 | 17 | Image
+https://images.unsplash.com/photo-1541807084-5c52b6b3adef | laptops/Gigabyte-Aorus-17 | 17 | Image
+
+https://images.unsplash.com/photo-1541807084-5c52b6b3adef | laptops/Gigabyte-Aero-16-OLED | 18 | Image
+https://images.unsplash.com/photo-1541807084-5c52b6b3adef | laptops/Gigabyte-Aero-16-OLED | 18 | Image
+
+https://images.unsplash.com/photo-1541807084-5c52b6b3adef | laptops/Samsung-Galaxy-Book4-Ultra | 19 | Image
+https://images.unsplash.com/photo-1541807084-5c52b6b3adef | laptops/Samsung-Galaxy-Book4-Ultra | 19 | Image
+
+https://images.unsplash.com/photo-1541807084-5c52b6b3adef | laptops/Samsung-Galaxy-Book4-Pro | 20 | Image
+https://images.unsplash.com/photo-1541807084-5c52b6b3adef | laptops/Samsung-Galaxy-Book4-Pro | 20 | Image
+
+https://images.unsplash.com/photo-1541807084-5c52b6b3adef | laptops/Acer-Predator-Helios-18 | 21 | Image
+https://images.unsplash.com/photo-1541807084-5c52b6b3adef | laptops/Acer-Predator-Helios-18 | 21 | Image
+
+https://images.unsplash.com/photo-1541807084-5c52b6b3adef | laptops/Acer-Predator-Helios-16 | 22 | Image
+https://images.unsplash.com/photo-1541807084-5c52b6b3adef | laptops/Acer-Predator-Helios-16 | 22 | Image
+
+https://images.unsplash.com/photo-1541807084-5c52b6b3adef | laptops/Acer-Swift-X-14 | 23 | Image
+https://images.unsplash.com/photo-1541807084-5c52b6b3adef | laptops/Acer-Swift-X-14 | 23 | Image
+
+https://images.unsplash.com/photo-1541807084-5c52b6b3adef | laptops/ASUS-Zenbook-Pro-Duo-14 | 24 | Image
+https://images.unsplash.com/photo-1541807084-5c52b6b3adef | laptops/ASUS-Zenbook-Pro-Duo-14 | 24 | Image
+
+https://images.unsplash.com/photo-1541807084-5c52b6b3adef | laptops/ASUS-TUF-Gaming-F15 | 25 | Image
+https://images.unsplash.com/photo-1541807084-5c52b6b3adef | laptops/ASUS-TUF-Gaming-F15 | 25 | Image
+
+https://images.unsplash.com/photo-1541807084-5c52b6b3adef | laptops/ASUS-TUF-Gaming-A17 | 26 | Image
+https://images.unsplash.com/photo-1541807084-5c52b6b3adef | laptops/ASUS-TUF-Gaming-A17 | 26 | Image
+
+https://images.unsplash.com/photo-1541807084-5c52b6b3adef | laptops/Lenovo-Yoga-Slim-7 | 27 | Image
+https://images.unsplash.com/photo-1541807084-5c52b6b3adef | laptops/Lenovo-Yoga-Slim-7 | 27 | Image
+
+https://images.unsplash.com/photo-1541807084-5c52b6b3adef | laptops/Lenovo-IdeaPad-Gaming-3 | 28 | Image
+https://images.unsplash.com/photo-1541807084-5c52b6b3adef | laptops/Lenovo-IdeaPad-Gaming-3 | 28 | Image
+
+https://images.unsplash.com/photo-1541807084-5c52b6b3adef | laptops/Lenovo-Legion-Slim-5 | 29 | Image
+https://images.unsplash.com/photo-1541807084-5c52b6b3adef | laptops/Lenovo-Legion-Slim-5 | 29 | Image
+
+https://images.unsplash.com/photo-1541807084-5c52b6b3adef | laptops/Lenovo-ThinkPad-X1-Carbon | 30 | Image
+https://images.unsplash.com/photo-1541807084-5c52b6b3adef | laptops/Lenovo-ThinkPad-X1-Carbon | 30 | Image
+
+https://images.unsplash.com/photo-1541807084-5c52b6b3adef | laptops/Microsoft-Surface-Laptop-Studio-2 | 31 | Image
+https://images.unsplash.com/photo-1541807084-5c52b6b3adef | laptops/Microsoft-Surface-Laptop-Studio-2 | 31 | Image
+
+https://images.unsplash.com/photo-1541807084-5c52b6b3adef | laptops/Microsoft-Surface-Laptop-6 | 32 | Image
+https://images.unsplash.com/photo-1541807084-5c52b6b3adef | laptops/Microsoft-Surface-Laptop-6 | 32 | Image
+
+https://images.unsplash.com/photo-1541807084-5c52b6b3adef | laptops/MSI-Prestige-16 | 33 | Image
+https://images.unsplash.com/photo-1541807084-5c52b6b3adef | laptops/MSI-Prestige-16 | 33 | Image
+
+https://images.unsplash.com/photo-1541807084-5c52b6b3adef | laptops/MSI-Stealth-17-Studio | 34 | Image
+https://images.unsplash.com/photo-1541807084-5c52b6b3adef | laptops/MSI-Stealth-17-Studio | 34 | Image
+
+https://images.unsplash.com/photo-1541807084-5c52b6b3adef | laptops/MSI-Katana-15 | 35 | Image
+https://images.unsplash.com/photo-1541807084-5c52b6b3adef | laptops/MSI-Katana-15 | 35 | Image
+
+https://images.unsplash.com/photo-1541807084-5c52b6b3adef | laptops/MSI-Cyborg-14 | 36 | Image
+https://images.unsplash.com/photo-1541807084-5c52b6b3adef | laptops/MSI-Cyborg-14 | 36 | Image
+
+https://images.unsplash.com/photo-1541807084-5c52b6b3adef | laptops/Alienware-m18 | 37 | Image
+https://images.unsplash.com/photo-1541807084-5c52b6b3adef | laptops/Alienware-m18 | 37 | Image
+
+https://images.unsplash.com/photo-1541807084-5c52b6b3adef | laptops/Alienware-x16 | 38 | Image
+https://images.unsplash.com/photo-1541807084-5c52b6b3adef | laptops/Alienware-x16 | 38 | Image
+
+https://images.unsplash.com/photo-1541807084-5c52b6b3adef | laptops/Alienware-m16 | 39 | Image
+https://images.unsplash.com/photo-1541807084-5c52b6b3adef | laptops/Alienware-m16 | 39 | Image
+
+https://images.unsplash.com/photo-1541807084-5c52b6b3adef | laptops/Alienware-x14 | 40 | Image
+https://images.unsplash.com/photo-1541807084-5c52b6b3adef | laptops/Alienware-x14 | 40 | Image
+
+https://images.unsplash.com/photo-1541807084-5c52b6b3adef | laptops/Huawei MateBook X Pro | 41 | Image
+https://images.unsplash.com/photo-1541807084-5c52b6b3adef | laptops/Huawei MateBook X Pro | 41 | Image
+

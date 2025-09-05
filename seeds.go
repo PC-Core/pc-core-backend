@@ -1,16 +1,22 @@
 package main
 
 import (
+	"context"
 	"crypto/sha256"
 	"database/sql"
 	"encoding/hex"
 	"fmt"
 	"log"
+	"net/http"
 	"os"
 	"strings"
+	"sync"
+	"time"
 
 	"github.com/PC-Core/pc-core-backend/pkg/models"
 	"github.com/joho/godotenv"
+	"github.com/minio/minio-go/v7"
+	"github.com/minio/minio-go/v7/pkg/credentials"
 	_ "github.com/lib/pq"
 )
 
@@ -18,16 +24,288 @@ const (
 	SEED_TYPE_USER     = "user"
 	SEED_TYPE_LAPTOP   = "laptop"
 	SEED_TYPE_CATEGORY = "category"
+	SEED_TYPE_MEDIA    = "media"
 	SEED_ALL           = "all"
 	CLEAR_ALL          = "clear"
 )
 
-var SEED_TYPE_NAMES = []string{SEED_TYPE_USER, SEED_TYPE_LAPTOP, SEED_TYPE_CATEGORY, SEED_ALL, CLEAR_ALL}
+var SEED_TYPE_NAMES = []string{SEED_TYPE_USER, SEED_TYPE_LAPTOP, SEED_TYPE_CATEGORY, SEED_TYPE_MEDIA, SEED_ALL, CLEAR_ALL}
+
+// MinIOConfig конфигурация MinIO
+type MinIOConfig struct {
+	Endpoint  string
+	AccessKey string
+	SecretKey string
+	Bucket    string
+	UseSSL    bool
+}
+
+// MediaDownloadTask задача на загрузку медиа
+type MediaDownloadTask struct {
+	URL        string
+	ObjectName string
+	ProductID  uint64
+	Type       string
+}
+
+// BatchMediaDownloader для пакетной загрузки медиа
+type BatchMediaDownloader struct {
+	minioClient *minio.Client
+	config      MinIOConfig
+	httpClient  *http.Client
+	semaphore   chan struct{}
+	wg          sync.WaitGroup
+	mu          sync.Mutex
+	results     []MediaDownloadResult
+}
+
+// MediaDownloadResult результат загрузки
+type MediaDownloadResult struct {
+	URL        string
+	ObjectName string
+	Success    bool
+	Error      error
+	Duration   time.Duration
+}
 
 func Sha256(value string) string {
 	hasher := sha256.New()
 	hasher.Write([]byte(value))
 	return hex.EncodeToString(hasher.Sum(nil))
+}
+
+func InitMinIOClient(config MinIOConfig) (*minio.Client, error) {
+	minioClient, err := minio.New(config.Endpoint, &minio.Options{
+		Creds:  credentials.NewStaticV4(config.AccessKey, config.SecretKey, ""),
+		Secure: config.UseSSL,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("ошибка подключения к MinIO: %w", err)
+	}
+
+	// Проверяем и создаем бакет если нужно
+	ctx := context.Background()
+	exists, err := minioClient.BucketExists(ctx, config.Bucket)
+	if err != nil {
+		return nil, fmt.Errorf("ошибка проверки бакета: %w", err)
+	}
+
+	if !exists {
+		err = minioClient.MakeBucket(ctx, config.Bucket, minio.MakeBucketOptions{})
+		if err != nil {
+			return nil, fmt.Errorf("ошибка создания бакета: %w", err)
+		}
+	}
+
+	return minioClient, nil
+}
+
+func NewBatchMediaDownloader(config MinIOConfig, maxConcurrent int) (*BatchMediaDownloader, error) {
+	minioClient, err := InitMinIOClient(config)
+	if err != nil {
+		return nil, err
+	}
+
+	return &BatchMediaDownloader{
+		minioClient: minioClient,
+		config:      config,
+		httpClient: &http.Client{
+			Timeout: 30 * time.Minute,
+			Transport: &http.Transport{
+				MaxIdleConns:        maxConcurrent,
+				MaxIdleConnsPerHost: maxConcurrent,
+				IdleConnTimeout:     90 * time.Second,
+			},
+		},
+		semaphore: make(chan struct{}, maxConcurrent),
+		results:   make([]MediaDownloadResult, 0),
+	}, nil
+}
+
+func (b *BatchMediaDownloader) DownloadAndUploadMedia(ctx context.Context, tasks []MediaDownloadTask) []MediaDownloadResult {
+	for _, task := range tasks {
+		b.wg.Add(1)
+		go b.processMediaTask(ctx, task)
+	}
+
+	b.wg.Wait()
+	return b.results
+}
+
+func (b *BatchMediaDownloader) processMediaTask(ctx context.Context, task MediaDownloadTask) {
+	defer b.wg.Done()
+
+	// Захватываем слот семафора
+	b.semaphore <- struct{}{}
+	defer func() { <-b.semaphore }()
+
+	startTime := time.Now()
+	result := MediaDownloadResult{
+		URL:        task.URL,
+		ObjectName: task.ObjectName,
+	}
+
+	// Скачиваем и загружаем файл
+	err := b.downloadAndUploadSingleMedia(ctx, task)
+	if err != nil {
+		result.Error = err
+		result.Success = false
+	} else {
+		result.Success = true
+	}
+
+	result.Duration = time.Since(startTime)
+
+	b.mu.Lock()
+	b.results = append(b.results, result)
+	b.mu.Unlock()
+}
+
+func (b *BatchMediaDownloader) downloadAndUploadSingleMedia(ctx context.Context, task MediaDownloadTask) error {
+	// Создаем HTTP запрос
+	req, err := http.NewRequestWithContext(ctx, "GET", task.URL, nil)
+	if err != nil {
+		return fmt.Errorf("ошибка создания запроса: %w", err)
+	}
+
+	// Выполняем запрос
+	resp, err := b.httpClient.Do(req)
+	if err != nil {
+		return fmt.Errorf("ошибка скачивания: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("HTTP ошибка: %s", resp.Status)
+	}
+
+	// Определяем content type
+	contentType := "application/octet-stream"
+	if task.Type == "Image" {
+		contentType = getImageContentType(task.URL)
+	} else if task.Type == "Video" {
+		contentType = "video/mp4"
+	}
+
+	// Загружаем в MinIO
+	_, err = b.minioClient.PutObject(ctx, b.config.Bucket, task.ObjectName, resp.Body, -1, minio.PutObjectOptions{
+		ContentType: contentType,
+	})
+	if err != nil {
+		return fmt.Errorf("ошибка загрузки в MinIO: %w", err)
+	}
+
+	return nil
+}
+
+func getImageContentType(url string) string {
+	ext := strings.ToLower(url[strings.LastIndex(url, "."):])
+	switch ext {
+	case ".jpg", ".jpeg":
+		return "image/jpeg"
+	case ".png":
+		return "image/png"
+	case ".gif":
+		return "image/gif"
+	case ".bmp":
+		return "image/bmp"
+	case ".webp":
+		return "image/webp"
+	default:
+		return "application/octet-stream"
+	}
+}
+
+// ReadMediaTasksFromFile читает задачи на загрузку медиа из файла
+func ReadMediaTasksFromFile(filename string) ([]MediaDownloadTask, error) {
+	content, err := os.ReadFile(filename)
+	if err != nil {
+		return nil, err
+	}
+
+	lines := strings.Split(string(content), "\n")
+	tasks := make([]MediaDownloadTask, 0)
+
+	for _, line := range lines {
+		line = strings.TrimSpace(line)
+		if line == "" || strings.HasPrefix(line, "#") {
+			continue
+		}
+
+		parts := strings.Split(line, "|")
+		if len(parts) < 4 {
+			continue
+		}
+
+		url := strings.TrimSpace(parts[0])
+		objectName := strings.TrimSpace(parts[1])
+		productID := strings.TrimSpace(parts[2])
+		mediaType := strings.TrimSpace(parts[3])
+
+		var pid uint64
+		fmt.Sscanf(productID, "%d", &pid)
+
+		tasks = append(tasks, MediaDownloadTask{
+			URL:        url,
+			ObjectName: objectName,
+			ProductID:  pid,
+			Type:       mediaType,
+		})
+	}
+
+	return tasks, nil
+}
+
+// getDefaultMediaTasks возвращает дефолтные задачи если файл не найден
+func getDefaultMediaTasks(laptopIDs []uint64) []MediaDownloadTask {
+	if len(laptopIDs) < 11 {
+		return []MediaDownloadTask{}
+	}
+
+	return []MediaDownloadTask{
+		{"https://example.com/images/2.png", "laptops/2.png", laptopIDs[0], "Image"},
+		{"https://example.com/videos/3.mp4", "laptops/3.mp4", laptopIDs[0], "Video"},
+		{"https://example.com/images/4.png", "laptops/4.png", laptopIDs[2], "Image"},
+		{"https://example.com/videos/5.mp4", "laptops/5.mp4", laptopIDs[2], "Video"},
+		{"https://example.com/images/6.png", "laptops/6.png", laptopIDs[3], "Image"},
+		{"https://example.com/images/7.png", "laptops/7.png", laptopIDs[3], "Image"},
+		{"https://example.com/images/8.png", "laptops/8.png", laptopIDs[4], "Image"},
+		{"https://example.com/images/9.png", "laptops/9.png", laptopIDs[4], "Image"},
+		{"https://example.com/videos/10.mp4", "laptops/10.mp4", laptopIDs[5], "Video"},
+		{"https://example.com/images/1.png", "laptops/1.png", laptopIDs[5], "Image"},
+		{"https://example.com/images/11.png", "laptops/11.png", laptopIDs[6], "Image"},
+		{"https://example.com/videos/12.mp4", "laptops/12.mp4", laptopIDs[6], "Video"},
+		{"https://example.com/images/13.png", "laptops/13.png", laptopIDs[6], "Image"},
+		{"https://example.com/videos/14.mp4", "laptops/14.mp4", laptopIDs[6], "Video"},
+		{"https://example.com/videos/15.mp4", "laptops/15.mp4", laptopIDs[7], "Video"},
+		{"https://example.com/images/16.png", "laptops/16.png", laptopIDs[8], "Image"},
+		{"https://example.com/images/17.png", "laptops/17.png", laptopIDs[8], "Image"},
+		{"https://example.com/videos/18.mp4", "laptops/18.mp4", laptopIDs[8], "Video"},
+		{"https://example.com/videos/19.mp4", "laptops/19.mp4", laptopIDs[9], "Video"},
+		{"https://example.com/images/20.png", "laptops/20.png", laptopIDs[10], "Image"},
+	}
+}
+
+// getExistingLaptopIDs получает ID существующих ноутбуков из базы
+func getExistingLaptopIDs(db *sql.DB) []uint64 {
+	rows, err := db.Query("SELECT id FROM Products WHERE chars_table_name = 'LaptopChars'")
+	if err != nil {
+		log.Printf("Ошибка получения ID ноутбуков: %v", err)
+		return []uint64{}
+	}
+	defer rows.Close()
+
+	var ids []uint64
+	for rows.Next() {
+		var id uint64
+		if err := rows.Scan(&id); err != nil {
+			log.Printf("Ошибка сканирования ID: %v", err)
+			continue
+		}
+		ids = append(ids, id)
+	}
+
+	return ids
 }
 
 func InsertUsers(db *sql.DB) {
@@ -47,45 +325,55 @@ func InsertUsers(db *sql.DB) {
 	}
 }
 
-var media_ids []uint64
+func InsertMedias(db *sql.DB, minioConfig MinIOConfig, laptopIDs []uint64) {
+	var mediaTasks []MediaDownloadTask
+	var err error
 
-func InsertMedias(db *sql.DB, ids []uint64) {
-	medias := []models.Media{
-		{0, "C:\\2.png", "Image", ids[0]},
-		{0, "C:\\3.mp4", "Video", ids[0]},
-		{0, "C:\\4.png", "Image", ids[2]},
-		{0, "C:\\5.mp4", "Video", ids[2]},
-		{0, "C:\\6.png", "Image", ids[3]},
-		{0, "C:\\7.png", "Image", ids[3]},
-		{0, "C:\\8.png", "Image", ids[4]},
-		{0, "C:\\9.png", "Image", ids[4]},
-		{0, "C:\\10.mp4", "Video", ids[5]},
-		{0, "C:\\1.png", "Image", ids[5]},
-		{0, "C:\\11.png", "Image", ids[6]},
-		{0, "C:\\12.mp4", "Video", ids[6]},
-		{0, "C:\\13.png", "Image", ids[6]},
-		{0, "C:\\14.mp4", "Video", ids[6]},
-		{0, "C:\\15.mp4", "Video", ids[7]},
-		{0, "C:\\16.png", "Image", ids[8]},
-		{0, "C:\\17.png", "Image", ids[8]},
-		{0, "C:\\18.mp4", "Video", ids[8]},
-		{0, "C:\\19.mp4", "Video", ids[9]},
-		{0, "C:\\20.png", "Image", ids[10]},
+	// Пытаемся прочитать из файла, если он существует
+	if _, err := os.Stat("media_urls.txt"); err == nil {
+		mediaTasks, err = ReadMediaTasksFromFile("media_urls.txt")
+		if err != nil {
+			log.Printf("Ошибка чтения файла с ссылками: %v", err)
+			// Fallback на дефолтные ссылки
+			mediaTasks = getDefaultMediaTasks(laptopIDs)
+		}
+	} else {
+		// Используем дефолтные ссылки если файла нет
+		mediaTasks = getDefaultMediaTasks(laptopIDs)
 	}
 
-	for _, media := range medias {
-		var id uint64
-		err := db.QueryRow("INSERT INTO Medias (url, type, product_id) VALUES ($1, $2, $3) returning id", media.Url, media.Type, media.ProductID).Scan(&id)
+	// Создаем загрузчик
+	downloader, err := NewBatchMediaDownloader(minioConfig, 5) // 5 одновременных загрузок
+	if err != nil {
+		log.Fatalf("Ошибка создания загрузчика: %v", err)
+	}
 
-		media_ids = append(media_ids, id)
+	// Загружаем медиафайлы
+	ctx := context.Background()
+	results := downloader.DownloadAndUploadMedia(ctx, mediaTasks)
 
-		if err != nil {
-			log.Fatalf("Error while adding medias: %s", err.Error())
+	// Сохраняем информацию о медиа в базу
+	for i, result := range results {
+		task := mediaTasks[i]
+		if result.Success {
+			// Сохраняем MinIO URL в базу
+			minioURL := fmt.Sprintf("https://%s/%s/%s", minioConfig.Endpoint, minioConfig.Bucket, task.ObjectName)
+			
+			_, err := db.Exec("INSERT INTO Medias (url, type, product_id) VALUES ($1, $2, $3)", 
+				minioURL, task.Type, task.ProductID)
+			
+			if err != nil {
+				log.Printf("Ошибка сохранения медиа в базу: %v", err)
+			} else {
+				log.Printf("Успешно загружено: %s -> %s", task.URL, minioURL)
+			}
+		} else {
+			log.Printf("Ошибка загрузки %s: %v", task.URL, result.Error)
 		}
 	}
 }
 
-func InsertLaptops(db *sql.DB) {
+func InsertLaptops(db *sql.DB, minioConfig MinIOConfig) {
 	cpus := []models.CpuChars{
 		{
 			Name:         "i9-14900HX",
@@ -332,7 +620,7 @@ func InsertLaptops(db *sql.DB) {
 		laptop_ids = append(laptop_ids, productId)
 	}
 
-	InsertMedias(db, laptop_ids)
+	InsertMedias(db, minioConfig, laptop_ids)
 }
 
 func InsertCategories(db *sql.DB) {
@@ -352,11 +640,6 @@ func InsertCategories(db *sql.DB) {
 		}
 	}
 }
-
-// func InsertCpus(db *sql.DB) {
-// 	cpus := []struct {
-// 	}
-// }
 
 func Clear(db *sql.DB) {
 	tables := []string{
@@ -378,55 +661,104 @@ func Clear(db *sql.DB) {
 	}
 }
 
-func InsertAll(db *sql.DB) {
+func InsertAll(db *sql.DB, minioConfig MinIOConfig) {
 	InsertUsers(db)
-	InsertLaptops(db)
+	InsertLaptops(db, minioConfig)
 	InsertCategories(db)
 }
 
-var SEED_TYPES = map[string]func(*sql.DB){
-	SEED_TYPE_USER:     InsertUsers,
-	SEED_TYPE_LAPTOP:   InsertLaptops,
-	SEED_TYPE_CATEGORY: InsertCategories,
-	SEED_ALL:           InsertAll,
-	CLEAR_ALL:          Clear,
+func GetMinIOConfig() MinIOConfig {
+	bucket := os.Getenv("MINIO_BUCKET")
+	if bucket == "" {
+		bucket = "media-bucket"
+	}
+
+	return MinIOConfig{
+		Endpoint:  os.Getenv("MINIO_ENDPOINT"),
+		AccessKey: os.Getenv("MINIO_ACCESS_KEY"),
+		SecretKey: os.Getenv("MINIO_SECRET_KEY"),
+		Bucket:    bucket,
+		UseSSL:    os.Getenv("MINIO_USE_SSL") == "true",
+	}
 }
 
 func formatHelpMessage() string {
-	return fmt.Sprintf("Setup seeds.\n\nUsage:\n\tgo run seeds.go [SEED TYPES]\n\nSeed Types:\n\t%s", strings.Join(SEED_TYPE_NAMES, "\n\t"))
+	return fmt.Sprintf("Setup seeds with MinIO media download.\n\nUsage:\n\tgo run seeds.go [SEED TYPES]\n\nSeed Types:\n\t%s", strings.Join(SEED_TYPE_NAMES, "\n\t"))
 }
 
-func handleCliArgs(args []string, db *sql.DB) {
+func handleCliArgs(args []string, db *sql.DB, config MinIOConfig, seedTypes map[string]func(*sql.DB, MinIOConfig)) {
 	if len(args) == 1 {
 		fmt.Println(formatHelpMessage())
 		return
 	}
 
 	for _, arg := range args[1:] {
-		fn, ok := SEED_TYPES[arg]
-
+		fn, ok := seedTypes[arg]
 		if !ok {
 			fmt.Printf("Error: unknown parameter: %s\n", arg)
-			os.Exit(-1)
+			os.Exit(1)
 		}
-
-		fn(db)
+		fn(db, config)
 	}
 }
 
 func main() {
 	err := godotenv.Load()
-
 	if err != nil {
-		panic(err)
+		log.Printf("Warning: .env file not found: %v", err)
 	}
+
+	// Получаем конфигурацию MinIO
+	minioConfig := GetMinIOConfig()
 
 	db, err := sql.Open("postgres", os.Getenv("PCCORE_POSTGRES_CONN"))
-
 	if err != nil {
-		fmt.Println("Error while connecting the db: ", err)
-		return
+		log.Fatalf("Error while connecting the db: %v", err)
+	}
+	defer db.Close()
+
+	// Обновляем map функций для передачи minioConfig
+	SEED_TYPES := map[string]func(*sql.DB, MinIOConfig){
+		SEED_TYPE_USER:     func(db *sql.DB, config MinIOConfig) { InsertUsers(db) },
+		SEED_TYPE_LAPTOP:   InsertLaptops,
+		SEED_TYPE_CATEGORY: func(db *sql.DB, config MinIOConfig) { InsertCategories(db) },
+		SEED_TYPE_MEDIA:    func(db *sql.DB, config MinIOConfig) { 
+			// Загрузка медиа из файла
+			mediaTasks, err := ReadMediaTasksFromFile("media_urls.txt")
+			if err != nil {
+				log.Fatalf("Ошибка чтения файла с медиа: %v", err)
+			}
+
+			// Создаем загрузчик
+			downloader, err := NewBatchMediaDownloader(config, 5)
+			if err != nil {
+				log.Fatalf("Ошибка создания загрузчика: %v", err)
+			}
+
+			// Загружаем медиафайлы
+			ctx := context.Background()
+			results := downloader.DownloadAndUploadMedia(ctx, mediaTasks)
+
+			// Сохраняем в базу
+			for i, result := range results {
+				task := mediaTasks[i]
+				if result.Success {
+					minioURL := fmt.Sprintf("https://%s/%s/%s", config.Endpoint, config.Bucket, task.ObjectName)
+					_, err := db.Exec("INSERT INTO Medias (url, type, product_id) VALUES ($1, $2, $3)", 
+						minioURL, task.Type, task.ProductID)
+					if err != nil {
+						log.Printf("Ошибка сохранения в базу: %v", err)
+					} else {
+						log.Printf("Успешно загружено: %s -> %s", task.URL, minioURL)
+					}
+				} else {
+					log.Printf("Ошибка загрузки %s: %v", task.URL, result.Error)
+				}
+			}
+		},
+		SEED_ALL:           InsertAll,
+		CLEAR_ALL:          func(db *sql.DB, config MinIOConfig) { Clear(db) },
 	}
 
-	handleCliArgs(os.Args, db)
+	handleCliArgs(os.Args, db, minioConfig, SEED_TYPES)
 }

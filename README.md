@@ -46,3 +46,8 @@ To open the Swagger page:
 
 ### Seeds
 To setup seeds, run the `seeds.go` file. If no flags are provided, a list of available options will be displayed. The execution order follows the order in which the flags are passed.
+- `go run seeds.go all` - download all
+
+- `go run seeds.go media` - download all media
+
+- `go run seeds.go laptop` - download all laptops

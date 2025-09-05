@@ -1,0 +1,13 @@
+# Формат: URL | ObjectName | ProductID | Type
+# Комментарии начинаются с #
+# Пустые строки игнорируются
+
+https://cdn1.ozone.ru/s3/multimedia-2/6714764426.jpg | laptops/msi-titan-1.jpg | 1 | Image
+https://www.ixbt.com/img/r30/00/02/56/91/msi-titan-gt77-12uhs-big.jpg | laptops/msi-titan-2.jpg | 1 | Image
+https://rutube.ru/video/24f70de9c47c9df1be60adfbd6b3d3db/?ysclid=mf7837kqg3115263121| laptops/msi-titan-review.mp4 | 1 | Video
+
+https://n.cdn.cdek.shopping/images/shopping/9257a5ea990e4f7fb298cf575b4dd336.jpg?v=1 | laptops/macbook-pro-1.jpg | 2 | Image
+https://appgreatstore.ru/upload/iblock/1e9/ndvccnc38q1a2l6i3yzdn45jdkkysxe5.jpg | laptops/macbook-pro-2.jpg | 2 | Image
+
+https://avatars.mds.yandex.net/get-entity_search/5283930/934215777/S600xU_2x | laptops/lenovo-legion-1.jpg | 3 | Image
+https://avatars.mds.yandex.net/get-entity_search/4734331/1197741807/S600xU_2x | laptops/lenovo-legion-2.jpg | 3 | Image

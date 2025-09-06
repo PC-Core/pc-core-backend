@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/PC-Core/pc-core-backend/pkg/models"
+	"github.com/lib/pq"
 )
 
 type DbCart struct {
@@ -227,18 +228,23 @@ func (u *DbUser) IntoUser() *models.User {
 }
 
 type DbComment struct {
-	ID          int64      `gorm:"column:id;primaryKey"`
-	UserID      int64      `gorm:"column:user_id"`
-	ProductID   int64      `gorm:"column:product_id"`
-	CommentText string     `gorm:"column:comment_text"`
-	AnswerOn    *int64     `gorm:"column:answer_on"`
-	Rating      int16      `gorm:"column:rating"`
-	CreatedAt   time.Time  `gorm:"column:created_at"`
-	UpdatedAt   *time.Time `gorm:"column:updated_at"`
-	MediaIDs    []int64    `gorm:"column:media_ids"`
+	ID          int64         `gorm:"column:id;primaryKey"`
+	UserID      int64         `gorm:"column:user_id"`
+	ProductID   int64         `gorm:"column:product_id"`
+	CommentText string        `gorm:"column:comment_text"`
+	AnswerOn    *int64        `gorm:"column:answer_on"`
+	Rating      *int16        `gorm:"column:rating"`
+	CreatedAt   time.Time     `gorm:"column:created_at"`
+	UpdatedAt   *time.Time    `gorm:"column:updated_at"`
+	MediaIDs    pq.Int64Array `gorm:"column:media_ids;type:bigint[]"`
+	Deleted     bool          `gorm:"column:is_deleted"`
 
 	User    DbUser    `gorm:"foreignKey:UserID;references:ID"`
 	Product DbProduct `gorm:"foreignKey:ProductID;references:ID"`
+}
+
+func (DbComment) TableName() string {
+	return "comments"
 }
 
 type DbCommentReaction struct {
@@ -246,4 +252,8 @@ type DbCommentReaction struct {
 	CommentID int64               `gorm:"column:comment_id"`
 	Type      models.ReactionType `gorm:"column:ty"`
 	AddedAt   time.Time           `gorm:"column:added_at"`
+}
+
+func (DbCommentReaction) TableName() string {
+	return "commentreactions"
 }

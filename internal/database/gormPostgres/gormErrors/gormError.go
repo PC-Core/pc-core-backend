@@ -12,6 +12,7 @@ const (
 	CART_QUANTITY_ERROR = "You're trying to add too many products"
 	UNKNOWN             = "Unknown database error"
 	RECORD_NOT_FOUND    = "Not found"
+	NOT_YOUR_COMMENT    = "You're trying to perform operations with others comment"
 )
 
 const KIND = ierrors.EK_DATABASE
@@ -60,6 +61,19 @@ func NewGormError(err error) *GormError {
 	} else {
 		return &UNKNOWN_ERROR
 	}
+}
+
+func NewGormErrorUserOwn(err error) *GormError {
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return &GormError{
+			code:    ierrors.EC_NOT_YOUR_COMMENT,
+			kind:    KIND,
+			details: nil,
+			message: NOT_YOUR_COMMENT,
+		}
+	}
+
+	return NewGormError(err)
 }
 
 func (g *GormError) Error() string {

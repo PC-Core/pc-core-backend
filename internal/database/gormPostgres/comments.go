@@ -1,9 +1,12 @@
 package gormpostgres
 
 import (
+	"time"
+
 	gormerrors "github.com/PC-Core/pc-core-backend/internal/database/gormPostgres/gormErrors"
 	"github.com/PC-Core/pc-core-backend/internal/errors"
 	"github.com/PC-Core/pc-core-backend/pkg/models"
+	"github.com/PC-Core/pc-core-backend/pkg/models/inputs"
 	"github.com/lib/pq"
 )
 
@@ -117,7 +120,7 @@ func (c *GormPostgresController) loadComments(product_id int64, userID *int64, t
 			return nil, nil, perr
 		}
 
-		result = append(result, *models.NewComment(comment.ID, comment.User.IntoUser(), comment.CommentText, []models.Comment{}, comment.Rating, &comment.CreatedAt, comment.UpdatedAt, medias.IntoMedias(), commentReactions[comment.ID]))
+		result = append(result, *models.NewComment(comment.ID, comment.User.IntoUser(), comment.CommentText, []models.Comment{}, comment.Rating, &comment.CreatedAt, comment.UpdatedAt, medias.IntoMedias(), commentReactions[comment.ID], comment.Deleted))
 	}
 
 	return comments, result, nil
@@ -138,7 +141,7 @@ func buildTree(comment *models.Comment, idToChildrenMap map[int64][]int64, idToC
 	}
 }
 
-func (c *GormPostgresController) GetAnswersOnTheComment(product_id int64, userID *int64, comment_id int64) ([]models.Comment, errors.PCCError) {
+func (c *GormPostgresController) GetAnswersOnComment(product_id int64, userID *int64, comment_id int64) ([]models.Comment, errors.PCCError) {
 	dbComments, upgrouppedComments, err := c.loadComments(product_id, userID, TCG_ALL)
 
 	if err != nil {
@@ -163,4 +166,90 @@ func (c *GormPostgresController) GetAnswersOnTheComment(product_id int64, userID
 	buildTree(targetComment, idToChildrenIdMap, idToCommentMap)
 
 	return targetComment.Children, nil
+}
+
+func (c *GormPostgresController) CheckUserOwnCommentByID(commentID int64, userID int64) errors.PCCError {
+	var comment DbComment
+
+	err := c.db.Where("id = ? AND user_id = ?", commentID, userID).Find(&comment).Error
+
+	if err != nil {
+		return gormerrors.GormErrorCastUserOwn(err)
+	}
+
+	return nil
+}
+
+func (c *GormPostgresController) AddComment(input *inputs.AddCommentInput, userID int64, product_id int64) (int64, errors.PCCError) {
+	comment := DbComment{
+		ID:          0,
+		UserID:      userID,
+		ProductID:   product_id,
+		CommentText: input.Text,
+		AnswerOn:    input.Answer,
+		Rating:      input.Rating,
+		CreatedAt:   time.Now(),
+		UpdatedAt:   nil,
+		MediaIDs:    []int64{},
+	}
+
+	err := c.db.Create(&comment).Error
+
+	if err != nil {
+		return -1, gormerrors.GormErrorCast(err)
+	}
+
+	return comment.ID, nil
+}
+
+func (c *GormPostgresController) EditComment(newText string, commentID int64, userID int64) (int64, errors.PCCError) {
+	if err := c.CheckUserOwnCommentByID(commentID, userID); err != nil {
+		return -1, err
+	}
+
+	var comment DbComment
+
+	err := c.db.First(&comment, commentID).Error
+
+	if err != nil {
+		return -1, gormerrors.GormErrorCast(err)
+	}
+
+	now := time.Now()
+
+	comment.CommentText = newText
+	comment.UpdatedAt = &now
+
+	err = c.db.Save(&comment).Error
+
+	if err != nil {
+		return -1, gormerrors.GormErrorCast(err)
+	}
+
+	return commentID, nil
+}
+
+func (c *GormPostgresController) DeleteComment(commentID int64, userID int64) (int64, errors.PCCError) {
+	if err := c.CheckUserOwnCommentByID(commentID, userID); err != nil {
+		return -1, err
+	}
+
+	var comment DbComment
+
+	err := c.db.First(&comment, commentID).Error
+
+	if err != nil {
+		return -1, gormerrors.GormErrorCast(err)
+	}
+
+	comment.CommentText = ""
+	comment.Deleted = true
+
+	err = c.db.Save(&comment).Error
+
+	if err != nil {
+		return -1, gormerrors.GormErrorCast(err)
+	}
+
+	return commentID, nil
 }

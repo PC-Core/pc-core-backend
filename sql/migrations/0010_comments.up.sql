@@ -7,7 +7,8 @@ create table Comments(
     rating int2 check (rating >= 0 and rating <= 100),
     created_at timestamptz not null default now(),
     updated_at timestamptz default null,
-    media_ids int8[] not null default '{}'
+    media_ids int8[] not null default '{}',
+    is_deleted boolean not null default false
 );
 
 create type ReactionType as enum ('like', 'dislike');

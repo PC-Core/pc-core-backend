@@ -376,6 +376,158 @@ const docTemplate = `{
                 }
             }
         },
+        "/comment/parent/:id": {
+            "get": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "comments"
+                ],
+                "summary": "Get answers on comment",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID of the comment",
+                        "name": "comment_id",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "description": "Input",
+                        "name": "input",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/inputs.GetAnswersInput"
+                        }
+                    },
+                    {
+                        "type": "string",
+                        "description": "access token for user is used to check your reaction, is not required",
+                        "name": "Authorization",
+                        "in": "header"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.Comment"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/errors.PublicPCCError"
+                        }
+                    }
+                }
+            }
+        },
+        "/comment/product/:id": {
+            "get": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "comments"
+                ],
+                "summary": "Get root comments",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID of the product",
+                        "name": "product_id",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "access token for user is used to check your reaction, is not required",
+                        "name": "Authorization",
+                        "in": "header"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.Comment"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/errors.PublicPCCError"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "comments"
+                ],
+                "summary": "Add comment",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID of the product",
+                        "name": "product_id",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "access token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "description": "input",
+                        "name": "input",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/inputs.AddCommentInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/errors.PublicPCCError"
+                        }
+                    }
+                }
+            }
+        },
         "/cpus/add": {
             "post": {
                 "consumes": [
@@ -623,7 +775,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/models.Product"
+                            "$ref": "#/definitions/outputs.ProductWithChars"
                         }
                     },
                     "400": {
@@ -833,7 +985,8 @@ const docTemplate = `{
                 28,
                 29,
                 30,
-                31
+                31,
+                32
             ],
             "x-enum-varnames": [
                 "EC_INTERNAL",
@@ -867,7 +1020,8 @@ const docTemplate = `{
                 "EC_COOKIE_MISSING",
                 "EC_UNKNOWN_MINIO_ERROR",
                 "EC_MINIO_NOT_FOUNT",
-                "EC_DB_CART_QUANTITY_ERROR"
+                "EC_DB_CART_QUANTITY_ERROR",
+                "EC_NOT_YOUR_COMMENT"
             ]
         },
         "errors.ErrorKind": {
@@ -923,6 +1077,21 @@ const docTemplate = `{
                 },
                 "message": {
                     "description": "SafeMessage contains the summary message that should be safe",
+                    "type": "string"
+                }
+            }
+        },
+        "inputs.AddCommentInput": {
+            "type": "object",
+            "properties": {
+                "answer": {
+                    "description": "Medias    models.Medias ` + "`" + `json:\"medias\"` + "`" + `",
+                    "type": "integer"
+                },
+                "rating": {
+                    "type": "integer"
+                },
+                "text": {
                     "type": "string"
                 }
             }
@@ -1029,6 +1198,14 @@ const docTemplate = `{
                 }
             }
         },
+        "inputs.GetAnswersInput": {
+            "type": "object",
+            "properties": {
+                "product_id": {
+                    "type": "integer"
+                }
+            }
+        },
         "inputs.LoginUserInput": {
             "type": "object",
             "required": [
@@ -1122,6 +1299,73 @@ const docTemplate = `{
                 },
                 "title": {
                     "type": "string"
+                }
+            }
+        },
+        "models.CharsDescription": {
+            "type": "object",
+            "properties": {
+                "key": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.Comment": {
+            "type": "object",
+            "properties": {
+                "children": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.Comment"
+                    }
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "deleted": {
+                    "type": "boolean"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "medias": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.Media"
+                    }
+                },
+                "rating": {
+                    "type": "integer"
+                },
+                "reactions": {
+                    "$ref": "#/definitions/models.CommentReactions"
+                },
+                "text": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                },
+                "user": {
+                    "$ref": "#/definitions/models.User"
+                }
+            }
+        },
+        "models.CommentReactions": {
+            "type": "object",
+            "properties": {
+                "reactions": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "integer",
+                        "format": "int64"
+                    }
+                },
+                "your_reaction": {
+                    "$ref": "#/definitions/models.ReactionType"
                 }
             }
         },
@@ -1254,6 +1498,34 @@ const docTemplate = `{
                 }
             }
         },
+        "models.ReactionType": {
+            "type": "string",
+            "enum": [
+                "like",
+                "dislike"
+            ],
+            "x-enum-varnames": [
+                "REACTION_LIKE",
+                "REACTION_DISLIKE"
+            ]
+        },
+        "models.User": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "user_role": {
+                    "$ref": "#/definitions/models.UserRole"
+                }
+            }
+        },
         "models.UserRole": {
             "type": "string",
             "enum": [
@@ -1292,6 +1564,46 @@ const docTemplate = `{
                 },
                 "user": {
                     "$ref": "#/definitions/models.PublicUser"
+                }
+            }
+        },
+        "outputs.ProductWithChars": {
+            "type": "object",
+            "properties": {
+                "chars": {
+                    "$ref": "#/definitions/outputs.RestCharsObject"
+                },
+                "product": {
+                    "$ref": "#/definitions/models.Product"
+                }
+            }
+        },
+        "outputs.RestCharsComponent": {
+            "type": "object",
+            "properties": {
+                "info": {},
+                "type": {
+                    "type": "string"
+                },
+                "values": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.CharsDescription"
+                    }
+                }
+            }
+        },
+        "outputs.RestCharsObject": {
+            "type": "object",
+            "properties": {
+                "components": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/outputs.RestCharsComponent"
+                    }
+                },
+                "id": {
+                    "type": "integer"
                 }
             }
         },

@@ -45,6 +45,7 @@ definitions:
     - 29
     - 30
     - 31
+    - 32
     type: integer
     x-enum-varnames:
     - EC_INTERNAL
@@ -79,6 +80,7 @@ definitions:
     - EC_UNKNOWN_MINIO_ERROR
     - EC_MINIO_NOT_FOUNT
     - EC_DB_CART_QUANTITY_ERROR
+    - EC_NOT_YOUR_COMMENT
   errors.ErrorKind:
     enum:
     - internal
@@ -124,6 +126,16 @@ definitions:
           on which the error occured
       message:
         description: SafeMessage contains the summary message that should be safe
+        type: string
+    type: object
+  inputs.AddCommentInput:
+    properties:
+      answer:
+        description: Medias    models.Medias `json:"medias"`
+        type: integer
+      rating:
+        type: integer
+      text:
         type: string
     type: object
   inputs.AddCpuInput:
@@ -193,6 +205,11 @@ definitions:
       quantity:
         type: integer
     type: object
+  inputs.GetAnswersInput:
+    properties:
+      product_id:
+        type: integer
+    type: object
   inputs.LoginUserInput:
     properties:
       email:
@@ -255,6 +272,50 @@ definitions:
         type: string
       title:
         type: string
+    type: object
+  models.CharsDescription:
+    properties:
+      key:
+        type: string
+      title:
+        type: string
+    type: object
+  models.Comment:
+    properties:
+      children:
+        items:
+          $ref: '#/definitions/models.Comment'
+        type: array
+      created_at:
+        type: string
+      deleted:
+        type: boolean
+      id:
+        type: integer
+      medias:
+        items:
+          $ref: '#/definitions/models.Media'
+        type: array
+      rating:
+        type: integer
+      reactions:
+        $ref: '#/definitions/models.CommentReactions'
+      text:
+        type: string
+      updated_at:
+        type: string
+      user:
+        $ref: '#/definitions/models.User'
+    type: object
+  models.CommentReactions:
+    properties:
+      reactions:
+        additionalProperties:
+          format: int64
+          type: integer
+        type: object
+      your_reaction:
+        $ref: '#/definitions/models.ReactionType'
     type: object
   models.CpuSocket:
     enum:
@@ -351,6 +412,25 @@ definitions:
       role:
         $ref: '#/definitions/models.UserRole'
     type: object
+  models.ReactionType:
+    enum:
+    - like
+    - dislike
+    type: string
+    x-enum-varnames:
+    - REACTION_LIKE
+    - REACTION_DISLIKE
+  models.User:
+    properties:
+      email:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      user_role:
+        $ref: '#/definitions/models.UserRole'
+    type: object
   models.UserRole:
     enum:
     - Temporary
@@ -378,6 +458,32 @@ definitions:
         $ref: '#/definitions/outputs.TokensMap'
       user:
         $ref: '#/definitions/models.PublicUser'
+    type: object
+  outputs.ProductWithChars:
+    properties:
+      chars:
+        $ref: '#/definitions/outputs.RestCharsObject'
+      product:
+        $ref: '#/definitions/models.Product'
+    type: object
+  outputs.RestCharsComponent:
+    properties:
+      info: {}
+      type:
+        type: string
+      values:
+        items:
+          $ref: '#/definitions/models.CharsDescription'
+        type: array
+    type: object
+  outputs.RestCharsObject:
+    properties:
+      components:
+        items:
+          $ref: '#/definitions/outputs.RestCharsComponent'
+        type: array
+      id:
+        type: integer
     type: object
   outputs.TokensMap:
     additionalProperties:
@@ -625,6 +731,108 @@ paths:
       summary: Get all categories
       tags:
       - categories
+  /comment/parent/:id:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: ID of the comment
+        in: query
+        name: comment_id
+        required: true
+        type: integer
+      - description: Input
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/inputs.GetAnswersInput'
+      - description: access token for user is used to check your reaction, is not
+          required
+        in: header
+        name: Authorization
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Comment'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/errors.PublicPCCError'
+      summary: Get answers on comment
+      tags:
+      - comments
+  /comment/product/:id:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: ID of the product
+        in: query
+        name: product_id
+        required: true
+        type: integer
+      - description: access token for user is used to check your reaction, is not
+          required
+        in: header
+        name: Authorization
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Comment'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/errors.PublicPCCError'
+      summary: Get root comments
+      tags:
+      - comments
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: ID of the product
+        in: query
+        name: product_id
+        required: true
+        type: integer
+      - description: access token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: input
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/inputs.AddCommentInput'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            type: integer
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/errors.PublicPCCError'
+      summary: Add comment
+      tags:
+      - comments
   /cpus/add:
     post:
       consumes:
@@ -763,7 +971,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/models.Product'
+            $ref: '#/definitions/outputs.ProductWithChars'
         "400":
           description: Bad Request
           schema:

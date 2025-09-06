@@ -96,6 +96,8 @@ const (
 	EC_MINIO_NOT_FOUNT
 	// Error code means that there are less products then you want to add to the cart
 	EC_DB_CART_QUANTITY_ERROR
+	// Error code means you're trying to perform operations with others comment
+	EC_NOT_YOUR_COMMENT
 )
 
 // PCCError - minimal error interface used in the PC Core project

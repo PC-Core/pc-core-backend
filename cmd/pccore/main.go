@@ -156,6 +156,7 @@ func main() {
 	prc := controllers.NewProfileController(r, helpers.JWTPublicUserCaster(auth), middlewares.JWTAuthorize(auth))
 	mc := controllers.NewStaticController(r, staticDataController)
 	cpc := controllers.NewCpuController(r, db, middlewares.JWTAuthorize(auth), helpers.JWTRoleCast)
+	comc := controllers.NewCommentController(r, db, middlewares.JWTAuthorize(auth), middlewares.JWTNotRequired(auth), helpers.JWTPublicUserCaster(auth))
 
 	uc.ApplyRoutes()
 	lc.ApplyRoutes()
@@ -166,6 +167,7 @@ func main() {
 	prc.ApplyRoutes()
 	mc.ApplyRoutes()
 	cpc.ApplyRoutes()
+	comc.ApplyRoutes()
 
 	r.Run(config.Addr + ":" + strconv.Itoa(config.Port))
 }

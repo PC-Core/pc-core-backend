@@ -7,3 +7,7 @@ import (
 func GormErrorCast(err error) ierrors.PCCError {
 	return NewGormError(err)
 }
+
+func GormErrorCastUserOwn(err error) ierrors.PCCError {
+	return NewGormErrorUserOwn(err)
+}

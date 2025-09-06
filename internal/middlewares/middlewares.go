@@ -46,6 +46,30 @@ func JWTAuthorize(auth auth.Auth) gin.HandlerFunc {
 	}
 }
 
+// If user is authorized, save his data in gin context
+//
+// Else just go next
+func JWTNotRequired(auth auth.Auth) gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		token, err := helpers.GetAutorizationToken(ctx, helpers.BearerPrefix)
+
+		if err != nil {
+			ctx.Next()
+			return
+		}
+
+		data, err := auth.Authorize(token)
+
+		if err != nil {
+			ctx.Next()
+			return
+		}
+
+		ctx.Set(helpers.UserDataKey, data)
+		ctx.Next()
+	}
+}
+
 func RoleCheck(required models.UserRole, db database.DbController, caster helpers.RoleCastFunc) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		data, exists := ctx.Get(helpers.UserDataKey)

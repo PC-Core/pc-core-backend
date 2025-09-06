@@ -30,16 +30,19 @@ type DbController interface {
 	GetLaptopChars(charId uint64) (*models.LaptopChars, errors.PCCError)
 	AddLaptop(laptop *inputs.AddLaptopInput) (*models.Product, *models.LaptopChars, errors.PCCError)
 	GetProducts(start uint64, count uint64) ([]models.Product, uint64, errors.PCCError)
-	//ScanProduct(rows RowLike) (*models.Product, errors.PCCError)
 	GetProductCharsByProductID(productId uint64) (ProductChars, errors.PCCError)
 	GetProductById(id uint64) (*models.Product, errors.PCCError)
 	LoadProductsRangeAsCartItem(tempCart []models.TempCartItem) ([]models.CartItem, errors.PCCError)
 	RegisterUser(register *inputs.RegisterUserInput) (*models.User, errors.PCCError)
 	LoginUser(login *inputs.LoginUserInput) (*models.User, errors.PCCError)
 	GetUserByID(id int) (*models.User, errors.PCCError)
-	//AddMedias(imedias []models.InputMedia) (models.Medias, errors.PCCError)
 	GetCpuChars(charId uint64) (*models.CpuChars, errors.PCCError)
 	AddCpu(cpu *inputs.AddCpuInput) (*models.Product, *models.CpuChars, errors.PCCError)
+	GetRootCommentsForProduct(product_id int64, userID *int64) ([]models.Comment, errors.PCCError)
+	GetAnswersOnComment(product_id int64, userID *int64, comment_id int64) ([]models.Comment, errors.PCCError)
+	AddComment(input *inputs.AddCommentInput, userID int64, product_id int64) (int64, errors.PCCError)
+	EditComment(newText string, commentID int64, userID int64) (int64, errors.PCCError)
+	DeleteComment(commentID int64, userID int64) (int64, errors.PCCError)
 }
 
 // Database controller

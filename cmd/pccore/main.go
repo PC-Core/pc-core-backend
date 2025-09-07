@@ -111,7 +111,21 @@ func MustSetupWorkingDir() string {
 	return *dir
 }
 
+func MustSetupMode() bool {
+	mode := flag.Bool("release", false, "If true, application will be run in release mode")
+
+	flag.Parse()
+
+	return *mode
+}
+
 func main() {
+	release := MustSetupMode()
+
+	if release {
+		gin.SetMode(gin.ReleaseMode)
+	}
+
 	wd := MustSetupWorkingDir()
 
 	err := godotenv.Load(fmt.Sprintf("%s/.env", wd))

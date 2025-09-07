@@ -652,6 +652,8 @@ func Clear(db *sql.DB) {
 		"Categories",
 		"Medias",
 		"Products",
+		"comments",
+		"commentreactions",
 	}
 
 	for _, table := range tables {

@@ -13,11 +13,12 @@ import (
 	"sync"
 	"time"
 
+	"github.com/PC-Core/pc-core-backend/pkg/config"
 	"github.com/PC-Core/pc-core-backend/pkg/models"
 	"github.com/joho/godotenv"
+	_ "github.com/lib/pq"
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
-	_ "github.com/lib/pq"
 )
 
 const (
@@ -124,6 +125,7 @@ func NewBatchMediaDownloader(config MinIOConfig, maxConcurrent int) (*BatchMedia
 
 func (b *BatchMediaDownloader) DownloadAndUploadMedia(ctx context.Context, tasks []MediaDownloadTask) []MediaDownloadResult {
 	for _, task := range tasks {
+		fmt.Println(task)
 		b.wg.Add(1)
 		go b.processMediaTask(ctx, task)
 	}
@@ -358,10 +360,10 @@ func InsertMedias(db *sql.DB, minioConfig MinIOConfig, laptopIDs []uint64) {
 		if result.Success {
 			// Сохраняем MinIO URL в базу
 			minioURL := fmt.Sprintf("https://%s/%s/%s", minioConfig.Endpoint, minioConfig.Bucket, task.ObjectName)
-			
-			_, err := db.Exec("INSERT INTO Medias (url, type, product_id) VALUES ($1, $2, $3)", 
+
+			_, err := db.Exec("INSERT INTO Medias (url, type, product_id) VALUES ($1, $2, $3)",
 				minioURL, task.Type, task.ProductID)
-			
+
 			if err != nil {
 				log.Printf("Ошибка сохранения медиа в базу: %v", err)
 			} else {
@@ -667,18 +669,19 @@ func InsertAll(db *sql.DB, minioConfig MinIOConfig) {
 	InsertCategories(db)
 }
 
-func GetMinIOConfig() MinIOConfig {
-	bucket := os.Getenv("MINIO_BUCKET")
+func GetMinIOConfig(cfg *config.Config) MinIOConfig {
+	bucket := cfg.MinIOConn.Bucket
+
 	if bucket == "" {
-		bucket = "media-bucket"
+		bucket = "pccore"
 	}
 
 	return MinIOConfig{
-		Endpoint:  os.Getenv("MINIO_ENDPOINT"),
-		AccessKey: os.Getenv("MINIO_ACCESS_KEY"),
-		SecretKey: os.Getenv("MINIO_SECRET_KEY"),
+		Endpoint:  cfg.MinIOConn.Ep,
+		AccessKey: os.Getenv("MINIO_ACCESS"),
+		SecretKey: os.Getenv("MINIO_SECRET"),
 		Bucket:    bucket,
-		UseSSL:    os.Getenv("MINIO_USE_SSL") == "true",
+		UseSSL:    cfg.MinIOConn.Secure,
 	}
 }
 
@@ -703,13 +706,18 @@ func handleCliArgs(args []string, db *sql.DB, config MinIOConfig, seedTypes map[
 }
 
 func main() {
-	err := godotenv.Load()
+	cfg, err := config.ParseConfig("cfg.yml")
+
+	if err != nil {
+		panic(err)
+	}
+
+	err = godotenv.Load()
 	if err != nil {
 		log.Printf("Warning: .env file not found: %v", err)
 	}
 
-	// Получаем конфигурацию MinIO
-	minioConfig := GetMinIOConfig()
+	minioConfig := GetMinIOConfig(cfg)
 
 	db, err := sql.Open("postgres", os.Getenv("PCCORE_POSTGRES_CONN"))
 	if err != nil {
@@ -717,34 +725,32 @@ func main() {
 	}
 	defer db.Close()
 
-	// Обновляем map функций для передачи minioConfig
 	SEED_TYPES := map[string]func(*sql.DB, MinIOConfig){
 		SEED_TYPE_USER:     func(db *sql.DB, config MinIOConfig) { InsertUsers(db) },
 		SEED_TYPE_LAPTOP:   InsertLaptops,
 		SEED_TYPE_CATEGORY: func(db *sql.DB, config MinIOConfig) { InsertCategories(db) },
-		SEED_TYPE_MEDIA:    func(db *sql.DB, config MinIOConfig) { 
-			// Загрузка медиа из файла
+		SEED_TYPE_MEDIA: func(db *sql.DB, config MinIOConfig) {
 			mediaTasks, err := ReadMediaTasksFromFile("media_urls.txt")
 			if err != nil {
 				log.Fatalf("Ошибка чтения файла с медиа: %v", err)
 			}
 
-			// Создаем загрузчик
 			downloader, err := NewBatchMediaDownloader(config, 5)
 			if err != nil {
 				log.Fatalf("Ошибка создания загрузчика: %v", err)
 			}
 
-			// Загружаем медиафайлы
+			fmt.Println("Created downloader")
+
 			ctx := context.Background()
 			results := downloader.DownloadAndUploadMedia(ctx, mediaTasks)
 
-			// Сохраняем в базу
 			for i, result := range results {
+				fmt.Println(result)
 				task := mediaTasks[i]
 				if result.Success {
 					minioURL := fmt.Sprintf("https://%s/%s/%s", config.Endpoint, config.Bucket, task.ObjectName)
-					_, err := db.Exec("INSERT INTO Medias (url, type, product_id) VALUES ($1, $2, $3)", 
+					_, err := db.Exec("INSERT INTO Medias (url, type, product_id) VALUES ($1, $2, $3)",
 						minioURL, task.Type, task.ProductID)
 					if err != nil {
 						log.Printf("Ошибка сохранения в базу: %v", err)
@@ -756,8 +762,8 @@ func main() {
 				}
 			}
 		},
-		SEED_ALL:           InsertAll,
-		CLEAR_ALL:          func(db *sql.DB, config MinIOConfig) { Clear(db) },
+		SEED_ALL:  InsertAll,
+		CLEAR_ALL: func(db *sql.DB, config MinIOConfig) { Clear(db) },
 	}
 
 	handleCliArgs(os.Args, db, minioConfig, SEED_TYPES)

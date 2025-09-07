@@ -12,47 +12,47 @@ https://cdn1.youla.io/files/images/780_780/65/df/65df0a0dc3773b77740cf344-2.jpg 
 https://n.cdn.cdek.shopping/images/shopping/9257a5ea990e4f7fb298cf575b4dd336.jpg?v=1 | laptops/macbook-pro-1.jpg | 3 | Image
 https://appgreatstore.ru/upload/iblock/1e9/ndvccnc38q1a2l6i3yzdn45jdkkysxe5.jpg | laptops/macbook-pro-2.jpg | 3 | Image
 
-https://images.unsplash.com/photo-1541807084-5c52b6b3adef | laptops/MSI-Raider-18 | 4 | Image
-https://images.unsplash.com/photo-1541807084-5c52b6b3adef | laptops/MSI-Raider-18 | 4 | Image
+https://static.1k.by/images/productsimages/ip/big/pp6/4/4931862/i128c38fef.jpg | laptops/MSI-Raider-18 | 4 | Image
+https://overclockers.ru/st/legacy/blog/413830/606041_O.jpg | laptops/MSI-Raider-18 | 4 | Image
 
-https://images.unsplash.com/photo-1541807084-5c52b6b3adef | laptops/ASUS-ROG-Zephyrus-Duo-16 | 5 | Image
-https://images.unsplash.com/photo-1541807084-5c52b6b3adef | laptops/ASUS-ROG-Zephyrus-Duo-16 | 5 | Image
+https://thedigitaltech.com/wp-content/uploads/2022/07/Asus-ROG-Zephyrus-Duo-16.jpg | laptops/ASUS-ROG-Zephyrus-Duo-16 | 5 | Image
+https://wit.ru/images/1/10625/10627/10640/90NR0D71-M000X0-421567.png | laptops/ASUS-ROG-Zephyrus-Duo-16 | 5 | Image
 
-https://images.unsplash.com/photo-1541807084-5c52b6b3adef | laptops/MSI-Vector-17 | 6 | Image
-https://images.unsplash.com/photo-1541807084-5c52b6b3adef | laptops/MSI-Vector-17 | 6 | Image
+https://static.1k.by/images/productsimages/ip/big/pp6/4/4931862/i128c38fef.jpg | laptops/MSI-Vector-17 | 6 | Image
+https://img.mvideo.ru/Pdb/400293516b4.jpg | laptops/MSI-Vector-17 | 6 | Image
 
-https://images.unsplash.com/photo-1541807084-5c52b6b3adef | laptops/ASUS-VivoBook-Pro-15 | 7 | Image
-https://images.unsplash.com/photo-1541807084-5c52b6b3adef | laptops/ASUS-VivoBook-Pro-15 | 7 | Image
+https://comparema.ru/image/cache/catalog/products/3441782_3-1200x800.jpg | laptops/ASUS-VivoBook-Pro-15 | 7 | Image
+https://cdn1.ozone.ru/s3/multimedia-u/6479990442.jpg | laptops/ASUS-VivoBook-Pro-15 | 7 | Image
 
-https://images.unsplash.com/photo-1541807084-5c52b6b3adef | laptops/MSI-Sword-17-HX | 8 | Image
-https://images.unsplash.com/photo-1541807084-5c52b6b3adef | laptops/MSI-Sword-17-HX | 8 | Image
+https://tm.by/sites/default/files/styles/uc_product_full/public/content/product/2024/11/2/i835792-20241126_0.jpg | laptops/MSI-Sword-17-HX | 8 | Image
+https://main-cdn.sbermegamarket.ru/big2/hlr-system/166/078/535/511/615/44/100071445455b5.png | laptops/MSI-Sword-17-HX | 8 | Image
 
-https://images.unsplash.com/photo-1541807084-5c52b6b3adef | laptops/MSI-Summit-13-AI+-Evo | 9 | Image
-https://images.unsplash.com/photo-1541807084-5c52b6b3adef | laptops/MSI-Summit-13-AI+-Evo | 9 | Image
+https://m.media-amazon.com/images/I/714G8bC-F1L.jpg | laptops/MSI-Summit-13-AI+-Evo | 9 | Image
+https://avatars.mds.yandex.net/i?id=7487728a923587b878ff5e9c0bbfb7d0780eb10a-16485021-images-thumbs&n=13 | laptops/MSI-Summit-13-AI+-Evo | 9 | Image
 
-https://images.unsplash.com/photo-1541807084-5c52b6b3adef | laptops/Apple-MacBook-Air | 10 | Image
-https://images.unsplash.com/photo-1541807084-5c52b6b3adef | laptops/Apple-MacBook-Air | 10 | Image
+https://mews.biggeek.ru/wp-content/uploads/2022/07/bfarsace_190101_5333_0005.jpg | laptops/Apple-MacBook-Air | 10 | Image
+https://overclockers.ru/st/legacy/blog/422120/358217_O.jpg | laptops/Apple-MacBook-Air | 10 | Image
 
-https://images.unsplash.com/photo-1541807084-5c52b6b3adef | laptops/Dell-XPS-17 | 11 | Image
-https://images.unsplash.com/photo-1541807084-5c52b6b3adef | laptops/Dell-XPS-17 | 11 | Image
+https://m.media-amazon.com/images/I/71RuOUPT+4L.jpg | laptops/Dell-XPS-17 | 11 | Image
+https://m.media-amazon.com/images/I/71Kn5i5fsrL.jpg | laptops/Dell-XPS-17 | 11 | Image
 
-https://images.unsplash.com/photo-1541807084-5c52b6b3adef | laptops/Dell-XPS-15 | 12 | Image
-https://images.unsplash.com/photo-1541807084-5c52b6b3adef | laptops/Dell-XPS-15 | 12 | Image
+https://m.media-amazon.com/images/I/71RuOUPT+4L.jpg | laptops/Dell-XPS-15 | 12 | Image
+https://m.media-amazon.com/images/I/71RuOUPT+4L.jpg | laptops/Dell-XPS-15 | 12 | Image
 
-https://images.unsplash.com/photo-1541807084-5c52b6b3adef | laptops/HP-Omen-17 | 13 | Image
-https://images.unsplash.com/photo-1541807084-5c52b6b3adef | laptops/HP-Omen-17 | 13 | Image
+https://cache3.youla.io/files/images/780_780/5b/03/5b0306f0e7696a72e95fb742.jpg | laptops/HP-Omen-17 | 13 | Image
+https://i.pinimg.com/736x/08/18/d4/0818d4903ca522622de32b48ccdcd932.jpg | laptops/HP-Omen-17 | 13 | Image
 
-https://images.unsplash.com/photo-1541807084-5c52b6b3adef | laptops/HP-Spectre-x360-14 | 14 | Image
-https://images.unsplash.com/photo-1541807084-5c52b6b3adef | laptops/HP-Spectre-x360-14 | 14 | Image
+https://pigmentarius.ru/upload/medialibrary/3ac/0xxtl71pz9280bvq0pzcz2t9wmvyu6mr.jpg | laptops/HP-Spectre-x360-14 | 14 | Image
+https://main-cdn.sbermegamarket.ru/big2/hlr-system/1628142416/100023661450b5.jpg | laptops/HP-Spectre-x360-14 | 14 | Image
 
-https://images.unsplash.com/photo-1541807084-5c52b6b3adef | laptops/Razer-Blade-18 | 15 | Image
-https://images.unsplash.com/photo-1541807084-5c52b6b3adef | laptops/Razer-Blade-18 | 15 | Image
+https://static01.servicebox.ru/img/uploads/news/6614e1b3cf74f_1712644531.jpeg | laptops/Razer-Blade-18 | 15 | Image
+https://www.notebookcheck-ru.com/uploads/tx_nbc2/blade_01.jpg | laptops/Razer-Blade-18 | 15 | Image
 
-https://images.unsplash.com/photo-1541807084-5c52b6b3adef | laptops/Razer-Blade-18 | 16 | Image
-https://images.unsplash.com/photo-1541807084-5c52b6b3adef | laptops/Razer-Blade-18 | 16 | Image
+https://www.notebookcheck-ru.com/uploads/tx_nbc2/blade_01.jpg | laptops/Razer-Blade-18 | 16 | Image
+https://www.notebookcheck-ru.com/uploads/tx_nbc2/blade_01.jpg | laptops/Razer-Blade-18 | 16 | Image
 
-https://images.unsplash.com/photo-1541807084-5c52b6b3adef | laptops/Gigabyte-Aorus-17 | 17 | Image
-https://images.unsplash.com/photo-1541807084-5c52b6b3adef | laptops/Gigabyte-Aorus-17 | 17 | Image
+https://www.cdrinfo.com/d7/system/files/styles/siteberty_image_770x484/private/new_site_image/2020/gigabyte_aorus17g.jpg?itok=FSbVJYlW | laptops/Gigabyte-Aorus-17 | 17 | Image
+https://www.cdrinfo.com/d7/system/files/styles/siteberty_image_770x484/private/new_site_image/2020/gigabyte_aorus17g.jpg?itok=FSbVJYlW | laptops/Gigabyte-Aorus-17 | 17 | Image
 
 https://images.unsplash.com/photo-1541807084-5c52b6b3adef | laptops/Gigabyte-Aero-16-OLED | 18 | Image
 https://images.unsplash.com/photo-1541807084-5c52b6b3adef | laptops/Gigabyte-Aero-16-OLED | 18 | Image

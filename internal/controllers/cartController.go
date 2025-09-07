@@ -33,22 +33,6 @@ func (c *CartController) GetPUCaster() helpers.PublicUserCaster {
 	return c.pucaster
 }
 
-func (c *CartController) GetPubUser(ctx *gin.Context) (*models.PublicUser, errors.PCCError) {
-	userdata, exists := ctx.Get(helpers.UserDataKey)
-
-	if !exists {
-		return nil, conerrors.GetUserDataFromContextError()
-	}
-
-	pu, err := c.pucaster(userdata)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return pu, err
-}
-
 func (c *CartController) ApplyRoutes() {
 	gr := c.engine.Group("/cart", c.auth_middleware)
 	{
@@ -110,7 +94,7 @@ func (c *CartController) setToDefaultCart(pu *models.PublicUser, productID int, 
 // @Failure      403  {object}  errors.PublicPCCError
 // @Router       /cart/ [get]
 func (c *CartController) getCart(ctx *gin.Context) {
-	pu, err := c.GetPubUser(ctx)
+	pu, err := GetPubUser(ctx, c.pucaster)
 
 	if CheckErrorAndWriteUnauthorized(ctx, err) {
 		return
@@ -146,7 +130,7 @@ func (c *CartController) getCart(ctx *gin.Context) {
 // @Failure      403  {object}  errors.PublicPCCError
 // @Router       /cart/item/:id [post]
 func (c *CartController) setToCart(ctx *gin.Context) {
-	pu, err := c.GetPubUser(ctx)
+	pu, err := GetPubUser(ctx, c.pucaster)
 
 	if CheckErrorAndWriteUnauthorized(ctx, err) {
 		return
@@ -195,7 +179,7 @@ func (c *CartController) setToCart(ctx *gin.Context) {
 // @Failure      403  {object}  errors.PublicPCCError
 // @Router       /cart/ [delete]
 func (c *CartController) removeFromCart(ctx *gin.Context) {
-	pu, err := c.GetPubUser(ctx)
+	pu, err := GetPubUser(ctx, c.pucaster)
 
 	if CheckErrorAndWriteUnauthorized(ctx, err) {
 		return
@@ -226,7 +210,7 @@ func (c *CartController) reqChangeQuantity(ctx *gin.Context, sign int) {
 		ctx.JSON(http.StatusInternalServerError, errors.NewInternalSecretError())
 	}
 
-	pu, err := c.GetPubUser(ctx)
+	pu, err := GetPubUser(ctx, c.pucaster)
 
 	if CheckErrorAndWriteUnauthorized(ctx, err) {
 		return

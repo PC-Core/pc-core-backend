@@ -3,8 +3,8 @@ package models
 import "time"
 
 type CommentReactions struct {
-	Reactions    map[ReactionType]uint64 `json:"reactions"`
-	YourReaction *ReactionType           `json:"your_reaction"`
+	ReactionsAmount map[ReactionType]uint64 `json:"reactions_amount"`
+	YourReaction    *ReactionType           `json:"your_reaction"`
 }
 
 type Comment struct {

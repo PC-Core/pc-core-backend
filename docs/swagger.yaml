@@ -242,6 +242,11 @@ definitions:
       product_id:
         type: integer
     type: object
+  inputs.SetReactionInput:
+    properties:
+      type:
+        $ref: '#/definitions/models.ReactionType'
+    type: object
   models.Cart:
     properties:
       items:
@@ -309,7 +314,7 @@ definitions:
     type: object
   models.CommentReactions:
     properties:
-      reactions:
+      reactions_amount:
         additionalProperties:
           format: int64
           type: integer
@@ -1030,6 +1035,46 @@ paths:
       summary: Get user profile
       tags:
       - profile
+  /reactions/:id:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: ID of the comment
+        in: query
+        name: comment_id
+        required: true
+        type: integer
+      - description: Input
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/inputs.SetReactionInput'
+      - description: access token for user is used to check your reaction, is not
+          required
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: integer
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/errors.PublicPCCError'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/errors.PublicPCCError'
+      summary: Add, change or delete reaction from a comment
+      tags:
+      - reactions
   /users/login:
     post:
       consumes:

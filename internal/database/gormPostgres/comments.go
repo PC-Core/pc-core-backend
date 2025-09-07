@@ -8,6 +8,7 @@ import (
 	"github.com/PC-Core/pc-core-backend/pkg/models"
 	"github.com/PC-Core/pc-core-backend/pkg/models/inputs"
 	"github.com/lib/pq"
+	"gorm.io/gorm"
 )
 
 type TargetCommentGroup string
@@ -61,7 +62,7 @@ func (*GormPostgresController) getCommentReactions(dbreactions []DbCommentReacti
 		}
 	}
 
-	return models.CommentReactions{Reactions: reactions, YourReaction: yourReaction}
+	return models.CommentReactions{ReactionsAmount: reactions, YourReaction: yourReaction}
 }
 
 func (c *GormPostgresController) LoadMediasForComment(mediaIDs []int64) (DbMedias, errors.PCCError) {
@@ -246,6 +247,57 @@ func (c *GormPostgresController) DeleteComment(commentID int64, userID int64) (i
 	comment.Deleted = true
 
 	err = c.db.Save(&comment).Error
+
+	if err != nil {
+		return -1, gormerrors.GormErrorCast(err)
+	}
+
+	return commentID, nil
+}
+
+func (c *GormPostgresController) CreateReaction(commentID int64, userID int64, ty models.ReactionType) errors.PCCError {
+	reaction := DbCommentReaction{
+		UserID:    userID,
+		CommentID: commentID,
+		Type:      ty,
+	}
+
+	err := c.db.Create(&reaction).Error
+
+	if err != nil {
+		return gormerrors.GormErrorCast(err)
+	}
+
+	return nil
+}
+
+func (c *GormPostgresController) DeleteReaction(existing *DbCommentReaction) errors.PCCError {
+	err := c.db.Delete(existing).Error
+
+	if err != nil {
+		return gormerrors.GormErrorCast(err)
+	}
+
+	return nil
+}
+
+func (c *GormPostgresController) SetReaction(commentID int64, userID int64, ty models.ReactionType) (int64, errors.PCCError) {
+
+	var existing DbCommentReaction
+
+	err := c.db.First(&existing, "comment_id = ? AND user_id = ?", &commentID, &userID).Error
+
+	if err == gorm.ErrRecordNotFound {
+		return commentID, c.CreateReaction(commentID, userID, ty)
+	}
+
+	if existing.Type == ty {
+		return commentID, c.DeleteReaction(&existing)
+	}
+
+	existing.Type = ty
+
+	err = c.db.Save(&existing).Error
 
 	if err != nil {
 		return -1, gormerrors.GormErrorCast(err)

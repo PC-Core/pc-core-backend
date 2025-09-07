@@ -830,6 +830,65 @@ const docTemplate = `{
                 }
             }
         },
+        "/reactions/:id": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "reactions"
+                ],
+                "summary": "Add, change or delete reaction from a comment",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID of the comment",
+                        "name": "comment_id",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "description": "Input",
+                        "name": "input",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/inputs.SetReactionInput"
+                        }
+                    },
+                    {
+                        "type": "string",
+                        "description": "access token for user is used to check your reaction, is not required",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/errors.PublicPCCError"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/errors.PublicPCCError"
+                        }
+                    }
+                }
+            }
+        },
         "/users/login": {
             "post": {
                 "consumes": [
@@ -1254,6 +1313,14 @@ const docTemplate = `{
                 }
             }
         },
+        "inputs.SetReactionInput": {
+            "type": "object",
+            "properties": {
+                "type": {
+                    "$ref": "#/definitions/models.ReactionType"
+                }
+            }
+        },
         "models.Cart": {
             "type": "object",
             "properties": {
@@ -1357,7 +1424,7 @@ const docTemplate = `{
         "models.CommentReactions": {
             "type": "object",
             "properties": {
-                "reactions": {
+                "reactions_amount": {
                     "type": "object",
                     "additionalProperties": {
                         "type": "integer",

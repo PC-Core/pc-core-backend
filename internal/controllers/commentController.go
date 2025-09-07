@@ -8,7 +8,6 @@ import (
 	"github.com/PC-Core/pc-core-backend/internal/database"
 	"github.com/PC-Core/pc-core-backend/internal/errors"
 	"github.com/PC-Core/pc-core-backend/internal/helpers"
-	"github.com/PC-Core/pc-core-backend/pkg/models"
 	"github.com/PC-Core/pc-core-backend/pkg/models/inputs"
 	"github.com/gin-gonic/gin"
 )
@@ -40,39 +39,6 @@ func (c *CommentController) ApplyRoutes() {
 	}
 }
 
-func (c *CommentController) GetNotRequiredUserID(ctx *gin.Context) *int64 {
-	var userID *int64 = nil
-
-	userData, exists := ctx.Get(helpers.UserDataKey)
-
-	if exists {
-		data, err := c.pucaster(userData)
-
-		if err == nil && data.Role != models.Temporary {
-			i := int64(data.ID)
-			userID = &i
-		}
-	}
-
-	return userID
-}
-
-func (c *CommentController) GetPubUser(ctx *gin.Context) (*models.PublicUser, errors.PCCError) {
-	userdata, exists := ctx.Get(helpers.UserDataKey)
-
-	if !exists {
-		return nil, conerrors.GetUserDataFromContextError()
-	}
-
-	pu, err := c.pucaster(userdata)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return pu, err
-}
-
 // Get root comments
 // @Summary      Get root comments
 // @Tags         comments
@@ -92,7 +58,7 @@ func (c *CommentController) getRootComments(ctx *gin.Context) {
 		return
 	}
 
-	userID := c.GetNotRequiredUserID(ctx)
+	userID := GetNotRequiredUserID(ctx, c.pucaster)
 
 	comments, perr := c.db.GetRootCommentsForProduct(int64(id), userID)
 
@@ -130,7 +96,7 @@ func (c *CommentController) getAnswers(ctx *gin.Context) {
 		return
 	}
 
-	userID := c.GetNotRequiredUserID(ctx)
+	userID := GetNotRequiredUserID(ctx, c.pucaster)
 
 	ans, perr := c.db.GetAnswersOnComment(input.ProductID, userID, int64(id))
 
@@ -161,7 +127,7 @@ func (c *CommentController) addComment(ctx *gin.Context) {
 		return
 	}
 
-	data, perr := c.GetPubUser(ctx)
+	data, perr := GetPubUser(ctx, c.pucaster)
 
 	if CheckErrorAndWriteUnauthorized(ctx, perr) {
 		return

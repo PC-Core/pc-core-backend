@@ -248,8 +248,8 @@ func (DbComment) TableName() string {
 }
 
 type DbCommentReaction struct {
-	UserID    int64               `gorm:"column:user_id"`
-	CommentID int64               `gorm:"column:comment_id"`
+	UserID    int64               `gorm:"column:user_id;primaryKey"`
+	CommentID int64               `gorm:"column:comment_id;primaryKey"`
 	Type      models.ReactionType `gorm:"column:ty"`
 	AddedAt   time.Time           `gorm:"column:added_at"`
 }

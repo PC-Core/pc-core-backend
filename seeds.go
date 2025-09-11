@@ -359,10 +359,13 @@ func InsertMedias(db *sql.DB, minioConfig MinIOConfig, laptopIDs []uint64) {
 		task := mediaTasks[i]
 		if result.Success {
 			// Сохраняем MinIO URL в базу
-			minioURL := fmt.Sprintf("https://%s/%s/%s", minioConfig.Endpoint, minioConfig.Bucket, task.ObjectName)
+			path := fmt.Sprintf("%s/%s", minioConfig.Bucket, task.ObjectName)
+			minioURL := fmt.Sprintf("https://%s/%s", minioConfig.Endpoint, path)
+
+			id := laptopIDs[task.ProductID-1]
 
 			_, err := db.Exec("INSERT INTO Medias (url, type, product_id) VALUES ($1, $2, $3)",
-				minioURL, task.Type, task.ProductID)
+				path, task.Type, id)
 
 			if err != nil {
 				log.Printf("Ошибка сохранения медиа в базу: %v", err)
@@ -732,37 +735,7 @@ func main() {
 		SEED_TYPE_LAPTOP:   InsertLaptops,
 		SEED_TYPE_CATEGORY: func(db *sql.DB, config MinIOConfig) { InsertCategories(db) },
 		SEED_TYPE_MEDIA: func(db *sql.DB, config MinIOConfig) {
-			mediaTasks, err := ReadMediaTasksFromFile("media_urls.txt")
-			if err != nil {
-				log.Fatalf("Ошибка чтения файла с медиа: %v", err)
-			}
 
-			downloader, err := NewBatchMediaDownloader(config, 5)
-			if err != nil {
-				log.Fatalf("Ошибка создания загрузчика: %v", err)
-			}
-
-			fmt.Println("Created downloader")
-
-			ctx := context.Background()
-			results := downloader.DownloadAndUploadMedia(ctx, mediaTasks)
-
-			for i, result := range results {
-				fmt.Println(result)
-				task := mediaTasks[i]
-				if result.Success {
-					minioURL := fmt.Sprintf("https://%s/%s/%s", config.Endpoint, config.Bucket, task.ObjectName)
-					_, err := db.Exec("INSERT INTO Medias (url, type, product_id) VALUES ($1, $2, $3)",
-						minioURL, task.Type, task.ProductID)
-					if err != nil {
-						log.Printf("Ошибка сохранения в базу: %v", err)
-					} else {
-						log.Printf("Успешно загружено: %s -> %s", task.URL, minioURL)
-					}
-				} else {
-					log.Printf("Ошибка загрузки %s: %v", task.URL, result.Error)
-				}
-			}
 		},
 		SEED_ALL:  InsertAll,
 		CLEAR_ALL: func(db *sql.DB, config MinIOConfig) { Clear(db) },

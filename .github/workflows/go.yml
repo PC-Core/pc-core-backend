@@ -1,0 +1,48 @@
+name: Go
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: '1.22.6'
+
+    - name: Build
+      run: go build -o pccore ./cmd/pccore/main.go
+
+    - name: Copy compiled file
+      uses: appleboy/scp-action@v0.1.7
+      with: 
+        host: ${{ secrets.SERVER_IP }}
+        username: ${{ secrets.SERVER_USER }}
+        key: ${{ secrets.SERVER_SSH_KEY }}
+        source: "pccore"
+        target: "/pccore-backend"
+
+    - name: Copy migrations
+      uses: appleboy/scp-action@v0.1.7
+      with: 
+        host: ${{ secrets.SERVER_IP }}
+        username: ${{ secrets.SERVER_USER }}
+        key: ${{ secrets.SERVER_SSH_KEY }}
+        source: "sql/migrations/*"
+        target: "/pccore-backend/migrations"
+
+    - name: Deploy
+      uses: appleboy/ssh-action@v1.0.3
+      with: 
+        host: ${{ secrets.SERVER_IP }}
+        username: ${{ secrets.SERVER_USER }}
+        key: ${{ secrets.SERVER_SSH_KEY }}
+        script: "systemctl restart pccore.service"
+

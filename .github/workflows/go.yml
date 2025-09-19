@@ -25,7 +25,7 @@ jobs:
       with: 
         host: ${{ secrets.SERVER_IP }}
         username: ${{ secrets.SERVER_USER }}
-        key: ${{ secrets.SERVER_SSH_KEY }}
+        password: ${{ secrets.SERVER_SSH_KEY }}
         source: "pccore"
         target: "/pccore-backend"
 
@@ -43,6 +43,6 @@ jobs:
       with: 
         host: ${{ secrets.SERVER_IP }}
         username: ${{ secrets.SERVER_USER }}
-        key: ${{ secrets.SERVER_SSH_KEY }}
+        password: ${{ secrets.SERVER_SSH_KEY }}
         script: "systemctl restart pccore.service"
 

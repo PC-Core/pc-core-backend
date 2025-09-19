@@ -52,14 +52,24 @@ type DPostgresDbController struct {
 	db *sql.DB
 }
 
-func NewDbController(driver string, conn string) (*DbController, error) {
+// Creates a new Database Controller
+//
+// Params:
+//
+//	`driver` - the name of the database driver
+//	`conn` - the connection string to the database
+//
+// Returns:
+//
+//	`*DbController` or `error`
+func NewDPostgresDbController(driver string, conn string) (*DPostgresDbController, error) {
 	db, err := sql.Open(driver, conn)
 
 	if err != nil {
 		return nil, err
 	}
 
-	return &DbController{
+	return &DPostgresDbController{
 		db,
 	}, nil
 }

@@ -43,6 +43,7 @@ type DbController interface {
 	AddComment(input *inputs.AddCommentInput, userID int64, product_id int64) (int64, errors.PCCError)
 	EditComment(newText string, commentID int64, userID int64) (int64, errors.PCCError)
 	DeleteComment(commentID int64, userID int64) (int64, errors.PCCError)
+	GetGpus() ([]models.Gpu, error)
 	SetReaction(commentID int64, userID int64, ty models.ReactionType) (int64, errors.PCCError)
 }
 

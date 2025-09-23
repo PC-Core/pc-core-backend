@@ -195,7 +195,7 @@ type DbLaptopChars struct {
 	CpuID uint64     `gorm:"column:cpu_id"`
 	Cpu   DbCpuChars `gorm:"foreignKey:CpuID"`
 	Ram   int16      `gorm:"column:ram"`
-	Gpu   string     `gorm:"column:gpu"`
+	GpuID uint64     `gorm:"column:gpu_id"`
 }
 
 func (DbLaptopChars) TableName() string {
@@ -203,11 +203,13 @@ func (DbLaptopChars) TableName() string {
 }
 
 func (c *DbLaptopChars) IntoLaptopChars() *models.LaptopChars {
+	gpu := &models.Gpu{ID: int(c.GpuID)}
+
 	return models.NewLaptopChars(
 		c.ID,
 		c.Cpu.IntoCpuChars(),
 		c.Ram,
-		c.Gpu,
+		gpu,
 	)
 }
 

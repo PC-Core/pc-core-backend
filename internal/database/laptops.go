@@ -13,7 +13,7 @@ func (c *DPostgresDbController) GetLaptopChars(charId uint64) (*models.LaptopCha
 	var (
 		id  uint64
 		ram int16
-		gpu string
+		gpu models.Gpu
 		cpu models.CpuChars
 	)
 
@@ -26,13 +26,14 @@ func (c *DPostgresDbController) GetLaptopChars(charId uint64) (*models.LaptopCha
 
 	row := c.db.QueryRow(query, charId)
 
-	err := row.Scan(&id, &cpu.ID, &cpu.Name, &cpu.PCores, &cpu.ECores, &cpu.Threads, &cpu.BasePFreqMHz, &cpu.MaxPFreqMHz, &cpu.BaseEFreqMHz, &cpu.MaxEFreqMHz, &cpu.Socket, &cpu.L1KB, &cpu.L2KB, &cpu.L3KB, &cpu.TecProcNM, &cpu.TDPWatt, &cpu.ReleaseYear, &gpu, &ram)
+	err := row.Scan(&id, &cpu.ID, &cpu.Name, &cpu.PCores, &cpu.ECores, &cpu.Threads, &cpu.BasePFreqMHz, &cpu.MaxPFreqMHz, &cpu.BaseEFreqMHz, &cpu.MaxEFreqMHz, &cpu.Socket, &cpu.L1KB, &cpu.L2KB, &cpu.L3KB, &cpu.TecProcNM, &cpu.TDPWatt, &cpu.ReleaseYear,
+		&gpu, &gpu.BaseFreqMHz, &gpu.BoostFreqMHz, &gpu.BusWidthBit, &gpu.ID, &gpu.MemoryGB, &gpu.MemoryType, &gpu.Name, &gpu.RealeseYear, &gpu.TDPWatt, &gpu.TecprocNm, &ram)
 
 	if err != nil {
 		return nil, dberrors.PQDbErrorCaster(c.db, err)
 	}
 
-	return models.NewLaptopChars(id, &cpu, ram, gpu), nil
+	return models.NewLaptopChars(id, &cpu, ram, &gpu), nil
 }
 
 func (c *DPostgresDbController) AddLaptop(laptop *inputs.AddLaptopInput) (*models.Product, *models.LaptopChars, errors.PCCError) {
@@ -49,7 +50,7 @@ func (c *DPostgresDbController) AddLaptop(laptop *inputs.AddLaptopInput) (*model
 
 	defer tx.Rollback()
 
-	err = tx.QueryRow(fmt.Sprintf("INSERT INTO %s (cpu_id, ram, gpu) VALUES ($1, $2, $3) returning id", LaptopCharsTable), laptop.CpuID, laptop.Ram, laptop.Gpu).Scan(&charId)
+	err = tx.QueryRow(fmt.Sprintf("INSERT INTO %s (cpu_id, ram, gpu) VALUES ($1, $2, $3) returning id", LaptopCharsTable), laptop.CpuID, laptop.Ram, laptop.GpuID).Scan(&charId)
 
 	if err != nil {
 		return nil, nil, dberrors.PQDbErrorCaster(c.db, err)
@@ -66,12 +67,16 @@ func (c *DPostgresDbController) AddLaptop(laptop *inputs.AddLaptopInput) (*model
 	}
 
 	cpu, cerr := c.GetCpuChars(laptop.CpuID)
-
 	if cerr != nil {
 		return nil, nil, cerr
 	}
 
+	gpu, gerr := c.GetGpuByID(laptop.GpuID)
+	if gerr != nil { 
+		return nil, nil, gerr
+	}
+
 	return models.NewProduct(productId, laptop.Name, laptop.Price, 0, laptop.Stock, medias, LaptopCharsTable, charId),
-		models.NewLaptopChars(charId, cpu, laptop.Ram, laptop.Gpu),
+		models.NewLaptopChars(charId, cpu, laptop.Ram, gpu),
 		nil
 }

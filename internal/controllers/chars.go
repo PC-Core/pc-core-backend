@@ -12,17 +12,34 @@ func GetRestCharsObject(chars database.ProductChars) (*outputs.RestCharsObject, 
 
 	if lc, ok := chars.(*models.LaptopChars); ok {
 
-		cpuChars, err := GetRestCharsObject(lc.Cpu)
+		cpuChars, cerr := GetRestCharsObject(lc.Cpu)
+		gpuChars, gerr := GetRestCharsObject(lc.Gpu)
 
-		if err != nil {
-			return nil, err
+		if cerr != nil {
+			return nil, cerr
+		}
+
+		if gerr != nil {
+			return nil, gerr
 		}
 
 		cc = append(cc, cpuChars.Components...)
-		cc = append(cc, outputs.RestCharsComponent{Type: "gpu", Values: []models.CharsDescription{{Title: "Name", Key: "gpu"}}, Info: map[string]string{"gpu": lc.Gpu}})
+		cc = append(cc, gpuChars.Components...)
 		cc = append(cc, outputs.RestCharsComponent{Type: "ram", Values: []models.CharsDescription{{Title: "Capacity", Key: "cap"}}, Info: map[string]int16{"cap": lc.Ram}})
 
 		return outputs.NewRestCharsObject(lc.ID, cc), nil
+	}
+
+	if gchars, gok := chars.(*models.Gpu); gok {
+		gpuInfo, gerr := GetCharsDescription(gchars)
+
+		if gerr != nil {
+			return nil, gerr
+		}
+
+		cc = append(cc, outputs.RestCharsComponent{Type: "gpu", Values: gpuInfo, Info: gchars})
+
+		return outputs.NewRestCharsObject(uint64(gchars.ID), cc), nil
 	}
 
 	if chars, ok := chars.(*models.CpuChars); ok {

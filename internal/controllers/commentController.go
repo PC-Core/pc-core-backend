@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -46,7 +47,7 @@ func (c *CommentController) ApplyRoutes() {
 // @Produce      json
 // @Param 		 product_id 	query	int								true	"ID of the product"
 // @Param		 Authorization  header	string							false	"access token for user is used to check your reaction, is not required"
-// @Param		 input			form	inputs.GetRootCommentsInput		true	"input"
+// @Param		 input			query	inputs.GetRootCommentsInput		true	"input"
 // @Success      200  {object}  outputs.CommentsOutput
 // @Failure      400  {object}  errors.PublicPCCError
 // @Router       /comment/product/:id [get]
@@ -66,6 +67,8 @@ func (c *CommentController) getRootComments(ctx *gin.Context) {
 	}
 
 	userID := GetNotRequiredUserID(ctx, c.pucaster)
+
+	fmt.Printf("limit: %d, offset: %d\n", input.Limit, input.Offset)
 
 	comments, perr := c.db.GetRootCommentsForProduct(int64(id), userID, input.Limit, input.Offset)
 

@@ -1,7 +1,6 @@
 package gormpostgres
 
 import (
-	"fmt"
 	"time"
 
 	gormerrors "github.com/PC-Core/pc-core-backend/internal/database/gormPostgres/gormErrors"
@@ -98,20 +97,42 @@ func getFiltersForCommentGroup(group TargetCommentGroup) string {
 	}
 }
 
-func (c *GormPostgresController) getCommentsCount(product_id int64, parent_id *int64) (int64, errors.PCCError) {
+func (c *GormPostgresController) getAnswersCount(product_id int64, parent_id int64) (int64, errors.PCCError) {
 	var count int64
 
-	var addictionalFilter = ""
+	cte := `
+WITH RECURSIVE comment_tree AS (
+    SELECT id, answer_on
+    FROM comments
+    WHERE answer_on = ?
 
-	if parent_id != nil {
-		addictionalFilter = fmt.Sprintf("AND answer_on = %d", *parent_id)
-	} else {
-		addictionalFilter = "AND answer_on IS NULL"
+    UNION ALL
+
+    SELECT c.id, c.answer_on
+    FROM comments c
+    INNER JOIN comment_tree ct ON c.answer_on = ct.id
+)
+SELECT COUNT(*) FROM comment_tree;
+`
+
+	err := c.db.Raw(cte, parent_id).Scan(&count).Error
+	if err != nil {
+		return -1, gormerrors.GormErrorCast(err)
 	}
 
-	err := c.db.Model(&DbComment{}).Count(&count).Where("product_id = ? "+addictionalFilter, product_id).Error
+	return count, nil
+}
 
-	return count, gormerrors.GormErrorCast(err)
+func (c *GormPostgresController) getRootCommentsCount(product_id int64) (int64, errors.PCCError) {
+	var count int64
+
+	err := c.db.Model(&DbComment{}).Where("product_id = ? AND answer_on IS NULL", product_id).Count(&count).Error
+
+	if err != nil {
+		return -1, gormerrors.GormErrorCast(err)
+	}
+
+	return count, nil
 }
 
 func (c *GormPostgresController) loadComments(product_id int64, userID *int64, target TargetCommentGroup, limit int, offset int, parent_id *int64) (*LoadedComments, errors.PCCError) {
@@ -121,13 +142,22 @@ func (c *GormPostgresController) loadComments(product_id int64, userID *int64, t
 	result := make([]models.Comment, 0)
 	commentReactions := make(map[int64]models.CommentReactions)
 
-	err := c.db.Preload("User").Preload("Product").Order("created_at DESC").Offset(offset).Limit(limit).Where("product_id = ?"+filter, product_id).Find(&comments).Error
+	err := c.db.Preload("User").Preload("Product").Order("created_at DESC").Limit(limit).Offset(offset).Where("product_id = ?"+filter, product_id).Find(&comments).Error
 
 	if err != nil {
 		return nil, gormerrors.GormErrorCast(err)
 	}
 
-	count, perr := c.getCommentsCount(product_id, parent_id)
+	var (
+		count int64
+		perr  errors.PCCError
+	)
+
+	if parent_id == nil {
+		count, perr = c.getRootCommentsCount(product_id)
+	} else {
+		count, perr = c.getAnswersCount(product_id, *parent_id)
+	}
 
 	if perr != nil {
 		return nil, perr
@@ -158,7 +188,12 @@ func (c *GormPostgresController) loadComments(product_id int64, userID *int64, t
 }
 
 func (c *GormPostgresController) GetRootCommentsForProduct(product_id int64, userID *int64, limit int, offset int) (*outputs.CommentsOutput, errors.PCCError) {
-	result, err := c.loadComments(product_id, userID, TCG_ALL, limit, offset, nil)
+	result, err := c.loadComments(product_id, userID, TCG_ROOT, limit, offset, nil)
+
+	if err != nil {
+		return nil, err
+	}
+
 	return &outputs.CommentsOutput{
 		Comments:           result.Comments,
 		TotalCommentsCount: result.TotalCount,

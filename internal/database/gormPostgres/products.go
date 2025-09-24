@@ -67,6 +67,8 @@ func (c *GormPostgresController) GetProductCharsByProductID(productId uint64) (d
 		return c.GetLaptopChars(p.CharId)
 	case database.CpuCharsTable:
 		return c.GetCpuChars(p.CharId)
+	case database.GpuCharsTable:
+		return c.GetGpuByID(p.CharId)
 	default:
 		return nil, gormerrors.GormErrorCast(err)
 	}

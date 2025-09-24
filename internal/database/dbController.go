@@ -11,6 +11,7 @@ import (
 const (
 	LaptopCharsTable = "LaptopChars"
 	CpuCharsTable    = "CpuChars"
+	GpuCharsTable    = "GpuChars"
 )
 
 // An interface for Product Characterics

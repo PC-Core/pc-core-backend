@@ -259,3 +259,20 @@ type DbCommentReaction struct {
 func (DbCommentReaction) TableName() string {
 	return "commentreactions"
 }
+
+type DbGpu struct {
+	ID           uint64 `gorm:"column:id;primaryKey"`
+	Name         string `gorm:"column:name"`
+	MemoryGB     int    `gorm:"column:memory_gb"`
+	MemoryType   string `gorm:"column:memory_type"`
+	BusWidthBit  int    `gorm:"column:bus_width_bit"`
+	BaseFreqMHz  int    `gorm:"column:base_freq_mhz"`
+	BoostFreqMHz int    `gorm:"column:boost_freq_mhz"`
+	TecprocNm    int    `gorm:"column:tecproc_nm"`
+	TDPWatt      int    `gorm:"column:tdp_watt"`
+	ReleaseYear  int    `gorm:"column:release_year"`
+}
+
+func (DbGpu) TableName() string {
+	return "GpuChars"
+}

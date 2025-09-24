@@ -416,10 +416,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/models.Comment"
-                            }
+                            "$ref": "#/definitions/outputs.CommentsOutput"
                         }
                     },
                     "400": {
@@ -456,16 +453,24 @@ const docTemplate = `{
                         "description": "access token for user is used to check your reaction, is not required",
                         "name": "Authorization",
                         "in": "header"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "limit",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "name": "offset",
+                        "in": "query"
                     }
                 ],
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/models.Comment"
-                            }
+                            "$ref": "#/definitions/outputs.CommentsOutput"
                         }
                     },
                     "400": {
@@ -1259,7 +1264,16 @@ const docTemplate = `{
         },
         "inputs.GetAnswersInput": {
             "type": "object",
+            "required": [
+                "limit"
+            ],
             "properties": {
+                "limit": {
+                    "type": "integer"
+                },
+                "offset": {
+                    "type": "integer"
+                },
                 "product_id": {
                     "type": "integer"
                 }
@@ -1605,6 +1619,20 @@ const docTemplate = `{
                 "Default",
                 "Admin"
             ]
+        },
+        "outputs.CommentsOutput": {
+            "type": "object",
+            "properties": {
+                "comments": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.Comment"
+                    }
+                },
+                "total_comments_count": {
+                    "type": "integer"
+                }
+            }
         },
         "outputs.GetProductsResult": {
             "type": "object",

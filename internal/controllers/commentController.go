@@ -87,7 +87,7 @@ func (c *CommentController) getRootComments(ctx *gin.Context) {
 // @Param 		 comment_id 	query	int						true	"ID of the comment"
 // @param		 input			body	inputs.GetAnswersInput	true	"Input"
 // @Param		 Authorization  header	string					false	"access token for user is used to check your reaction, is not required"
-// @Success      200  {object}  	*outputs.CommentsOutput
+// @Success      200  {object}  outputs.CommentsOutput
 // @Failure      400  {object}  errors.PublicPCCError
 // @Router       /comment/parent/:id [get]
 func (c *CommentController) getAnswers(ctx *gin.Context) {

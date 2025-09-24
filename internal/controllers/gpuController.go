@@ -1,19 +1,51 @@
 package controllers
 
 import (
+	"net/http"
+
 	"github.com/PC-Core/pc-core-backend/internal/database"
+	"github.com/PC-Core/pc-core-backend/internal/helpers"
+	"github.com/PC-Core/pc-core-backend/internal/middlewares"
+	"github.com/PC-Core/pc-core-backend/pkg/models"
+	"github.com/PC-Core/pc-core-backend/pkg/models/inputs"
 	"github.com/gin-gonic/gin"
 )
 
-type dbController struct {
-	DB database.DbController
+type GpuController struct {
+	engine          *gin.Engine
+	db              database.DbController
+	auth_middleware gin.HandlerFunc
+	caster          helpers.RoleCastFunc
 }
 
-func (c *dbController) GetGpus(ctx *gin.Context) {
-	gpus, err := c.DB.GetGpus()
-	if err != nil {
-		ctx.JSON(500, gin.H{"error": err.Error()})
+func NewGpuController(engine *gin.Engine, db database.DbController, auth_middleware gin.HandlerFunc, caster helpers.RoleCastFunc) *GpuController {
+	return &GpuController{
+		engine, db, auth_middleware, caster,
+	}
+}
+
+func (c *GpuController) ApplyRoutes() {
+	c.engine.POST("/gpus/add", c.auth_middleware, middlewares.RoleCheck(models.Admin, c.db, c.caster), c.addGpu)
+}
+
+func (c *GpuController) addGpu(ctx *gin.Context) {
+	var input inputs.AddGpuInput
+
+	if err := ctx.ShouldBindBodyWithJSON(&input); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
+		})
 		return
 	}
-	ctx.JSON(200, gpus)
+
+	product, gpus, err := c.db.AddGpu(&input)
+
+	if CheckErrorAndWriteBadRequest(ctx, err){
+		return
+	}
+
+	ctx.JSON(http.StatusCreated, gin.H{
+		"Product": product,
+		"Gpu": gpus,
+	})
 }

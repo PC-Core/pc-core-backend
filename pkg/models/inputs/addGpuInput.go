@@ -1,6 +1,6 @@
-package models
+package inputs
 
-type Gpu struct {
+type AddGpuInput struct {
 	ID           int    `json:"id"`
 	Name         string `json:"name"`
 	MemoryGB     int    `json:"memory_bg"`

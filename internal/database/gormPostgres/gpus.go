@@ -9,10 +9,10 @@ import (
 	"gorm.io/gorm"
 )
 
-func (c *GormPostgresController) GetGpuChars() ([]models.Gpu, errors.PCCError) {
-	var gpus []models.Gpu
+func (c *GormPostgresController) GetGpuChars() ([]models.GpuChars, errors.PCCError) {
+	var gpus []models.GpuChars
 
-	err := c.db.Model(&models.Gpu{}).Find(&gpus).Error
+	err := c.db.Model(&models.GpuChars{}).Find(&gpus).Error
 	if err != nil {
 		return nil, gormerrors.GormErrorCast(err)
 	}
@@ -20,10 +20,10 @@ func (c *GormPostgresController) GetGpuChars() ([]models.Gpu, errors.PCCError) {
 	return gpus, nil
 }
 
-func (c *GormPostgresController) GetGpuByID(id uint64) (*models.Gpu, errors.PCCError) {
-	var gpu models.Gpu
+func (c *GormPostgresController) GetGpuByID(id uint64) (*models.GpuChars, errors.PCCError) {
+	var gpu DbGpuChars
 
-	err := c.db.Model(&models.Gpu{}).Where("id = ?", id).First(&gpu).Error
+	err := c.db.Model(&DbGpuChars{}).Where("id = ?", id).First(&gpu).Error
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return nil, nil
@@ -31,7 +31,7 @@ func (c *GormPostgresController) GetGpuByID(id uint64) (*models.Gpu, errors.PCCE
 		return nil, gormerrors.GormErrorCast(err)
 	}
 
-	return &gpu, nil
+	return gpu.IntoGpu(), nil
 }
 
 func (c *GormPostgresController) AddGpu(gpu *inputs.AddGpuInput) (*models.GpuChars, *models.Product, errors.PCCError) {
@@ -56,7 +56,7 @@ func (c *GormPostgresController) AddGpu(gpu *inputs.AddGpuInput) (*models.GpuCha
 		ReleaseYear:  gpu.RealeseYear,
 	}
 
-	err := tx.Create(chars).Error
+	err := tx.Create(&chars).Error
 
 	if err != nil {
 		return nil, nil, gormerrors.GormErrorCast(err)

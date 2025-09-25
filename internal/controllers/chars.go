@@ -30,7 +30,7 @@ func GetRestCharsObject(chars database.ProductChars) (*outputs.RestCharsObject, 
 		return outputs.NewRestCharsObject(lc.ID, cc), nil
 	}
 
-	if gchars, gok := chars.(*models.Gpu); gok {
+	if gchars, gok := chars.(*models.GpuChars); gok {
 		gpuInfo, gerr := GetCharsDescription(gchars)
 
 		if gerr != nil {

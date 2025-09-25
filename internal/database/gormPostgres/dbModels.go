@@ -203,7 +203,7 @@ func (DbLaptopChars) TableName() string {
 }
 
 func (c *DbLaptopChars) IntoLaptopChars() *models.LaptopChars {
-	gpu := &models.Gpu{ID: int(c.GpuID)}
+	gpu := &models.GpuChars{ID: c.GpuID}
 
 	return models.NewLaptopChars(
 		c.ID,
@@ -289,5 +289,5 @@ func (chars *DbGpuChars) IntoGpu() *models.GpuChars {
 }
 
 func (DbGpuChars) TableName() string {
-	return "GpuChars"
+	return "gpuchars"
 }

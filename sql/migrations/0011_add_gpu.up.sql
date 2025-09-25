@@ -1,5 +1,5 @@
 CREATE TABLE IF NOT EXISTS GpuChars(
-  id integer GENERATE ALWAYS AS IDENTITY PRIMARY KEY,
+  id integer GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
   name text NOT NULL,
   memory_gb integer NOT NULL,
   memory_type text NOT NULL,
@@ -13,5 +13,4 @@ CREATE TABLE IF NOT EXISTS GpuChars(
 
 ALTER TABLE LaptopChars ADD COLUMN gpu_id integer REFERENCES GpuChars(id);
 INSERT INTO Categories (title, description, icon, slug) 
-VALUES ('GPU', 'Графические процессоры', 'gpu-icon', 'gpu', 'Видеокарта')
-ON CONFLICT (slug) DO NOTHING;
+VALUES ('GPU', 'Графические процессоры', 'gpu-icon', 'gpu')

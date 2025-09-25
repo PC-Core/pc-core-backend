@@ -12,3 +12,4 @@ type Gpu struct {
 	TDPWatt      int    `json:"tdp_watt"`
 	RealeseYear  int    `json:"realese_year"`
 }
+

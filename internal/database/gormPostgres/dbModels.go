@@ -260,7 +260,7 @@ func (DbCommentReaction) TableName() string {
 	return "commentreactions"
 }
 
-type DbGpu struct {
+type DbGpuChars struct {
 	ID           uint64 `gorm:"column:id;primaryKey"`
 	Name         string `gorm:"column:name"`
 	MemoryGB     int    `gorm:"column:memory_gb"`
@@ -273,6 +273,21 @@ type DbGpu struct {
 	ReleaseYear  int    `gorm:"column:release_year"`
 }
 
-func (DbGpu) TableName() string {
+func (chars *DbGpuChars) IntoGpu() *models.GpuChars {
+	return models.NewGpuChars(
+		chars.ID,
+		chars.Name,
+		chars.MemoryType,
+		uint64(chars.MemoryGB),     // конвертация int -> uint64
+		uint64(chars.BusWidthBit),  // конвертация int -> uint64
+		uint64(chars.BaseFreqMHz),  // конвертация int -> uint64
+		uint64(chars.BoostFreqMHz), // конвертация int -> uint64
+		uint64(chars.TecprocNm),    // конвертация int -> uint64
+		uint64(chars.TDPWatt),      // конвертация int -> uint64
+		uint64(chars.ReleaseYear),
+	)
+}
+
+func (DbGpuChars) TableName() string {
 	return "GpuChars"
 }

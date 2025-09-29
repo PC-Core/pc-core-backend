@@ -378,6 +378,49 @@ func InsertMedias(db *sql.DB, minioConfig MinIOConfig, laptopIDs []uint64) {
 	}
 }
 
+func InsertGpus(db *sql.DB) {
+	gpuss := []models.GpuChars{
+		{
+			Name:         "RTX 4090",
+			MemoryGB:     1,
+			MemoryType:   "GDDR6X",
+			BusWidthBit:  2,
+			BaseFreqMHz:  321,
+			BoostFreqMHz: 72436,
+			TecprocNm:    5,
+			TDPWatt:      1000,
+			RealeseYear:  2090,
+		},
+	}
+
+	idg := make([]uint64, 0, len(gpuss))
+
+	for _, gpu := range gpuss {
+		var (
+			chargId uint64
+		)
+		err := db.QueryRow(fmt.Sprintf("INSERT INTO %s (name, memory_gb, memory_type, bus_width_bit, base_freq_mhz, boost_freq_mhz, tecprocNM, TDPWatt, realese_year) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) returning id", "GpuChars"), gpu.Name, gpu.MemoryGB, gpu.MemoryType, gpu.BusWidthBit, gpu.BaseFreqMHz, gpu.BoostFreqMHz, gpu.TecprocNm, gpu.TDPWatt, gpu.RealeseYear).Scan(&chargId)
+
+		if err != nil {
+			panic(err)
+		}
+
+		idg = append(idg, chargId)
+	}
+
+	// gpus := []struct {
+	// 	Name   string
+	// 	Price  float64
+	// 	Selled uint64
+	// 	Stock  uint64
+	// 	CpuID  uint64
+	// 	Ram    int16
+	// 	Gpu    string
+	// }{
+	// 	//че сюда писать???
+	// }
+}
+
 func InsertLaptops(db *sql.DB, minioConfig MinIOConfig) {
 	cpus := []models.CpuChars{
 		{

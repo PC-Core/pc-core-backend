@@ -392,6 +392,83 @@ func InsertGpus(db *sql.DB) []uint64 {
 			TDPWatt:      1000,
 			RealeseYear:  2090,
 		},
+		{
+			Name:         "Apple M3 Max",
+			MemoryGB:     1,
+			MemoryType:   "GDDR6X",
+			BusWidthBit:  2,
+			BaseFreqMHz:  321,
+			BoostFreqMHz: 72436,
+			TecprocNm:    5,
+			TDPWatt:      1000,
+			RealeseYear:  2090,
+		},
+		{
+			Name:         "Apple M3",
+			MemoryGB:     1,
+			MemoryType:   "GDDR6X",
+			BusWidthBit:  2,
+			BaseFreqMHz:  321,
+			BoostFreqMHz: 72436,
+			TecprocNm:    5,
+			TDPWatt:      1000,
+			RealeseYear:  2090,
+		},
+		{
+			Name:         "RTX 4080",
+			MemoryGB:     1,
+			MemoryType:   "GDDR6X",
+			BusWidthBit:  2,
+			BaseFreqMHz:  321,
+			BoostFreqMHz: 72436,
+			TecprocNm:    5,
+			TDPWatt:      1000,
+			RealeseYear:  2090,
+		},
+		{
+			Name:         "RTX 4070",
+			MemoryGB:     1,
+			MemoryType:   "GDDR6X",
+			BusWidthBit:  2,
+			BaseFreqMHz:  321,
+			BoostFreqMHz: 72436,
+			TecprocNm:    5,
+			TDPWatt:      1000,
+			RealeseYear:  2090,
+		},
+		{
+			Name:         "RTX 4060",
+			MemoryGB:     1,
+			MemoryType:   "GDDR6X",
+			BusWidthBit:  2,
+			BaseFreqMHz:  321,
+			BoostFreqMHz: 72436,
+			TecprocNm:    5,
+			TDPWatt:      1000,
+			RealeseYear:  2090,
+		},
+		{
+			Name:         "RTX 4050",
+			MemoryGB:     1,
+			MemoryType:   "GDDR6X",
+			BusWidthBit:  2,
+			BaseFreqMHz:  321,
+			BoostFreqMHz: 72436,
+			TecprocNm:    5,
+			TDPWatt:      1000,
+			RealeseYear:  2090,
+		},
+		{
+			Name:         "Intel Arc Graphics",
+			MemoryGB:     1,
+			MemoryType:   "GDDR6X",
+			BusWidthBit:  2,
+			BaseFreqMHz:  321,
+			BoostFreqMHz: 72436,
+			TecprocNm:    5,
+			TDPWatt:      1000,
+			RealeseYear:  2090,
+		},
 	}
 
 	idg := make([]uint64, 0, len(gpus))
@@ -410,7 +487,6 @@ func InsertGpus(db *sql.DB) []uint64 {
 	}
 
 	return idg
-
 }
 
 func InsertLaptops(db *sql.DB, minioConfig MinIOConfig) {

@@ -57,33 +57,59 @@ func GetRestCharsObject(chars database.ProductChars) (*outputs.RestCharsObject, 
 	return nil, errors.NewInternalSecretError()
 }
 
+func getLaptopCharsDescription() []models.CharsDescription {
+	return []models.CharsDescription{
+		{Title: "CPU", Key: "cpu"},
+		{Title: "RAM", Key: "ram"},
+		{Title: "GPU", Key: "gpu"},
+	}
+}
+
+func getCpuCharsDescription() []models.CharsDescription {
+	return []models.CharsDescription{
+		{Title: "Name", Key: "name"},
+		{Title: "Performance Cores", Key: "pcores"},
+		{Title: "Efficiency Cores", Key: "ecores"},
+		{Title: "Threads", Key: "threads"},
+		{Title: "Base PCores Frequency", Key: "base_p_freq_mhz"},
+		{Title: "Max PCores Frequency", Key: "max_p_freq_mhz"},
+		{Title: "Base ECores Frequency", Key: "base_e_freq_mhz"},
+		{Title: "Max ECores Frequency", Key: "max_e_freq_mhz"},
+		{Title: "Socket", Key: "Socket"},
+		{Title: "L1 Cache Size", Key: "l1_kb"},
+		{Title: "L2 Cache Size", Key: "l2_kb"},
+		{Title: "L3 Cache Size", Key: "l3_kb"},
+		{Title: "Technical Process", Key: "tecproc_nm"},
+		{Title: "TDP", Key: "tdp_watt"},
+		{Title: "Release Year", Key: "release_year"},
+	}
+}
+
+func getGpuCharsDescription() []models.CharsDescription {
+	return []models.CharsDescription{
+		{Title: "Name", Key: "name"},
+		{Title: "Memory", Key: "memory_gb"},
+		{Title: "Memory Type", Key: "memory_type"},
+		{Title: "Bus Width", Key: "bus_width_bit"},
+		{Title: "Base Core Frequency", Key: "base_freq_mhz"},
+		{Title: "Boost Core Frequency", Key: "boost_freq_mhz"},
+		{Title: "Technical Process", Key: "tecproc_nm"},
+		{Title: "TDP", Key: "tdp_watt"},
+		{Title: "Release Year", Key: "release_year"},
+	}
+}
+
 func GetCharsDescription(chars database.ProductChars) ([]models.CharsDescription, errors.PCCError) {
 	if _, ok := chars.(*models.LaptopChars); ok {
-		return []models.CharsDescription{
-			{Title: "CPU", Key: "cpu"},
-			{Title: "RAM", Key: "ram"},
-			{Title: "GPU", Key: "gpu"},
-		}, nil
+		return getLaptopCharsDescription(), nil
 	}
 
 	if _, ok := chars.(*models.CpuChars); ok {
-		return []models.CharsDescription{
-			{Title: "Name", Key: "name"},
-			{Title: "Performance Cores", Key: "pcores"},
-			{Title: "Efficiency Cores", Key: "ecores"},
-			{Title: "Threads", Key: "threads"},
-			{Title: "Base PCores Frequency", Key: "base_p_freq_mhz"},
-			{Title: "Max PCores Frequency", Key: "max_p_freq_mhz"},
-			{Title: "Base ECores Frequency", Key: "base_e_freq_mhz"},
-			{Title: "Max ECores Frequency", Key: "max_e_freq_mhz"},
-			{Title: "Socket", Key: "Socket"},
-			{Title: "L1 Cache Size", Key: "l1_kb"},
-			{Title: "L2 Cache Size", Key: "l2_kb"},
-			{Title: "L3 Cache Size", Key: "l3_kb"},
-			{Title: "Technical Process", Key: "tecproc_nm"},
-			{Title: "TDP", Key: "tdp_watt"},
-			{Title: "Release Year", Key: "release_year"},
-		}, nil
+		return getCpuCharsDescription(), nil
+	}
+
+	if _, ok := chars.(*models.GpuChars); ok {
+		return getGpuCharsDescription(), nil
 	}
 
 	return nil, errors.NewInternalSecretError()

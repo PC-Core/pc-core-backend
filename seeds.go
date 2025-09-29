@@ -28,9 +28,10 @@ const (
 	SEED_TYPE_MEDIA    = "media"
 	SEED_ALL           = "all"
 	CLEAR_ALL          = "clear"
+	SEED_TYPE_GPU      = "gpu"
 )
 
-var SEED_TYPE_NAMES = []string{SEED_TYPE_USER, SEED_TYPE_LAPTOP, SEED_TYPE_CATEGORY, SEED_TYPE_MEDIA, SEED_ALL, CLEAR_ALL}
+var SEED_TYPE_NAMES = []string{SEED_TYPE_USER, SEED_TYPE_LAPTOP, SEED_TYPE_CATEGORY, SEED_TYPE_MEDIA, SEED_ALL, CLEAR_ALL, SEED_TYPE_GPU}
 
 // MinIOConfig конфигурация MinIO
 type MinIOConfig struct {
@@ -378,8 +379,8 @@ func InsertMedias(db *sql.DB, minioConfig MinIOConfig, laptopIDs []uint64) {
 	}
 }
 
-func InsertGpus(db *sql.DB) {
-	gpuss := []models.GpuChars{
+func InsertGpus(db *sql.DB) []uint64 {
+	gpus := []models.GpuChars{
 		{
 			Name:         "RTX 4090",
 			MemoryGB:     1,
@@ -393,13 +394,13 @@ func InsertGpus(db *sql.DB) {
 		},
 	}
 
-	idg := make([]uint64, 0, len(gpuss))
+	idg := make([]uint64, 0, len(gpus))
 
-	for _, gpu := range gpuss {
+	for _, gpu := range gpus {
 		var (
 			chargId uint64
 		)
-		err := db.QueryRow(fmt.Sprintf("INSERT INTO %s (name, memory_gb, memory_type, bus_width_bit, base_freq_mhz, boost_freq_mhz, tecprocNM, TDPWatt, realese_year) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) returning id", "GpuChars"), gpu.Name, gpu.MemoryGB, gpu.MemoryType, gpu.BusWidthBit, gpu.BaseFreqMHz, gpu.BoostFreqMHz, gpu.TecprocNm, gpu.TDPWatt, gpu.RealeseYear).Scan(&chargId)
+		err := db.QueryRow(fmt.Sprintf("INSERT INTO %s (name, memory_gb, memory_type, bus_width_bit, base_freq_mhz, boost_freq_mhz, tecproc_nm, tdp_watt, release_year) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) returning id", "GpuChars"), gpu.Name, gpu.MemoryGB, gpu.MemoryType, gpu.BusWidthBit, gpu.BaseFreqMHz, gpu.BoostFreqMHz, gpu.TecprocNm, gpu.TDPWatt, gpu.RealeseYear).Scan(&chargId)
 
 		if err != nil {
 			panic(err)
@@ -408,17 +409,8 @@ func InsertGpus(db *sql.DB) {
 		idg = append(idg, chargId)
 	}
 
-	// gpus := []struct {
-	// 	Name   string
-	// 	Price  float64
-	// 	Selled uint64
-	// 	Stock  uint64
-	// 	CpuID  uint64
-	// 	Ram    int16
-	// 	Gpu    string
-	// }{
-	// 	//че сюда писать???
-	// }
+	return idg
+
 }
 
 func InsertLaptops(db *sql.DB, minioConfig MinIOConfig) {
@@ -715,6 +707,7 @@ func InsertAll(db *sql.DB, minioConfig MinIOConfig) {
 	InsertUsers(db)
 	InsertLaptops(db, minioConfig)
 	InsertCategories(db)
+	InsertGpus(db)
 }
 
 func GetMinIOConfig(cfg *config.Config) MinIOConfig {
@@ -780,8 +773,9 @@ func main() {
 		SEED_TYPE_MEDIA: func(db *sql.DB, config MinIOConfig) {
 
 		},
-		SEED_ALL:  InsertAll,
-		CLEAR_ALL: func(db *sql.DB, config MinIOConfig) { Clear(db) },
+		SEED_ALL:      InsertAll,
+		CLEAR_ALL:     func(db *sql.DB, config MinIOConfig) { Clear(db) },
+		SEED_TYPE_GPU: func(d *sql.DB, mi MinIOConfig) { InsertGpus(db) },
 	}
 
 	handleCliArgs(os.Args, db, minioConfig, SEED_TYPES)

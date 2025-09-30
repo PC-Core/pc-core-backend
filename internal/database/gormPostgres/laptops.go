@@ -35,7 +35,7 @@ func (c *GormPostgresController) AddLaptop(laptop *inputs.AddLaptopInput) (*mode
 	chars := DbLaptopChars{
 		CpuID: laptop.CpuID,
 		Ram:   laptop.Ram,
-		Gpu:   laptop.Gpu,
+		GpuID:   laptop.GpuID,
 	}
 
 	err := tx.

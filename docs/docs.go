@@ -1232,7 +1232,7 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "gpu": {
-                    "type": "string"
+                    "type": "integer"
                 },
                 "medias": {
                     "type": "array",
@@ -1402,6 +1402,9 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/models.Comment"
                     }
+                },
+                "children_count": {
+                    "type": "integer"
                 },
                 "created_at": {
                     "type": "string"
@@ -1623,14 +1626,14 @@ const docTemplate = `{
         "outputs.CommentsOutput": {
             "type": "object",
             "properties": {
+                "amount": {
+                    "type": "integer"
+                },
                 "comments": {
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/models.Comment"
                     }
-                },
-                "total_comments_count": {
-                    "type": "integer"
                 }
             }
         },

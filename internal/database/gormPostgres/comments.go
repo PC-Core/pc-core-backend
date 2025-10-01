@@ -97,7 +97,7 @@ func getFiltersForCommentGroup(group TargetCommentGroup) string {
 	}
 }
 
-func (c *GormPostgresController) getAnswersCount(product_id int64, parent_id int64) (int64, errors.PCCError) {
+func (c *GormPostgresController) getAnswersCount(parent_id int64) (int64, errors.PCCError) {
 	var count int64
 
 	cte := `
@@ -156,7 +156,7 @@ func (c *GormPostgresController) loadComments(product_id int64, userID *int64, t
 	if parent_id == nil {
 		count, perr = c.getRootCommentsCount(product_id)
 	} else {
-		count, perr = c.getAnswersCount(product_id, *parent_id)
+		count, perr = c.getAnswersCount(product_id)
 	}
 
 	if perr != nil {
@@ -184,7 +184,7 @@ func (c *GormPostgresController) loadComments(product_id int64, userID *int64, t
 		}
 
 		if parent_id == nil {
-			answersCount, perr = c.getAnswersCount(product_id, comment.ID)
+			answersCount, perr = c.getAnswersCount(product_id)
 		} else {
 			answersCount = count
 		}

@@ -97,7 +97,7 @@ func getFiltersForCommentGroup(group TargetCommentGroup) string {
 	}
 }
 
-func (c *GormPostgresController) getAnswersCount(product_id int64, parent_id int64) (int64, errors.PCCError) {
+func (c *GormPostgresController) getAnswersCount(parent_id int64) (int64, errors.PCCError) {
 	var count int64
 
 	cte := `
@@ -156,7 +156,7 @@ func (c *GormPostgresController) loadComments(product_id int64, userID *int64, t
 	if parent_id == nil {
 		count, perr = c.getRootCommentsCount(product_id)
 	} else {
-		count, perr = c.getAnswersCount(product_id, *parent_id)
+		count, perr = c.getAnswersCount(product_id)
 	}
 
 	if perr != nil {
@@ -174,6 +174,8 @@ func (c *GormPostgresController) loadComments(product_id int64, userID *int64, t
 		commentReactions[k] = c.getCommentReactions(v, userID)
 	}
 
+	var answersCount int64
+
 	for _, comment := range comments {
 		medias, perr := c.LoadMediasForComment(comment.MediaIDs)
 
@@ -181,7 +183,17 @@ func (c *GormPostgresController) loadComments(product_id int64, userID *int64, t
 			return nil, perr
 		}
 
-		result = append(result, *models.NewComment(comment.ID, comment.User.IntoUser(), comment.CommentText, []models.Comment{}, comment.Rating, &comment.CreatedAt, comment.UpdatedAt, medias.IntoMedias(), commentReactions[comment.ID], comment.Deleted))
+		if parent_id == nil {
+			answersCount, perr = c.getAnswersCount(product_id)
+		} else {
+			answersCount = count
+		}
+
+		if perr != nil {
+			return nil, perr
+		}
+
+		result = append(result, *models.NewComment(comment.ID, comment.User.IntoUser(), comment.CommentText, []models.Comment{}, uint64(answersCount), comment.Rating, &comment.CreatedAt, comment.UpdatedAt, medias.IntoMedias(), commentReactions[comment.ID], comment.Deleted))
 	}
 
 	return &LoadedComments{comments, result, count}, nil
@@ -195,8 +207,8 @@ func (c *GormPostgresController) GetRootCommentsForProduct(product_id int64, use
 	}
 
 	return &outputs.CommentsOutput{
-		Comments:           result.Comments,
-		TotalCommentsCount: result.TotalCount,
+		Comments: result.Comments,
+		Amount:   result.TotalCount,
 	}, err
 }
 
@@ -219,8 +231,8 @@ func (c *GormPostgresController) GetAnswersOnComment(product_id int64, userID *i
 
 	if len(res.Comments) == 0 {
 		return &outputs.CommentsOutput{
-			Comments:           []models.Comment{},
-			TotalCommentsCount: res.TotalCount,
+			Comments: []models.Comment{},
+			Amount:   res.TotalCount,
 		}, nil
 	}
 
@@ -242,8 +254,8 @@ func (c *GormPostgresController) GetAnswersOnComment(product_id int64, userID *i
 	buildTree(targetComment, idToChildrenIdMap, idToCommentMap)
 
 	return &outputs.CommentsOutput{
-		Comments:           targetComment.Children,
-		TotalCommentsCount: res.TotalCount,
+		Comments: targetComment.Children,
+		Amount:   res.TotalCount,
 	}, nil
 }
 

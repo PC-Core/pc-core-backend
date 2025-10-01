@@ -186,7 +186,7 @@ definitions:
       cpu:
         type: integer
       gpu:
-        type: string
+        type: integer
       medias:
         items:
           $ref: '#/definitions/models.InputMedia'
@@ -297,6 +297,8 @@ definitions:
         items:
           $ref: '#/definitions/models.Comment'
         type: array
+      children_count:
+        type: integer
       created_at:
         type: string
       deleted:
@@ -454,12 +456,12 @@ definitions:
     - Admin
   outputs.CommentsOutput:
     properties:
+      amount:
+        type: integer
       comments:
         items:
           $ref: '#/definitions/models.Comment'
         type: array
-      total_comments_count:
-        type: integer
     type: object
   outputs.GetProductsResult:
     properties:

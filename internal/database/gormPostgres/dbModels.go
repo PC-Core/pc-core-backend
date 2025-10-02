@@ -291,3 +291,25 @@ func (chars *DbGpuChars) IntoGpu() *models.GpuChars {
 func (DbGpuChars) TableName() string {
 	return "gpuchars"
 }
+
+type DbKeyboardChars struct {
+	ID            uint64   `gorm:"column:id;primarykey"`
+	Name          string   `gorm:"column:name"`
+	TypeKeyBoards string   `gorm:"column:type_keyboards"`
+	Switches      []string `gorm:"column:switches"`
+	ReleaseYear   uint64   `gorm:"column:release_year"`
+}
+
+func (chars *DbKeyboardChars) IntoKeyBoard() *models.KeyboardChars {
+	return models.NewKeyBoardChars(
+		chars.ID,
+		chars.Name,
+		chars.TypeKeyBoards,
+		chars.Switches,
+		chars.ReleaseYear,
+	)
+}
+
+func (DbKeyboardChars) TableName() string {
+	return "keyboardchars"
+}

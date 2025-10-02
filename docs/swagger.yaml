@@ -205,17 +205,6 @@ definitions:
       quantity:
         type: integer
     type: object
-  inputs.GetAnswersInput:
-    properties:
-      limit:
-        type: integer
-      offset:
-        type: integer
-      product_id:
-        type: integer
-    required:
-    - limit
-    type: object
   inputs.LoginUserInput:
     properties:
       email:
@@ -763,12 +752,16 @@ paths:
         name: comment_id
         required: true
         type: integer
-      - description: Input
-        in: body
-        name: input
+      - in: query
+        name: limit
         required: true
-        schema:
-          $ref: '#/definitions/inputs.GetAnswersInput'
+        type: integer
+      - in: query
+        name: offset
+        type: integer
+      - in: query
+        name: product_id
+        type: integer
       - description: access token for user is used to check your reaction, is not
           required
         in: header

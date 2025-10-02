@@ -82,7 +82,7 @@ func (c *CommentController) getRootComments(ctx *gin.Context) {
 // @Accept       json
 // @Produce      json
 // @Param 		 comment_id 	query	int						true	"ID of the comment"
-// @param		 input			body	inputs.GetAnswersInput	true	"Input"
+// @param		 input			query	inputs.GetAnswersInput	true	"Input"
 // @Param		 Authorization  header	string					false	"access token for user is used to check your reaction, is not required"
 // @Success      200  {object}  outputs.CommentsOutput
 // @Failure      400  {object}  errors.PublicPCCError
@@ -98,7 +98,7 @@ func (c *CommentController) getAnswers(ctx *gin.Context) {
 
 	var input inputs.GetAnswersInput
 
-	if err := ctx.ShouldBindBodyWithJSON(&input); err != nil {
+	if err := ctx.ShouldBindQuery(&input); err != nil {
 		CheckErrorAndWriteBadRequest(ctx, conerrors.BindErrorCast(err))
 		return
 	}

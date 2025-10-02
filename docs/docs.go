@@ -397,13 +397,20 @@ const docTemplate = `{
                         "required": true
                     },
                     {
-                        "description": "Input",
-                        "name": "input",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/inputs.GetAnswersInput"
-                        }
+                        "type": "integer",
+                        "name": "limit",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "name": "offset",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "product_id",
+                        "in": "query"
                     },
                     {
                         "type": "string",
@@ -1258,23 +1265,6 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "quantity": {
-                    "type": "integer"
-                }
-            }
-        },
-        "inputs.GetAnswersInput": {
-            "type": "object",
-            "required": [
-                "limit"
-            ],
-            "properties": {
-                "limit": {
-                    "type": "integer"
-                },
-                "offset": {
-                    "type": "integer"
-                },
-                "product_id": {
                     "type": "integer"
                 }
             }

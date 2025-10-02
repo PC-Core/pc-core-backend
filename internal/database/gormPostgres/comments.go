@@ -217,6 +217,11 @@ func buildTree(comment *models.Comment, idToChildrenMap map[int64][]int64, idToC
 
 	for _, childId := range childIds {
 		childComment := idToCommentMap[childId]
+
+		if childComment == nil {
+			continue
+		}
+
 		buildTree(childComment, idToChildrenMap, idToCommentMap)
 		comment.Children = append(comment.Children, *childComment)
 	}

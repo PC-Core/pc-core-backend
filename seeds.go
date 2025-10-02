@@ -381,95 +381,95 @@ func InsertMedias(db *sql.DB, minioConfig MinIOConfig, laptopIDs []uint64) {
 
 func InsertGpus(db *sql.DB) []uint64 {
 	gpus := []models.GpuChars{
-    {
-        Name:         "RTX 4090",
-        MemoryGB:     24,
-        MemoryType:   "GDDR6X",
-        BusWidthBit:  384,
-        BaseFreqMHz:  2235,
-        BoostFreqMHz: 2520,
-        TecprocNm:    5,
-        TDPWatt:      450,
-        RealeseYear:  2022,
-    },
-    {
-        Name:         "Apple M3 Max",
-        MemoryGB:     128, 
-        MemoryType:   "LPDDR5",
-        BusWidthBit:  512, 
-        BaseFreqMHz:  400,
-        BoostFreqMHz: 1400,
-        TecprocNm:    3,
-        TDPWatt:      60,
-        RealeseYear:  2023,
-    },
-    {
-        Name:         "Apple M3",
-        MemoryGB:     24, 
-        MemoryType:   "LPDDR5",
-        BusWidthBit:  128,
-        BaseFreqMHz:  400,
-        BoostFreqMHz: 1100,
-        TecprocNm:    3,
-        TDPWatt:      30,
-        RealeseYear:  2023,
-    },
-    {
-        Name:         "RTX 4080",
-        MemoryGB:     16,
-        MemoryType:   "GDDR6X",
-        BusWidthBit:  256,
-        BaseFreqMHz:  2210,
-        BoostFreqMHz: 2510,
-        TecprocNm:    5,
-        TDPWatt:      320,
-        RealeseYear:  2022,
-    },
-    {
-        Name:         "RTX 4070",
-        MemoryGB:     12,
-        MemoryType:   "GDDR6X",
-        BusWidthBit:  192,
-        BaseFreqMHz:  1920,
-        BoostFreqMHz: 2475,
-        TecprocNm:    5,
-        TDPWatt:      200,
-        RealeseYear:  2023,
-    },
-    {
-        Name:         "RTX 4060",
-        MemoryGB:     8,
-        MemoryType:   "GDDR6",
-        BusWidthBit:  128,
-        BaseFreqMHz:  1830,
-        BoostFreqMHz: 2460,
-        TecprocNm:    5,
-        TDPWatt:      115,
-        RealeseYear:  2023,
-    },
-    {
-        Name:         "RTX 4050", 
-        MemoryGB:     6,
-        MemoryType:   "GDDR6",
-        BusWidthBit:  96,
-        BaseFreqMHz:  1600,
-        BoostFreqMHz: 2200,
-        TecprocNm:    5,
-        TDPWatt:      75,
-        RealeseYear:  2023,
-    },
-    {
-        Name:         "Intel Arc A770",
-        MemoryGB:     16,
-        MemoryType:   "GDDR6",
-        BusWidthBit:  256,
-        BaseFreqMHz:  2100,
-        BoostFreqMHz: 2400,
-        TecprocNm:    6,
-        TDPWatt:      225,
-        RealeseYear:  2022,
-    },
-}
+		{
+			Name:         "RTX 4090",
+			MemoryGB:     24,
+			MemoryType:   "GDDR6X",
+			BusWidthBit:  384,
+			BaseFreqMHz:  2235,
+			BoostFreqMHz: 2520,
+			TecprocNm:    5,
+			TDPWatt:      450,
+			ReleaseYear:  2022,
+		},
+		{
+			Name:         "Apple M3 Max",
+			MemoryGB:     128,
+			MemoryType:   "LPDDR5",
+			BusWidthBit:  512,
+			BaseFreqMHz:  400,
+			BoostFreqMHz: 1400,
+			TecprocNm:    3,
+			TDPWatt:      60,
+			ReleaseYear:  2023,
+		},
+		{
+			Name:         "Apple M3",
+			MemoryGB:     24,
+			MemoryType:   "LPDDR5",
+			BusWidthBit:  128,
+			BaseFreqMHz:  400,
+			BoostFreqMHz: 1100,
+			TecprocNm:    3,
+			TDPWatt:      30,
+			ReleaseYear:  2023,
+		},
+		{
+			Name:         "RTX 4080",
+			MemoryGB:     16,
+			MemoryType:   "GDDR6X",
+			BusWidthBit:  256,
+			BaseFreqMHz:  2210,
+			BoostFreqMHz: 2510,
+			TecprocNm:    5,
+			TDPWatt:      320,
+			ReleaseYear:  2022,
+		},
+		{
+			Name:         "RTX 4070",
+			MemoryGB:     12,
+			MemoryType:   "GDDR6X",
+			BusWidthBit:  192,
+			BaseFreqMHz:  1920,
+			BoostFreqMHz: 2475,
+			TecprocNm:    5,
+			TDPWatt:      200,
+			ReleaseYear:  2023,
+		},
+		{
+			Name:         "RTX 4060",
+			MemoryGB:     8,
+			MemoryType:   "GDDR6",
+			BusWidthBit:  128,
+			BaseFreqMHz:  1830,
+			BoostFreqMHz: 2460,
+			TecprocNm:    5,
+			TDPWatt:      115,
+			ReleaseYear:  2023,
+		},
+		{
+			Name:         "RTX 4050",
+			MemoryGB:     6,
+			MemoryType:   "GDDR6",
+			BusWidthBit:  96,
+			BaseFreqMHz:  1600,
+			BoostFreqMHz: 2200,
+			TecprocNm:    5,
+			TDPWatt:      75,
+			ReleaseYear:  2023,
+		},
+		{
+			Name:         "Intel Arc A770",
+			MemoryGB:     16,
+			MemoryType:   "GDDR6",
+			BusWidthBit:  256,
+			BaseFreqMHz:  2100,
+			BoostFreqMHz: 2400,
+			TecprocNm:    6,
+			TDPWatt:      225,
+			ReleaseYear:  2022,
+		},
+	}
 
 	idg := make([]uint64, 0, len(gpus))
 
@@ -477,7 +477,7 @@ func InsertGpus(db *sql.DB) []uint64 {
 		var (
 			chargId uint64
 		)
-		err := db.QueryRow(fmt.Sprintf("INSERT INTO %s (name, memory_gb, memory_type, bus_width_bit, base_freq_mhz, boost_freq_mhz, tecproc_nm, tdp_watt, release_year) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) returning id", "GpuChars"), gpu.Name, gpu.MemoryGB, gpu.MemoryType, gpu.BusWidthBit, gpu.BaseFreqMHz, gpu.BoostFreqMHz, gpu.TecprocNm, gpu.TDPWatt, gpu.RealeseYear).Scan(&chargId)
+		err := db.QueryRow(fmt.Sprintf("INSERT INTO %s (name, memory_gb, memory_type, bus_width_bit, base_freq_mhz, boost_freq_mhz, tecproc_nm, tdp_watt, release_year) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) returning id", "GpuChars"), gpu.Name, gpu.MemoryGB, gpu.MemoryType, gpu.BusWidthBit, gpu.BaseFreqMHz, gpu.BoostFreqMHz, gpu.TecprocNm, gpu.TDPWatt, gpu.ReleaseYear).Scan(&chargId)
 
 		if err != nil {
 			panic(err)
@@ -656,7 +656,7 @@ func InsertLaptops(db *sql.DB, minioConfig MinIOConfig) {
 		CpuID  uint64
 		Ram    int16
 		Gpu    string
-		GpuId uint64
+		GpuId  uint64
 	}{
 		{"MSI Titan 18", 614999, 0, 13, ids[0], 32, "RTX 4090", gpuIds[0]},
 		{"Lenovo Legion Y9000P", 425999, 32, 28, ids[0], 32, "RTX 4090", gpuIds[0]},

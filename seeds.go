@@ -28,9 +28,10 @@ const (
 	SEED_TYPE_MEDIA    = "media"
 	SEED_ALL           = "all"
 	CLEAR_ALL          = "clear"
+	SEED_TYPE_GPU      = "gpu"
 )
 
-var SEED_TYPE_NAMES = []string{SEED_TYPE_USER, SEED_TYPE_LAPTOP, SEED_TYPE_CATEGORY, SEED_TYPE_MEDIA, SEED_ALL, CLEAR_ALL}
+var SEED_TYPE_NAMES = []string{SEED_TYPE_USER, SEED_TYPE_LAPTOP, SEED_TYPE_CATEGORY, SEED_TYPE_MEDIA, SEED_ALL, CLEAR_ALL, SEED_TYPE_GPU}
 
 // MinIOConfig конфигурация MinIO
 type MinIOConfig struct {
@@ -378,6 +379,116 @@ func InsertMedias(db *sql.DB, minioConfig MinIOConfig, laptopIDs []uint64) {
 	}
 }
 
+func InsertGpus(db *sql.DB) []uint64 {
+	gpus := []models.GpuChars{
+    {
+        Name:         "RTX 4090",
+        MemoryGB:     24,
+        MemoryType:   "GDDR6X",
+        BusWidthBit:  384,
+        BaseFreqMHz:  2235,
+        BoostFreqMHz: 2520,
+        TecprocNm:    5,
+        TDPWatt:      450,
+        RealeseYear:  2022,
+    },
+    {
+        Name:         "Apple M3 Max",
+        MemoryGB:     128, 
+        MemoryType:   "LPDDR5",
+        BusWidthBit:  512, 
+        BaseFreqMHz:  400,
+        BoostFreqMHz: 1400,
+        TecprocNm:    3,
+        TDPWatt:      60,
+        RealeseYear:  2023,
+    },
+    {
+        Name:         "Apple M3",
+        MemoryGB:     24, 
+        MemoryType:   "LPDDR5",
+        BusWidthBit:  128,
+        BaseFreqMHz:  400,
+        BoostFreqMHz: 1100,
+        TecprocNm:    3,
+        TDPWatt:      30,
+        RealeseYear:  2023,
+    },
+    {
+        Name:         "RTX 4080",
+        MemoryGB:     16,
+        MemoryType:   "GDDR6X",
+        BusWidthBit:  256,
+        BaseFreqMHz:  2210,
+        BoostFreqMHz: 2510,
+        TecprocNm:    5,
+        TDPWatt:      320,
+        RealeseYear:  2022,
+    },
+    {
+        Name:         "RTX 4070",
+        MemoryGB:     12,
+        MemoryType:   "GDDR6X",
+        BusWidthBit:  192,
+        BaseFreqMHz:  1920,
+        BoostFreqMHz: 2475,
+        TecprocNm:    5,
+        TDPWatt:      200,
+        RealeseYear:  2023,
+    },
+    {
+        Name:         "RTX 4060",
+        MemoryGB:     8,
+        MemoryType:   "GDDR6",
+        BusWidthBit:  128,
+        BaseFreqMHz:  1830,
+        BoostFreqMHz: 2460,
+        TecprocNm:    5,
+        TDPWatt:      115,
+        RealeseYear:  2023,
+    },
+    {
+        Name:         "RTX 4050", 
+        MemoryGB:     6,
+        MemoryType:   "GDDR6",
+        BusWidthBit:  96,
+        BaseFreqMHz:  1600,
+        BoostFreqMHz: 2200,
+        TecprocNm:    5,
+        TDPWatt:      75,
+        RealeseYear:  2023,
+    },
+    {
+        Name:         "Intel Arc A770",
+        MemoryGB:     16,
+        MemoryType:   "GDDR6",
+        BusWidthBit:  256,
+        BaseFreqMHz:  2100,
+        BoostFreqMHz: 2400,
+        TecprocNm:    6,
+        TDPWatt:      225,
+        RealeseYear:  2022,
+    },
+}
+
+	idg := make([]uint64, 0, len(gpus))
+
+	for _, gpu := range gpus {
+		var (
+			chargId uint64
+		)
+		err := db.QueryRow(fmt.Sprintf("INSERT INTO %s (name, memory_gb, memory_type, bus_width_bit, base_freq_mhz, boost_freq_mhz, tecproc_nm, tdp_watt, release_year) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) returning id", "GpuChars"), gpu.Name, gpu.MemoryGB, gpu.MemoryType, gpu.BusWidthBit, gpu.BaseFreqMHz, gpu.BoostFreqMHz, gpu.TecprocNm, gpu.TDPWatt, gpu.RealeseYear).Scan(&chargId)
+
+		if err != nil {
+			panic(err)
+		}
+
+		idg = append(idg, chargId)
+	}
+
+	return idg
+}
+
 func InsertLaptops(db *sql.DB, minioConfig MinIOConfig) {
 	cpus := []models.CpuChars{
 		{
@@ -535,6 +646,8 @@ func InsertLaptops(db *sql.DB, minioConfig MinIOConfig) {
 		ids = append(ids, charId)
 	}
 
+	gpuIds := InsertGpus(db)
+
 	laptops := []struct {
 		Name   string
 		Price  float64
@@ -543,49 +656,50 @@ func InsertLaptops(db *sql.DB, minioConfig MinIOConfig) {
 		CpuID  uint64
 		Ram    int16
 		Gpu    string
+		GpuId uint64
 	}{
-		{"MSI Titan 18", 614999, 0, 13, ids[0], 32, "RTX 4090"},
-		{"Lenovo Legion Y9000P", 425999, 32, 28, ids[0], 32, "RTX 4090"},
-		{"Apple Macbook Pro", 421599, 3, 83, ids[1], 48, "Apple M3 Max"},
-		{"MSI Raider 18", 417999, 10, 38, ids[0], 32, "RTX 4090"},
-		{"ASUS ROG Zephyrus Duo 16", 389999, 5, 47, ids[2], 32, "RTX 4090"},
-		{"MSI Vector 17", 374999, 5, 123, ids[0], 32, "RTX 4080"},
-		{"ASUS VivoBook Pro 15", 179999, 42, 82, ids[3], 24, "RTX 4060"},
-		{"MSI Sword 17 HX", 179999, 6, 35, ids[4], 16, "RTX 4070"},
-		{"MSI Summit 13 AI+ Evo", 179999, 0, 4, ids[5], 32, "Intel Arc Graphics"},
-		{"Honor MagicBook Art 14", 149999, 2, 64, ids[6], 32, "Intel Arc Graphics"},
-		{"Apple MacBook Air", 179499, 30, 32, ids[7], 16, "Apple M3"},
-		{"Dell XPS 17", 359999, 15, 50, ids[0], 32, "RTX 4080"},
-		{"Dell XPS 15", 289999, 20, 40, ids[3], 16, "RTX 4070"},
-		{"HP Omen 17", 299999, 12, 33, ids[4], 16, "RTX 4070"},
-		{"HP Spectre x360 14", 189999, 8, 60, ids[6], 16, "Intel Arc Graphics"},
-		{"Razer Blade 18", 449999, 5, 20, ids[0], 32, "RTX 4090"},
-		{"Razer Blade 16", 379999, 7, 22, ids[2], 32, "RTX 4080"},
-		{"Gigabyte Aorus 17", 319999, 6, 15, ids[4], 32, "RTX 4070"},
-		{"Gigabyte Aero 16 OLED", 299999, 10, 18, ids[3], 32, "RTX 4060"},
-		{"Samsung Galaxy Book4 Ultra", 279999, 4, 25, ids[6], 32, "RTX 4070"},
-		{"Samsung Galaxy Book4 Pro", 219999, 12, 30, ids[6], 16, "Intel Arc Graphics"},
-		{"Acer Predator Helios 18", 349999, 9, 27, ids[0], 32, "RTX 4080"},
-		{"Acer Predator Helios 16", 309999, 10, 21, ids[4], 32, "RTX 4070"},
-		{"Acer Swift X 14", 159999, 11, 42, ids[6], 16, "RTX 4050"},
-		{"ASUS Zenbook Pro Duo 14", 279999, 6, 34, ids[3], 32, "RTX 4060"},
-		{"ASUS TUF Gaming F15", 199999, 40, 50, ids[4], 16, "RTX 4060"},
-		{"ASUS TUF Gaming A17", 219999, 22, 44, ids[2], 16, "RTX 4060"},
-		{"Lenovo Yoga Slim 7", 189999, 30, 38, ids[6], 16, "Intel Arc Graphics"},
-		{"Lenovo IdeaPad Gaming 3", 159999, 28, 45, ids[4], 16, "RTX 4050"},
-		{"Lenovo Legion Slim 5", 279999, 18, 32, ids[2], 32, "RTX 4070"},
-		{"Lenovo ThinkPad X1 Carbon", 259999, 12, 40, ids[6], 16, "Intel Arc Graphics"},
-		{"Microsoft Surface Laptop Studio 2", 299999, 8, 23, ids[3], 32, "RTX 4060"},
-		{"Microsoft Surface Laptop 6", 189999, 5, 30, ids[6], 16, "Intel Arc Graphics"},
-		{"MSI Prestige 16", 209999, 3, 28, ids[6], 16, "RTX 4050"},
-		{"MSI Stealth 17 Studio", 329999, 9, 20, ids[0], 32, "RTX 4080"},
-		{"MSI Katana 15", 179999, 17, 45, ids[4], 16, "RTX 4060"},
-		{"MSI Cyborg 14", 149999, 12, 55, ids[6], 16, "RTX 4050"},
-		{"Alienware m18", 469999, 4, 14, ids[0], 32, "RTX 4090"},
-		{"Alienware x16", 419999, 5, 19, ids[2], 32, "RTX 4080"},
-		{"Alienware m16", 339999, 6, 26, ids[4], 32, "RTX 4070"},
-		{"Alienware x14", 259999, 8, 33, ids[6], 16, "RTX 4060"},
-		{"Huawei MateBook X Pro", 179999, 10, 40, ids[6], 16, "Intel Arc Graphics"},
+		{"MSI Titan 18", 614999, 0, 13, ids[0], 32, "RTX 4090", gpuIds[0]},
+		{"Lenovo Legion Y9000P", 425999, 32, 28, ids[0], 32, "RTX 4090", gpuIds[0]},
+		{"Apple Macbook Pro", 421599, 3, 83, ids[1], 48, "Apple M3 Max", gpuIds[1]},
+		{"MSI Raider 18", 417999, 10, 38, ids[0], 32, "RTX 4090", gpuIds[0]},
+		{"ASUS ROG Zephyrus Duo 16", 389999, 5, 47, ids[2], 32, "RTX 4090", gpuIds[0]},
+		{"MSI Vector 17", 374999, 5, 123, ids[0], 32, "RTX 4080", gpuIds[3]},
+		{"ASUS VivoBook Pro 15", 179999, 42, 82, ids[3], 24, "RTX 4060", gpuIds[5]},
+		{"MSI Sword 17 HX", 179999, 6, 35, ids[4], 16, "RTX 4070", gpuIds[4]},
+		{"MSI Summit 13 AI+ Evo", 179999, 0, 4, ids[5], 32, "Intel Arc Graphics", gpuIds[7]},
+		{"Honor MagicBook Art 14", 149999, 2, 64, ids[6], 32, "Intel Arc Graphics", gpuIds[7]},
+		{"Apple MacBook Air", 179499, 30, 32, ids[7], 16, "Apple M3", gpuIds[2]},
+		{"Dell XPS 17", 359999, 15, 50, ids[0], 32, "RTX 4080", gpuIds[3]},
+		{"Dell XPS 15", 289999, 20, 40, ids[3], 16, "RTX 4070", gpuIds[4]},
+		{"HP Omen 17", 299999, 12, 33, ids[4], 16, "RTX 4070", gpuIds[4]},
+		{"HP Spectre x360 14", 189999, 8, 60, ids[6], 16, "Intel Arc Graphics", gpuIds[7]},
+		{"Razer Blade 18", 449999, 5, 20, ids[0], 32, "RTX 4090", gpuIds[0]},
+		{"Razer Blade 16", 379999, 7, 22, ids[2], 32, "RTX 4080", gpuIds[3]},
+		{"Gigabyte Aorus 17", 319999, 6, 15, ids[4], 32, "RTX 4070", gpuIds[4]},
+		{"Gigabyte Aero 16 OLED", 299999, 10, 18, ids[3], 32, "RTX 4060", gpuIds[5]},
+		{"Samsung Galaxy Book4 Ultra", 279999, 4, 25, ids[6], 32, "RTX 4070", gpuIds[4]},
+		{"Samsung Galaxy Book4 Pro", 219999, 12, 30, ids[6], 16, "Intel Arc Graphics", gpuIds[7]},
+		{"Acer Predator Helios 18", 349999, 9, 27, ids[0], 32, "RTX 4080", gpuIds[3]},
+		{"Acer Predator Helios 16", 309999, 10, 21, ids[4], 32, "RTX 4070", gpuIds[4]},
+		{"Acer Swift X 14", 159999, 11, 42, ids[6], 16, "RTX 4050", gpuIds[6]},
+		{"ASUS Zenbook Pro Duo 14", 279999, 6, 34, ids[3], 32, "RTX 4060", gpuIds[5]},
+		{"ASUS TUF Gaming F15", 199999, 40, 50, ids[4], 16, "RTX 4060", gpuIds[5]},
+		{"ASUS TUF Gaming A17", 219999, 22, 44, ids[2], 16, "RTX 4060", gpuIds[5]},
+		{"Lenovo Yoga Slim 7", 189999, 30, 38, ids[6], 16, "Intel Arc Graphics", gpuIds[7]},
+		{"Lenovo IdeaPad Gaming 3", 159999, 28, 45, ids[4], 16, "RTX 4050", gpuIds[6]},
+		{"Lenovo Legion Slim 5", 279999, 18, 32, ids[2], 32, "RTX 4070", gpuIds[4]},
+		{"Lenovo ThinkPad X1 Carbon", 259999, 12, 40, ids[6], 16, "Intel Arc Graphics", gpuIds[7]},
+		{"Microsoft Surface Laptop Studio 2", 299999, 8, 23, ids[3], 32, "RTX 4060", gpuIds[5]},
+		{"Microsoft Surface Laptop 6", 189999, 5, 30, ids[6], 16, "Intel Arc Graphics", gpuIds[7]},
+		{"MSI Prestige 16", 209999, 3, 28, ids[6], 16, "RTX 4050", gpuIds[6]},
+		{"MSI Stealth 17 Studio", 329999, 9, 20, ids[0], 32, "RTX 4080", gpuIds[3]},
+		{"MSI Katana 15", 179999, 17, 45, ids[4], 16, "RTX 4060", gpuIds[5]},
+		{"MSI Cyborg 14", 149999, 12, 55, ids[6], 16, "RTX 4050", gpuIds[6]},
+		{"Alienware m18", 469999, 4, 14, ids[0], 32, "RTX 4090", gpuIds[0]},
+		{"Alienware x16", 419999, 5, 19, ids[2], 32, "RTX 4080", gpuIds[3]},
+		{"Alienware m16", 339999, 6, 26, ids[4], 32, "RTX 4070", gpuIds[4]},
+		{"Alienware x14", 259999, 8, 33, ids[6], 16, "RTX 4060", gpuIds[5]},
+		{"Huawei MateBook X Pro", 179999, 10, 40, ids[6], 16, "Intel Arc Graphics", gpuIds[7]},
 	}
 
 	for _, laptop := range laptops {
@@ -672,6 +786,7 @@ func InsertAll(db *sql.DB, minioConfig MinIOConfig) {
 	InsertUsers(db)
 	InsertLaptops(db, minioConfig)
 	InsertCategories(db)
+	InsertGpus(db)
 }
 
 func GetMinIOConfig(cfg *config.Config) MinIOConfig {
@@ -737,8 +852,9 @@ func main() {
 		SEED_TYPE_MEDIA: func(db *sql.DB, config MinIOConfig) {
 
 		},
-		SEED_ALL:  InsertAll,
-		CLEAR_ALL: func(db *sql.DB, config MinIOConfig) { Clear(db) },
+		SEED_ALL:      InsertAll,
+		CLEAR_ALL:     func(db *sql.DB, config MinIOConfig) { Clear(db) },
+		SEED_TYPE_GPU: func(d *sql.DB, mi MinIOConfig) { InsertGpus(db) },
 	}
 
 	handleCliArgs(os.Args, db, minioConfig, SEED_TYPES)

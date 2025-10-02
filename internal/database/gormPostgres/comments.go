@@ -184,7 +184,7 @@ func (c *GormPostgresController) loadComments(product_id int64, userID *int64, t
 		}
 
 		if parent_id == nil {
-			answersCount, perr = c.getAnswersCount(product_id)
+			answersCount, perr = c.getAnswersCount(comment.ID)
 		} else {
 			answersCount = count
 		}

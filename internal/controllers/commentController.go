@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"fmt"
 	"net/http"
 	"strconv"
 
@@ -67,8 +66,6 @@ func (c *CommentController) getRootComments(ctx *gin.Context) {
 	}
 
 	userID := GetNotRequiredUserID(ctx, c.pucaster)
-
-	fmt.Printf("limit: %d, offset: %d\n", input.Limit, input.Offset)
 
 	comments, perr := c.db.GetRootCommentsForProduct(int64(id), userID, input.Limit, input.Offset)
 

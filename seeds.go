@@ -420,6 +420,34 @@ func InsertKeyboards(db *sql.DB) []uint64 {
 	return idk
 }
 
+func InsertMouse(db *sql.DB) []uint64{
+	mouses := []models.MouseChars{
+		{
+			Name: "MCHOSE",
+			TypeMouses: "mouse",
+			Dpi: 26000,
+			ReleaseYear: 2025,
+		},
+	}
+
+		idm := make([]uint64, 0, len(mouses))
+
+	for _, mouse := range mouses {
+		var (
+			charmId uint64
+		)
+		err := db.QueryRow(fmt.Sprintf("INSERT INTO %s (name, type_mouses, dpi, release_year) VALUES ($1, $2, $3, $4) returning id", "MouseChars"), mouse.Name, mouse.TypeMouses, mouse.Dpi, mouse.ReleaseYear).Scan(&charmId)
+
+		if err != nil {
+			panic(err)
+		}
+
+		idm = append(idm, charmId)
+	}
+
+	return idm
+}
+
 func InsertGpus(db *sql.DB) []uint64 {
 	gpus := []models.GpuChars{
 		{

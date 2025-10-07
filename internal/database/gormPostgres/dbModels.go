@@ -314,15 +314,15 @@ func (DbKeyboardChars) TableName() string {
 	return "keyboardchars"
 }
 
-type DbMouseChars struct{
-	ID uint64 `gorm:"column:id;primarykey"`
-	Name string `gorm:"column:name"`
-	TypeMouses string `gorm:"column:type_mouses"`
-	Dpi uint64 `gorm:"column:dpi"`
+type DbMouseChars struct {
+	ID          uint64 `gorm:"column:id;primarykey"`
+	Name        string `gorm:"column:name"`
+	TypeMouses  string `gorm:"column:type_mouses"`
+	Dpi         uint64 `gorm:"column:dpi"`
 	ReleaseYear uint64 `gorm:"column:release_year"`
 }
 
-func (chars *DbMouseChars) IntoMouse() *models.MouseChars{
+func (chars *DbMouseChars) IntoMouse() *models.MouseChars {
 	return models.NewMouseChars(
 		chars.ID,
 		chars.Name,
@@ -332,6 +332,6 @@ func (chars *DbMouseChars) IntoMouse() *models.MouseChars{
 	)
 }
 
-func (DbMouseChars) TableName() string{
+func (DbMouseChars) TableName() string {
 	return "mousechars"
 }

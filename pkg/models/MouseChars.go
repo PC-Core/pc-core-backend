@@ -13,3 +13,4 @@ func NewMouseChars(id uint64, name, type_mouses string, dpi, release_year uint64
 		id, name, type_mouses, dpi, release_year,
 	}
 }
+

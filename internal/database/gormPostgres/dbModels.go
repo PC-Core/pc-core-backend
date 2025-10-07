@@ -296,7 +296,7 @@ type DbKeyboardChars struct {
 	ID            uint64   `gorm:"column:id;primarykey"`
 	Name          string   `gorm:"column:name"`
 	TypeKeyBoards string   `gorm:"column:type_keyboards"`
-	Switches      []string `gorm:"column:switches"`
+	Switches      string `gorm:"column:switches"`
 	ReleaseYear   uint64   `gorm:"column:release_year"`
 }
 

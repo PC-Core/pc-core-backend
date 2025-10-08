@@ -293,11 +293,11 @@ func (DbGpuChars) TableName() string {
 }
 
 type DbKeyboardChars struct {
-	ID            uint64   `gorm:"column:id;primarykey"`
-	Name          string   `gorm:"column:name"`
-	TypeKeyBoards string   `gorm:"column:type_keyboards"`
-	Switches      []string `gorm:"column:switches"`
-	ReleaseYear   uint64   `gorm:"column:release_year"`
+	ID            uint64 `gorm:"column:id;primarykey"`
+	Name          string `gorm:"column:name"`
+	TypeKeyBoards string `gorm:"column:type_keyboards"`
+	Switches      string `gorm:"column:switches"`
+	ReleaseYear   uint64 `gorm:"column:release_year"`
 }
 
 func (chars *DbKeyboardChars) IntoKeyBoard() *models.KeyboardChars {
@@ -312,4 +312,26 @@ func (chars *DbKeyboardChars) IntoKeyBoard() *models.KeyboardChars {
 
 func (DbKeyboardChars) TableName() string {
 	return "keyboardchars"
+}
+
+type DbMouseChars struct {
+	ID          uint64 `gorm:"column:id;primarykey"`
+	Name        string `gorm:"column:name"`
+	TypeMouses  string `gorm:"column:type_mouses"`
+	Dpi         uint64 `gorm:"column:dpi"`
+	ReleaseYear uint64 `gorm:"column:release_year"`
+}
+
+func (chars *DbMouseChars) IntoMouse() *models.MouseChars {
+	return models.NewMouseChars(
+		chars.ID,
+		chars.Name,
+		chars.TypeMouses,
+		chars.Dpi,
+		chars.ReleaseYear,
+	)
+}
+
+func (DbMouseChars) TableName() string {
+	return "mousechars"
 }

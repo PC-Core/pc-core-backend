@@ -8,7 +8,7 @@ type AddKeyBoardInput struct {
 	Name          string              `json:"name"`
 	Stock         uint64              `json:"stock"`
 	TypeKeyBoards string              `json:"type_keyboards"`
-	Switches      []string            `json:"switches"`
+	Switches      string            `json:"switches"`
 	ReleaseYear   uint64              `json:"release_year"`
 	Medias        []models.InputMedia `json:"medias"`
 }

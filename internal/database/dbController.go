@@ -14,6 +14,7 @@ const (
 	CpuCharsTable      = "CpuChars"
 	GpuCharsTable      = "GpuChars"
 	KeyboardCharsTable = "KeyboardChars"
+	MouseCharsTable    = "MouseChars"
 )
 
 // An interface for Product Characterics
@@ -48,7 +49,8 @@ type DbController interface {
 	DeleteComment(commentID int64, userID int64) (int64, errors.PCCError)
 	AddGpu(gpu *inputs.AddGpuInput) (*models.GpuChars, *models.Product, errors.PCCError)
 	SetReaction(commentID int64, userID int64, ty models.ReactionType) (int64, errors.PCCError)
-	AddKeyBoard(keyboard *inputs.AddKeyBoardInput)(*models.KeyboardChars, *models.Product, errors.PCCError)
+	AddKeyBoard(keyboard *inputs.AddKeyBoardInput) (*models.KeyboardChars, *models.Product, errors.PCCError)
+	AddMouse(mouse *inputs.AddMouseInput) (*models.MouseChars, *models.Product, errors.PCCError)
 }
 
 // Database controller

@@ -29,6 +29,7 @@ const (
 	SEED_ALL           = "all"
 	CLEAR_ALL          = "clear"
 	SEED_TYPE_GPU      = "gpu"
+	SEED_TYPE_KEYBOARD = "keyboard"
 )
 
 var SEED_TYPE_NAMES = []string{SEED_TYPE_USER, SEED_TYPE_LAPTOP, SEED_TYPE_CATEGORY, SEED_TYPE_MEDIA, SEED_ALL, CLEAR_ALL, SEED_TYPE_GPU}
@@ -377,6 +378,74 @@ func InsertMedias(db *sql.DB, minioConfig MinIOConfig, laptopIDs []uint64) {
 			log.Printf("Ошибка загрузки %s: %v", task.URL, result.Error)
 		}
 	}
+}
+
+func InsertKeyboards(db *sql.DB) []uint64 {
+	keyboards := []models.KeyboardChars{
+		{
+		Name:          "Red Square",
+		TypeKeyBoards: "Mechanic",
+		Switches:      "Yellow",
+		ReleaseYear:   2023,
+		},
+		{
+		Name:          "Red Dragon",
+		TypeKeyBoards: "Mechanic",
+		Switches:      "Blue",
+		ReleaseYear:   2020,
+		},
+		{
+		Name:          "Razer",
+		TypeKeyBoards: "Mechanic",
+		Switches:      "Red",
+		ReleaseYear:   2017,
+		},
+	}
+
+	idk := make([]uint64, 0, len(keyboards))
+
+	for _, keyboard := range keyboards {
+		var (
+			charkId uint64
+		)
+		err := db.QueryRow(fmt.Sprintf("INSERT INTO %s (name, type_key_boards, switches, release_year) VALUES ($1, $2, $3, $4) returning id", "KeyboardChars"), keyboard.Name, keyboard.TypeKeyBoards, keyboard.Switches, keyboard.ReleaseYear).Scan(&charkId)
+
+		if err != nil {
+			panic(err)
+		}
+
+		idk = append(idk, charkId)
+	}
+
+	return idk
+}
+
+func InsertMouse(db *sql.DB) []uint64{
+	mouses := []models.MouseChars{
+		{
+			Name: "MCHOSE",
+			TypeMouses: "mouse",
+			Dpi: 26000,
+			ReleaseYear: 2025,
+		},
+	}
+
+		idm := make([]uint64, 0, len(mouses))
+
+	for _, mouse := range mouses {
+		var (
+			charmId uint64
+		)
+		err := db.QueryRow(fmt.Sprintf("INSERT INTO %s (name, type_mouses, dpi, release_year) VALUES ($1, $2, $3, $4) returning id", "MouseChars"), mouse.Name, mouse.TypeMouses, mouse.Dpi, mouse.ReleaseYear).Scan(&charmId)
+
+		if err != nil {
+			panic(err)
+		}
+
+		idm = append(idm, charmId)
+	}
+
+	return idm
 }
 
 func InsertGpus(db *sql.DB) []uint64 {

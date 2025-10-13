@@ -48,6 +48,42 @@ func (*GormPostgresController) loadCommentIds(comments []DbComment) []int64 {
 	return result
 }
 
+func (c *GormPostgresController) getAnswersCount(parent_id int64) (int64, errors.PCCError) {
+	var count int64
+
+	err := c.db.Model(&DbComment{}).Where("answer_on = ?", parent_id).Count(&count).Error
+
+	if err != nil {
+		return 0, gormerrors.GormErrorCast(err)
+	}
+
+	return count, nil
+
+	// 	var count int64
+
+	// 	cte := `
+	// WITH RECURSIVE comment_tree AS (
+	//     SELECT id, answer_on
+	//     FROM comments
+	//     WHERE answer_on = ?
+
+	//     UNION ALL
+
+	//     SELECT c.id, c.answer_on
+	//     FROM comments c
+	//     INNER JOIN comment_tree ct ON c.answer_on = ct.id
+	// )
+	// SELECT COUNT(*) FROM comment_tree;
+	// `
+
+	// 	err := c.db.Raw(cte, parent_id).Scan(&count).Error
+	// 	if err != nil {
+	// 		return -1, gormerrors.GormErrorCast(err)
+	// 	}
+
+	// return count, nil
+}
+
 func (c *GormPostgresController) loadReactionsForComments(ids []int64) (map[int64][]DbCommentReaction, errors.PCCError) {
 	var reactions []DbCommentReaction
 	err := c.db.Where("comment_id = ANY(?)", pq.Array(ids)).Find(&reactions).Error
@@ -112,7 +148,7 @@ func (c *GormPostgresController) loadRootComments(product_id int64, userID *int6
 	var comments []DbComment
 	commentReactions := make(map[int64]models.CommentReactions)
 
-	err := c.db.Preload("User").Preload("Product").Order("created_at DESC").Limit(limit).Offset(offset).Where("product_id = ?", product_id).Find(&comments).Error
+	err := c.db.Preload("User").Preload("Product").Order("created_at DESC").Limit(limit).Offset(offset).Where("product_id = ? AND answer_on is NULL", product_id).Find(&comments).Error
 
 	if err != nil {
 		return nil, gormerrors.GormErrorCast(err)
@@ -136,6 +172,17 @@ func (c *GormPostgresController) loadRootComments(product_id int64, userID *int6
 	}
 
 	result, perr := c.dbCommentsIntoComments(comments, rootCount, userID)
+
+	for i := range result.Comments {
+		cmt := &result.Comments[i]
+
+		cnt, perr := c.getAnswersCount(cmt.ID)
+		if perr != nil {
+			continue
+		}
+
+		cmt.ChildrenCount = uint64(cnt)
+	}
 
 	if perr != nil {
 		return nil, perr

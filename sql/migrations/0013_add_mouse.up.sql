@@ -4,7 +4,7 @@ CREATE TABLE IF NOT EXISTS MouseChars(
   type text NOT NULL CHECK (type IN ('мышь', 'тачпад')),
   dpi integer NOT NULL,
   release_year integer NOT NULL
-)
+);
 
 ALTER TABLE MouseChars ADD COLUMN mouse_id integer REFERENCES MouseChars(id);
 

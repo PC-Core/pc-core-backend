@@ -6,7 +6,7 @@ type AddLaptopInput struct {
 	Name   string              `json:"name"`
 	CpuID  uint64              `json:"cpu"`
 	Ram    int16               `json:"ram"`
-	Gpu    string              `json:"gpu"`
+	GpuID  uint64              `json:"gpu"`
 	Price  float64             `json:"price"`
 	Stock  uint64              `json:"stock"`
 	Medias []models.InputMedia `json:"medias"`

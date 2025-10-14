@@ -195,7 +195,7 @@ type DbLaptopChars struct {
 	CpuID uint64     `gorm:"column:cpu_id"`
 	Cpu   DbCpuChars `gorm:"foreignKey:CpuID"`
 	Ram   int16      `gorm:"column:ram"`
-	Gpu   string     `gorm:"column:gpu"`
+	GpuID uint64     `gorm:"column:gpu_id"`
 }
 
 func (DbLaptopChars) TableName() string {
@@ -203,11 +203,13 @@ func (DbLaptopChars) TableName() string {
 }
 
 func (c *DbLaptopChars) IntoLaptopChars() *models.LaptopChars {
+	gpu := &models.GpuChars{ID: c.GpuID}
+
 	return models.NewLaptopChars(
 		c.ID,
 		c.Cpu.IntoCpuChars(),
 		c.Ram,
-		c.Gpu,
+		gpu,
 	)
 }
 
@@ -256,4 +258,80 @@ type DbCommentReaction struct {
 
 func (DbCommentReaction) TableName() string {
 	return "commentreactions"
+}
+
+type DbGpuChars struct {
+	ID           uint64 `gorm:"column:id;primaryKey"`
+	Name         string `gorm:"column:name"`
+	MemoryGB     int    `gorm:"column:memory_gb"`
+	MemoryType   string `gorm:"column:memory_type"`
+	BusWidthBit  int    `gorm:"column:bus_width_bit"`
+	BaseFreqMHz  int    `gorm:"column:base_freq_mhz"`
+	BoostFreqMHz int    `gorm:"column:boost_freq_mhz"`
+	TecprocNm    int    `gorm:"column:tecproc_nm"`
+	TDPWatt      int    `gorm:"column:tdp_watt"`
+	ReleaseYear  int    `gorm:"column:release_year"`
+}
+
+func (chars *DbGpuChars) IntoGpu() *models.GpuChars {
+	return models.NewGpuChars(
+		chars.ID,
+		chars.Name,
+		chars.MemoryType,
+		uint64(chars.MemoryGB),     // конвертация int -> uint64
+		uint64(chars.BusWidthBit),  // конвертация int -> uint64
+		uint64(chars.BaseFreqMHz),  // конвертация int -> uint64
+		uint64(chars.BoostFreqMHz), // конвертация int -> uint64
+		uint64(chars.TecprocNm),    // конвертация int -> uint64
+		uint64(chars.TDPWatt),      // конвертация int -> uint64
+		uint64(chars.ReleaseYear),
+	)
+}
+
+func (DbGpuChars) TableName() string {
+	return "gpuchars"
+}
+
+type DbKeyboardChars struct {
+	ID            uint64 `gorm:"column:id;primarykey"`
+	Name          string `gorm:"column:name"`
+	TypeKeyBoards string `gorm:"column:type_keyboards"`
+	Switches      string `gorm:"column:switches"`
+	ReleaseYear   uint64 `gorm:"column:release_year"`
+}
+
+func (chars *DbKeyboardChars) IntoKeyBoard() *models.KeyboardChars {
+	return models.NewKeyBoardChars(
+		chars.ID,
+		chars.Name,
+		chars.TypeKeyBoards,
+		chars.Switches,
+		chars.ReleaseYear,
+	)
+}
+
+func (DbKeyboardChars) TableName() string {
+	return "keyboardchars"
+}
+
+type DbMouseChars struct {
+	ID          uint64 `gorm:"column:id;primarykey"`
+	Name        string `gorm:"column:name"`
+	TypeMouses  string `gorm:"column:type_mouses"`
+	Dpi         uint64 `gorm:"column:dpi"`
+	ReleaseYear uint64 `gorm:"column:release_year"`
+}
+
+func (chars *DbMouseChars) IntoMouse() *models.MouseChars {
+	return models.NewMouseChars(
+		chars.ID,
+		chars.Name,
+		chars.TypeMouses,
+		chars.Dpi,
+		chars.ReleaseYear,
+	)
+}
+
+func (DbMouseChars) TableName() string {
+	return "mousechars"
 }

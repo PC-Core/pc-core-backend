@@ -172,6 +172,9 @@ func main() {
 	cpc := controllers.NewCpuController(r, db, middlewares.JWTAuthorize(auth), helpers.JWTRoleCast)
 	comc := controllers.NewCommentController(r, db, middlewares.JWTAuthorize(auth), middlewares.JWTNotRequired(auth), helpers.JWTPublicUserCaster(auth))
 	rc := controllers.NewReactionsController(r, db, middlewares.JWTAuthorize(auth), helpers.JWTPublicUserCaster(auth))
+	gc := controllers.NewGpuController(r, db, middlewares.JWTAuthorize(auth), helpers.JWTRoleCast)
+	kbc := controllers.NewKeyBoardController(r, db, middlewares.JWTAuthorize(auth), helpers.JWTRoleCast)
+	msc := controllers.NewMouseController(r, db, middlewares.JWTAuthorize(auth), helpers.JWTRoleCast)
 
 	uc.ApplyRoutes()
 	lc.ApplyRoutes()
@@ -184,6 +187,9 @@ func main() {
 	cpc.ApplyRoutes()
 	comc.ApplyRoutes()
 	rc.ApplyRoutes()
+	gc.ApplyRoutes()
+	kbc.ApplyRoutes()
+	msc.ApplyRoutes()
 
 	r.Run(config.Addr + ":" + strconv.Itoa(config.Port))
 }

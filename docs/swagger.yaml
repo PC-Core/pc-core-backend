@@ -186,7 +186,7 @@ definitions:
       cpu:
         type: integer
       gpu:
-        type: string
+        type: integer
       medias:
         items:
           $ref: '#/definitions/models.InputMedia'
@@ -203,11 +203,6 @@ definitions:
   inputs.AddToCartInput:
     properties:
       quantity:
-        type: integer
-    type: object
-  inputs.GetAnswersInput:
-    properties:
-      product_id:
         type: integer
     type: object
   inputs.LoginUserInput:
@@ -291,6 +286,8 @@ definitions:
         items:
           $ref: '#/definitions/models.Comment'
         type: array
+      children_count:
+        type: integer
       created_at:
         type: string
       deleted:
@@ -446,6 +443,15 @@ definitions:
     - Temporary
     - Default
     - Admin
+  outputs.CommentsOutput:
+    properties:
+      amount:
+        type: integer
+      comments:
+        items:
+          $ref: '#/definitions/models.Comment'
+        type: array
+    type: object
   outputs.GetProductsResult:
     properties:
       amount:
@@ -746,12 +752,16 @@ paths:
         name: comment_id
         required: true
         type: integer
-      - description: Input
-        in: body
-        name: input
+      - in: query
+        name: limit
         required: true
-        schema:
-          $ref: '#/definitions/inputs.GetAnswersInput'
+        type: integer
+      - in: query
+        name: offset
+        type: integer
+      - in: query
+        name: product_id
+        type: integer
       - description: access token for user is used to check your reaction, is not
           required
         in: header
@@ -763,9 +773,7 @@ paths:
         "200":
           description: OK
           schema:
-            items:
-              $ref: '#/definitions/models.Comment'
-            type: array
+            $ref: '#/definitions/outputs.CommentsOutput'
         "400":
           description: Bad Request
           schema:
@@ -788,15 +796,20 @@ paths:
         in: header
         name: Authorization
         type: string
+      - in: query
+        name: limit
+        required: true
+        type: integer
+      - in: query
+        name: offset
+        type: integer
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            items:
-              $ref: '#/definitions/models.Comment'
-            type: array
+            $ref: '#/definitions/outputs.CommentsOutput'
         "400":
           description: Bad Request
           schema:

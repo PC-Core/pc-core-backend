@@ -10,6 +10,10 @@ import (
 func (c *GormPostgresController) AddMedias(tx *gorm.DB, imedias []models.InputMedia) (models.Medias, errors.PCCError) {
 	var medias []models.Media
 
+	if (len(imedias) == 0) || (tx == nil) {
+		return medias, nil
+	}
+
 	for _, im := range imedias {
 		medias = append(medias, models.Media{Url: im.Url, Type: im.Type})
 	}

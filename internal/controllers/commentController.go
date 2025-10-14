@@ -44,13 +44,15 @@ func (c *CommentController) ApplyRoutes() {
 // @Tags         comments
 // @Accept       json
 // @Produce      json
-// @Param 		 product_id 	query	int			true	"ID of the product"
-// @Param		 Authorization  header	string		false	"access token for user is used to check your reaction, is not required"
-// @Success      200  {array}  	models.Comment
+// @Param 		 product_id 	query	int								true	"ID of the product"
+// @Param		 Authorization  header	string							false	"access token for user is used to check your reaction, is not required"
+// @Param		 input			query	inputs.GetRootCommentsInput		true	"input"
+// @Success      200  {object}  outputs.CommentsOutput
 // @Failure      400  {object}  errors.PublicPCCError
 // @Router       /comment/product/:id [get]
 func (c *CommentController) getRootComments(ctx *gin.Context) {
 	idStr := ctx.Param("id")
+	var input inputs.GetRootCommentsInput
 
 	id, err := strconv.ParseUint(idStr, 10, 64)
 
@@ -58,9 +60,14 @@ func (c *CommentController) getRootComments(ctx *gin.Context) {
 		return
 	}
 
+	if err := ctx.ShouldBindQuery(&input); err != nil {
+		CheckErrorAndWriteBadRequest(ctx, conerrors.BindErrorCast(err))
+		return
+	}
+
 	userID := GetNotRequiredUserID(ctx, c.pucaster)
 
-	comments, perr := c.db.GetRootCommentsForProduct(int64(id), userID)
+	comments, perr := c.db.GetRootCommentsForProduct(int64(id), userID, input.Limit, input.Offset)
 
 	if CheckErrorAndWriteBadRequest(ctx, perr) {
 		return
@@ -75,9 +82,9 @@ func (c *CommentController) getRootComments(ctx *gin.Context) {
 // @Accept       json
 // @Produce      json
 // @Param 		 comment_id 	query	int						true	"ID of the comment"
-// @param		 input			body	inputs.GetAnswersInput	true	"Input"
+// @param		 input			query	inputs.GetAnswersInput	true	"Input"
 // @Param		 Authorization  header	string					false	"access token for user is used to check your reaction, is not required"
-// @Success      200  {array}  	models.Comment
+// @Success      200  {object}  outputs.CommentsOutput
 // @Failure      400  {object}  errors.PublicPCCError
 // @Router       /comment/parent/:id [get]
 func (c *CommentController) getAnswers(ctx *gin.Context) {
@@ -91,14 +98,14 @@ func (c *CommentController) getAnswers(ctx *gin.Context) {
 
 	var input inputs.GetAnswersInput
 
-	if err := ctx.ShouldBindBodyWithJSON(&input); err != nil {
+	if err := ctx.ShouldBindQuery(&input); err != nil {
 		CheckErrorAndWriteBadRequest(ctx, conerrors.BindErrorCast(err))
 		return
 	}
 
 	userID := GetNotRequiredUserID(ctx, c.pucaster)
 
-	ans, perr := c.db.GetAnswersOnComment(input.ProductID, userID, int64(id))
+	ans, perr := c.db.GetAnswersOnComment(input.ProductID, userID, int64(id), input.Limit, input.Offset)
 
 	if CheckErrorAndWriteBadRequest(ctx, perr) {
 		return

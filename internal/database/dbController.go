@@ -6,11 +6,15 @@ import (
 	"github.com/PC-Core/pc-core-backend/internal/errors"
 	"github.com/PC-Core/pc-core-backend/pkg/models"
 	"github.com/PC-Core/pc-core-backend/pkg/models/inputs"
+	"github.com/PC-Core/pc-core-backend/pkg/models/outputs"
 )
 
 const (
-	LaptopCharsTable = "LaptopChars"
-	CpuCharsTable    = "CpuChars"
+	LaptopCharsTable   = "LaptopChars"
+	CpuCharsTable      = "CpuChars"
+	GpuCharsTable      = "GpuChars"
+	KeyboardCharsTable = "KeyboardChars"
+	MouseCharsTable    = "MouseChars"
 )
 
 // An interface for Product Characterics
@@ -38,12 +42,15 @@ type DbController interface {
 	GetUserByID(id int) (*models.User, errors.PCCError)
 	GetCpuChars(charId uint64) (*models.CpuChars, errors.PCCError)
 	AddCpu(cpu *inputs.AddCpuInput) (*models.Product, *models.CpuChars, errors.PCCError)
-	GetRootCommentsForProduct(product_id int64, userID *int64) ([]models.Comment, errors.PCCError)
-	GetAnswersOnComment(product_id int64, userID *int64, comment_id int64) ([]models.Comment, errors.PCCError)
+	GetRootCommentsForProduct(product_id int64, userID *int64, limit int, offset int) (*outputs.CommentsOutput, errors.PCCError)
+	GetAnswersOnComment(product_id int64, userID *int64, comment_id int64, limit int, offset int) (*outputs.CommentsOutput, errors.PCCError)
 	AddComment(input *inputs.AddCommentInput, userID int64, product_id int64) (int64, errors.PCCError)
 	EditComment(newText string, commentID int64, userID int64) (int64, errors.PCCError)
 	DeleteComment(commentID int64, userID int64) (int64, errors.PCCError)
+	AddGpu(gpu *inputs.AddGpuInput) (*models.GpuChars, *models.Product, errors.PCCError)
 	SetReaction(commentID int64, userID int64, ty models.ReactionType) (int64, errors.PCCError)
+	AddKeyBoard(keyboard *inputs.AddKeyBoardInput) (*models.KeyboardChars, *models.Product, errors.PCCError)
+	AddMouse(mouse *inputs.AddMouseInput) (*models.MouseChars, *models.Product, errors.PCCError)
 }
 
 // Database controller

@@ -397,13 +397,20 @@ const docTemplate = `{
                         "required": true
                     },
                     {
-                        "description": "Input",
-                        "name": "input",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/inputs.GetAnswersInput"
-                        }
+                        "type": "integer",
+                        "name": "limit",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "name": "offset",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "product_id",
+                        "in": "query"
                     },
                     {
                         "type": "string",
@@ -416,10 +423,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/models.Comment"
-                            }
+                            "$ref": "#/definitions/outputs.CommentsOutput"
                         }
                     },
                     "400": {
@@ -456,16 +460,24 @@ const docTemplate = `{
                         "description": "access token for user is used to check your reaction, is not required",
                         "name": "Authorization",
                         "in": "header"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "limit",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "name": "offset",
+                        "in": "query"
                     }
                 ],
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/models.Comment"
-                            }
+                            "$ref": "#/definitions/outputs.CommentsOutput"
                         }
                     },
                     "400": {
@@ -1227,7 +1239,7 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "gpu": {
-                    "type": "string"
+                    "type": "integer"
                 },
                 "medias": {
                     "type": "array",
@@ -1253,14 +1265,6 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "quantity": {
-                    "type": "integer"
-                }
-            }
-        },
-        "inputs.GetAnswersInput": {
-            "type": "object",
-            "properties": {
-                "product_id": {
                     "type": "integer"
                 }
             }
@@ -1388,6 +1392,9 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/models.Comment"
                     }
+                },
+                "children_count": {
+                    "type": "integer"
                 },
                 "created_at": {
                     "type": "string"
@@ -1605,6 +1612,20 @@ const docTemplate = `{
                 "Default",
                 "Admin"
             ]
+        },
+        "outputs.CommentsOutput": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "type": "integer"
+                },
+                "comments": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.Comment"
+                    }
+                }
+            }
         },
         "outputs.GetProductsResult": {
             "type": "object",

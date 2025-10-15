@@ -1,24 +1,17 @@
 package main
 
 import (
-	"context"
 	"crypto/sha256"
 	"database/sql"
 	"encoding/hex"
 	"fmt"
 	"log"
-	"net/http"
 	"os"
 	"strings"
-	"sync"
-	"time"
 
-	"github.com/PC-Core/pc-core-backend/pkg/config"
 	"github.com/PC-Core/pc-core-backend/pkg/models"
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
-	"github.com/minio/minio-go/v7"
-	"github.com/minio/minio-go/v7/pkg/credentials"
 )
 
 const (
@@ -34,16 +27,6 @@ const (
 
 var SEED_TYPE_NAMES = []string{SEED_TYPE_USER, SEED_TYPE_LAPTOP, SEED_TYPE_CATEGORY, SEED_TYPE_MEDIA, SEED_ALL, CLEAR_ALL, SEED_TYPE_GPU}
 
-// MinIOConfig конфигурация MinIO
-type MinIOConfig struct {
-	Endpoint  string
-	AccessKey string
-	SecretKey string
-	Bucket    string
-	UseSSL    bool
-}
-
-// MediaDownloadTask задача на загрузку медиа
 type MediaDownloadTask struct {
 	URL        string
 	ObjectName string
@@ -51,173 +34,10 @@ type MediaDownloadTask struct {
 	Type       string
 }
 
-// BatchMediaDownloader для пакетной загрузки медиа
-type BatchMediaDownloader struct {
-	minioClient *minio.Client
-	config      MinIOConfig
-	httpClient  *http.Client
-	semaphore   chan struct{}
-	wg          sync.WaitGroup
-	mu          sync.Mutex
-	results     []MediaDownloadResult
-}
-
-// MediaDownloadResult результат загрузки
-type MediaDownloadResult struct {
-	URL        string
-	ObjectName string
-	Success    bool
-	Error      error
-	Duration   time.Duration
-}
-
 func Sha256(value string) string {
 	hasher := sha256.New()
 	hasher.Write([]byte(value))
 	return hex.EncodeToString(hasher.Sum(nil))
-}
-
-func InitMinIOClient(config MinIOConfig) (*minio.Client, error) {
-	minioClient, err := minio.New(config.Endpoint, &minio.Options{
-		Creds:  credentials.NewStaticV4(config.AccessKey, config.SecretKey, ""),
-		Secure: config.UseSSL,
-	})
-	if err != nil {
-		return nil, fmt.Errorf("ошибка подключения к MinIO: %w", err)
-	}
-
-	// Проверяем и создаем бакет если нужно
-	ctx := context.Background()
-	exists, err := minioClient.BucketExists(ctx, config.Bucket)
-	if err != nil {
-		return nil, fmt.Errorf("ошибка проверки бакета: %w", err)
-	}
-
-	if !exists {
-		err = minioClient.MakeBucket(ctx, config.Bucket, minio.MakeBucketOptions{})
-		if err != nil {
-			return nil, fmt.Errorf("ошибка создания бакета: %w", err)
-		}
-	}
-
-	return minioClient, nil
-}
-
-func NewBatchMediaDownloader(config MinIOConfig, maxConcurrent int) (*BatchMediaDownloader, error) {
-	minioClient, err := InitMinIOClient(config)
-	if err != nil {
-		return nil, err
-	}
-
-	return &BatchMediaDownloader{
-		minioClient: minioClient,
-		config:      config,
-		httpClient: &http.Client{
-			Timeout: 30 * time.Minute,
-			Transport: &http.Transport{
-				MaxIdleConns:        maxConcurrent,
-				MaxIdleConnsPerHost: maxConcurrent,
-				IdleConnTimeout:     90 * time.Second,
-			},
-		},
-		semaphore: make(chan struct{}, maxConcurrent),
-		results:   make([]MediaDownloadResult, 0),
-	}, nil
-}
-
-func (b *BatchMediaDownloader) DownloadAndUploadMedia(ctx context.Context, tasks []MediaDownloadTask) []MediaDownloadResult {
-	for _, task := range tasks {
-		fmt.Println(task)
-		b.wg.Add(1)
-		go b.processMediaTask(ctx, task)
-	}
-
-	b.wg.Wait()
-	return b.results
-}
-
-func (b *BatchMediaDownloader) processMediaTask(ctx context.Context, task MediaDownloadTask) {
-	defer b.wg.Done()
-
-	// Захватываем слот семафора
-	b.semaphore <- struct{}{}
-	defer func() { <-b.semaphore }()
-
-	startTime := time.Now()
-	result := MediaDownloadResult{
-		URL:        task.URL,
-		ObjectName: task.ObjectName,
-	}
-
-	// Скачиваем и загружаем файл
-	err := b.downloadAndUploadSingleMedia(ctx, task)
-	if err != nil {
-		result.Error = err
-		result.Success = false
-	} else {
-		result.Success = true
-	}
-
-	result.Duration = time.Since(startTime)
-
-	b.mu.Lock()
-	b.results = append(b.results, result)
-	b.mu.Unlock()
-}
-
-func (b *BatchMediaDownloader) downloadAndUploadSingleMedia(ctx context.Context, task MediaDownloadTask) error {
-	// Создаем HTTP запрос
-	req, err := http.NewRequestWithContext(ctx, "GET", task.URL, nil)
-	if err != nil {
-		return fmt.Errorf("ошибка создания запроса: %w", err)
-	}
-
-	// Выполняем запрос
-	resp, err := b.httpClient.Do(req)
-	if err != nil {
-		return fmt.Errorf("ошибка скачивания: %w", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("HTTP ошибка: %s", resp.Status)
-	}
-
-	// Определяем content type
-	contentType := "application/octet-stream"
-	if task.Type == "Image" {
-		contentType = getImageContentType(task.URL)
-	} else if task.Type == "Video" {
-		contentType = "video/mp4"
-	}
-
-	// Загружаем в MinIO
-	_, err = b.minioClient.PutObject(ctx, b.config.Bucket, task.ObjectName, resp.Body, -1, minio.PutObjectOptions{
-		ContentType: contentType,
-	})
-	if err != nil {
-		return fmt.Errorf("ошибка загрузки в MinIO: %w", err)
-	}
-
-	return nil
-}
-
-func getImageContentType(url string) string {
-	ext := strings.ToLower(url[strings.LastIndex(url, "."):])
-	switch ext {
-	case ".jpg", ".jpeg":
-		return "image/jpeg"
-	case ".png":
-		return "image/png"
-	case ".gif":
-		return "image/gif"
-	case ".bmp":
-		return "image/bmp"
-	case ".webp":
-		return "image/webp"
-	default:
-		return "application/octet-stream"
-	}
 }
 
 // ReadMediaTasksFromFile читает задачи на загрузку медиа из файла
@@ -260,58 +80,6 @@ func ReadMediaTasksFromFile(filename string) ([]MediaDownloadTask, error) {
 	return tasks, nil
 }
 
-// getDefaultMediaTasks возвращает дефолтные задачи если файл не найден
-func getDefaultMediaTasks(laptopIDs []uint64) []MediaDownloadTask {
-	if len(laptopIDs) < 11 {
-		return []MediaDownloadTask{}
-	}
-
-	return []MediaDownloadTask{
-		{"https://example.com/images/2.png", "laptops/2.png", laptopIDs[0], "Image"},
-		{"https://example.com/videos/3.mp4", "laptops/3.mp4", laptopIDs[0], "Video"},
-		{"https://example.com/images/4.png", "laptops/4.png", laptopIDs[2], "Image"},
-		{"https://example.com/videos/5.mp4", "laptops/5.mp4", laptopIDs[2], "Video"},
-		{"https://example.com/images/6.png", "laptops/6.png", laptopIDs[3], "Image"},
-		{"https://example.com/images/7.png", "laptops/7.png", laptopIDs[3], "Image"},
-		{"https://example.com/images/8.png", "laptops/8.png", laptopIDs[4], "Image"},
-		{"https://example.com/images/9.png", "laptops/9.png", laptopIDs[4], "Image"},
-		{"https://example.com/videos/10.mp4", "laptops/10.mp4", laptopIDs[5], "Video"},
-		{"https://example.com/images/1.png", "laptops/1.png", laptopIDs[5], "Image"},
-		{"https://example.com/images/11.png", "laptops/11.png", laptopIDs[6], "Image"},
-		{"https://example.com/videos/12.mp4", "laptops/12.mp4", laptopIDs[6], "Video"},
-		{"https://example.com/images/13.png", "laptops/13.png", laptopIDs[6], "Image"},
-		{"https://example.com/videos/14.mp4", "laptops/14.mp4", laptopIDs[6], "Video"},
-		{"https://example.com/videos/15.mp4", "laptops/15.mp4", laptopIDs[7], "Video"},
-		{"https://example.com/images/16.png", "laptops/16.png", laptopIDs[8], "Image"},
-		{"https://example.com/images/17.png", "laptops/17.png", laptopIDs[8], "Image"},
-		{"https://example.com/videos/18.mp4", "laptops/18.mp4", laptopIDs[8], "Video"},
-		{"https://example.com/videos/19.mp4", "laptops/19.mp4", laptopIDs[9], "Video"},
-		{"https://example.com/images/20.png", "laptops/20.png", laptopIDs[10], "Image"},
-	}
-}
-
-// getExistingLaptopIDs получает ID существующих ноутбуков из базы
-func getExistingLaptopIDs(db *sql.DB) []uint64 {
-	rows, err := db.Query("SELECT id FROM Products WHERE chars_table_name = 'LaptopChars'")
-	if err != nil {
-		log.Printf("Ошибка получения ID ноутбуков: %v", err)
-		return []uint64{}
-	}
-	defer rows.Close()
-
-	var ids []uint64
-	for rows.Next() {
-		var id uint64
-		if err := rows.Scan(&id); err != nil {
-			log.Printf("Ошибка сканирования ID: %v", err)
-			continue
-		}
-		ids = append(ids, id)
-	}
-
-	return ids
-}
-
 func InsertUsers(db *sql.DB) {
 	users := []models.User{
 		*models.NewUser(0, "yellowpeacock117", "jennie.nichols@example.com", "Default", Sha256("bibi")),
@@ -329,53 +97,101 @@ func InsertUsers(db *sql.DB) {
 	}
 }
 
-func InsertMedias(db *sql.DB, minioConfig MinIOConfig, laptopIDs []uint64) {
-	var mediaTasks []MediaDownloadTask
-	var err error
+func InsertMedias(db *sql.DB, laptopIDs []uint64) {
+	dowloadTask := []MediaDownloadTask{{"https://cdn1.ozone.ru/s3/multimedia-2/6714764426.jpg", "laptops/msi-titan-1.jpg", 1, "Image"},
+		{"https://www.ixbt.com/img/r30/00/02/56/91/msi-titan-gt77-12uhs-big.jpg", "laptops/msi-titan-2.jpg", 1, "Image"},
+		{"https://rutube.ru/video/24f70de9c47c9df1be60adfbd6b3d3db/?ysclid=mf7837kqg3115263121", "laptops/msi-titan-review.mp4", 1, "Video"},
+		{"https://i.ebayimg.com/images/g/IUoAAeSwPG5oMKqS/s-l500.jpg", "laptops/lenovo-legion-1.jpg", 2, "Image"},
+		{"https://cdn1.youla.io/files/images/780_780/65/df/65df0a0dc3773b77740cf344-2.jpg", "laptops/lenovo-legion-2.jpg", 2, "Image"},
+		{"https://n.cdn.cdek.shopping/images/shopping/9257a5ea990e4f7fb298cf575b4dd336.jpg?v=1", "laptops/macbook-pro-1.jpg", 3, "Image"},
+		{"https://appgreatstore.ru/upload/iblock/1e9/ndvccnc38q1a2l6i3yzdn45jdkkysxe5.jpg", "laptops/macbook-pro-2.jpg", 3, "Image"},
+		{"https://static.1k.by/images/productsimages/ip/big/pp6/4/4931862/i128c38fef.jpg", "laptops/MSI-Raider-18", 4, "Image"},
+		{"https://overclockers.ru/st/legacy/blog/413830/606041_O.jpg", "laptops/MSI-Raider-18", 4, "Image"},
+		{"https://thedigitaltech.com/wp-content/uploads/2022/07/Asus-ROG-Zephyrus-Duo-16.jpg", "laptops/ASUS-ROG-Zephyrus-Duo-16", 5, "Image"},
+		{"https://wit.ru/images/1/10625/10627/10640/90NR0D71-M000X0-421567.png", "laptops/ASUS-ROG-Zephyrus-Duo-16", 5, "Image"},
+		{"https://static.1k.by/images/productsimages/ip/big/pp6/4/4931862/i128c38fef.jpg", "laptops/MSI-Vector-17", 6, "Image"},
+		{"https://img.mvideo.ru/Pdb/400293516b4.jpg", "laptops/MSI-Vector-17", 6, "Image"},
+		{"https://comparema.ru/image/cache/catalog/products/3441782_3-1200x800.jpg", "laptops/ASUS-VivoBook-Pro-15", 7, "Image"},
+		{"https://cdn1.ozone.ru/s3/multimedia-u/6479990442.jpg", "laptops/ASUS-VivoBook-Pro-15", 7, "Image"},
+		{"https://tm.by/sites/default/files/styles/uc_product_full/public/content/product/2024/11/2/i835792-20241126_0.jpg", "laptops/MSI-Sword-17-HX", 8, "Image"},
+		{"https://main-cdn.sbermegamarket.ru/big2/hlr-system/166/078/535/511/615/44/100071445455b5.png", "laptops/MSI-Sword-17-HX", 8, "Image"},
+		{"https://m.media-amazon.com/images/I/714G8bC-F1L.jpg", "laptops/MSI-Summit-13-AI+-Evo", 9, "Image"},
+		{"https://avatars.mds.yandex.net/i?id=7487728a923587b878ff5e9c0bbfb7d0780eb10a-16485021-images-thumbs&n=13", "laptops/MSI-Summit-13-AI+-Evo", 9, "Image"},
+		{"https://mews.biggeek.ru/wp-content/uploads/2022/07/bfarsace_190101_5333_0005.jpg", "laptops/Apple-MacBook-Air", 10, "Image"},
+		{"https://overclockers.ru/st/legacy/blog/422120/358217_O.jpg", "laptops/Apple-MacBook-Air", 10, "Image"},
+		{"https://m.media-amazon.com/images/I/71RuOUPT+4L.jpg", "laptops/Dell-XPS-17", 11, "Image"},
+		{"https://m.media-amazon.com/images/I/71Kn5i5fsrL.jpg", "laptops/Dell-XPS-17", 11, "Image"},
+		{"https://m.media-amazon.com/images/I/71RuOUPT+4L.jpg", "laptops/Dell-XPS-15", 12, "Image"},
+		{"https://m.media-amazon.com/images/I/71RuOUPT+4L.jpg", "laptops/Dell-XPS-15", 12, "Image"},
+		{"https://cache3.youla.io/files/images/780_780/5b/03/5b0306f0e7696a72e95fb742.jpg", "laptops/HP-Omen-17", 13, "Image"},
+		{"https://i.pinimg.com/736x/08/18/d4/0818d4903ca522622de32b48ccdcd932.jpg", "laptops/HP-Omen-17", 13, "Image"},
+		{"https://pigmentarius.ru/upload/medialibrary/3ac/0xxtl71pz9280bvq0pzcz2t9wmvyu6mr.jpg", "laptops/HP-Spectre-x360-14", 14, "Image"},
+		{"https://main-cdn.sbermegamarket.ru/big2/hlr-system/1628142416/100023661450b5.jpg", "laptops/HP-Spectre-x360-14", 14, "Image"},
+		{"https://static01.servicebox.ru/img/uploads/news/6614e1b3cf74f_1712644531.jpeg", "laptops/Razer-Blade-18", 15, "Image"},
+		{"https://www.notebookcheck-ru.com/uploads/tx_nbc2/blade_01.jpg", "laptops/Razer-Blade-18", 15, "Image"},
+		{"https://www.notebookcheck-ru.com/uploads/tx_nbc2/blade_01.jpg", "laptops/Razer-Blade-18", 16, "Image"},
+		{"https://www.notebookcheck-ru.com/uploads/tx_nbc2/blade_01.jpg", "laptops/Razer-Blade-18", 16, "Image"},
+		{"https://www.cdrinfo.com/d7/system/files/styles/siteberty_image_770x484/private/new_site_image/2020/gigabyte_aorus17g.jpg?itok=FSbVJYlW", "laptops/Gigabyte-Aorus-17", 17, "Image"},
+		{"https://www.cdrinfo.com/d7/system/files/styles/siteberty_image_770x484/private/new_site_image/2020/gigabyte_aorus17g.jpg?itok=FSbVJYlW", "laptops/Gigabyte-Aorus-17", 17, "Image"},
+		{"https://c.dns-shop.ru/thumb/st4/fit/wm/0/0/549a0b1bc8b1b5e200fd28edaa260295/84560d0d011ac958db8e55cf001f4ae1f76900dab0409de57fa676540a3967aa.jpg.webp", "laptops/Gigabyte-Aero-16-OLED", 18, "Image"},
+		{"https://c.dns-shop.ru/thumb/st4/fit/0/0/794102e30c43ada217a69495e290e1ad/946fdc59e840364576d5e71525cc5d35e2438d8622914c753d36959a225d1b4e.jpg.webp", "laptops/Gigabyte-Aero-16-OLED", 18, "Image"},
+		{"https://c.dns-shop.ru/thumb/st1/fit/wm/0/0/ccadb1f98aa909e6ad96a9818607fdd3/f5cd838f524900de7a6151f32173465652ca351aa69cfd5386c284c9728c7b7d.jpg.webp", "laptops/Samsung-Galaxy-Book4-Ultra", 19, "Image"},
+		{"https://c.dns-shop.ru/thumb/st1/fit/wm/0/0/2d42b2861daa886897c3241892c3fa89/90ebe9e40b50a636bb77d99c8200f3222c1c21d58bf223c216305ceedbe03c6f.jpg.webp", "laptops/Samsung-Galaxy-Book4-Ultra", 19, "Image"},
+		{"https://c.dns-shop.ru/thumb/st1/fit/0/0/2d6bcec68df7c383e7a07dcab9515adf/148e2980db1a3a10d4777d448262fab966000e090948d2d33642298a1bce8fb8.jpg.webp", "laptops/Samsung-Galaxy-Book4-Pro", 20, "Image"},
+		{"https://c.dns-shop.ru/thumb/st1/fit/wm/0/0/addf544e5b369a9fdfedec1be4ae8319/88ada83908a3b640c579f699459808ac885a4f573c7ced103644563f59ade509.jpg.webp", "laptops/Samsung-Galaxy-Book4-Pro", 20, "Image"},
+		{"https://c.dns-shop.ru/thumb/st1/fit/0/0/ecd0d4a753caa2e3458411c0740cc800/6f11a7a1c608fcc6908402d94df217bd326a975d4c9e136d47123dc1db3e401a.jpg.webp", "laptops/Acer-Predator-Helios-18", 21, "Image"},
+		{"https://c.dns-shop.ru/thumb/st1/fit/wm/0/0/badaf84f3e48552f609f49b9f50bdfad/dee83ba14cf5b284f468e596a2e14e2b77a044099fe9ea697b74af3e553f8764.jpg.webp", "laptops/Acer-Predator-Helios-18", 21, "Image"},
+		{"https://c.dns-shop.ru/thumb/st1/fit/0/0/ecd0d4a753caa2e3458411c0740cc800/6f11a7a1c608fcc6908402d94df217bd326a975d4c9e136d47123dc1db3e401a.jpg.webp", "laptops/Acer-Predator-Helios-16", 22, "Image"},
+		{"https://c.dns-shop.ru/thumb/st1/fit/wm/0/0/badaf84f3e48552f609f49b9f50bdfad/dee83ba14cf5b284f468e596a2e14e2b77a044099fe9ea697b74af3e553f8764.jpg.webp", "laptops/Acer-Predator-Helios-16", 22, "Image"},
+		{"https://static.onlinetrade.ru/img/items/b/3036587_1.jpg", "laptops/Acer-Swift-X-14", 23, "Image"},
+		{"https://static.onlinetrade.ru/img/items/b/3036587_2.jpg", "laptops/Acer-Swift-X-14", 23, "Image"},
+		{"https://static.onlinetrade.ru/img/items/b/noutbuk_asus_zenbook_duo_ux8406ca_ql221w_duo_touch_14_14_fhd_fhd_oled_60hz_400nits_touch_ultra_7_255h_2.0ghz_16gb_lpddr5x_ssd_1tb_arc_graphics_win11_inkwell_gray_90nb14x1_m00c70_5.jpg", "laptops/ASUS-Zenbook-Pro-Duo-14", 24, "Image"},
+		{"https://static.onlinetrade.ru/img/items/b/noutbuk_asus_zenbook_duo_ux8406ca_ql221w_duo_touch_14_14_fhd_fhd_oled_60hz_400nits_touch_ultra_7_255h_2.0ghz_16gb_lpddr5x_ssd_1tb_arc_graphics_win11_inkwell_gray_90nb14x1_m00c70_1.jpg", "laptops/ASUS-Zenbook-Pro-Duo-14", 24, "Image"},
+		{"https://c.dns-shop.ru/thumb/st1/fit/0/0/241630471ce2bbc8a55673f6c7ac2ed4/5b5a9a787bdb5e970bea99f60f829bd57b53cd02179d2e0c0bd1a68eb9d6a8ce.jpg.webp", "laptops/ASUS-TUF-Gaming-F15", 25, "Image"},
+		{"https://c.dns-shop.ru/thumb/st1/fit/wm/0/0/644fecaa0ca3b884d037badf707f9365/dd1e4cbb67650916f2d89b1a6f0c9ca357fe23d99772bc5f628b700a769fe49e.jpg.webp", "laptops/ASUS-TUF-Gaming-F15", 25, "Image"},
+		{"https://static.onlinetrade.ru/img/items/b/noutbuk_asus_tuf_gaming_a17_fa706nfr_hx007_17.3_fhd_ips_144hz_250nits_ryzen_7_7435hs_3.1ghz_16gb_ddr5_ssd_512gb_rtx_2050_4gb_noos_graphite_black_90nr0jw5_m00080__3276410_1.jpg", "laptops/ASUS-TUF-Gaming-A17", 26, "Image"},
+		{"https://static.onlinetrade.ru/img/items/b/noutbuk_asus_tuf_gaming_a17_fa706nfr_hx007_17.3_fhd_ips_144hz_250nits_ryzen_7_7435hs_3.1ghz_16gb_ddr5_ssd_512gb_rtx_2050_4gb_noos_graphite_black_90nr0jw5_m00080__3276410_4.jpg", "laptops/ASUS-TUF-Gaming-A17", 26, "Image"},
+		{"https://c.dns-shop.ru/thumb/st1/fit/0/0/db7664bd13f5ac044f5aba55b3a375c1/be6c48142d7cd590b9ba88b6686ea1dc676773e97040233c356b76a117fc1cb8.jpg.webp", "laptops/Lenovo-Yoga-Slim-7", 27, "Image"},
+		{"https://c.dns-shop.ru/thumb/st4/fit/wm/0/0/ebc20c3e48d27a12c2ca199f5aa71bab/b85df134be0d2db537543b57048fdb16509ea80e069b0aa78672e608764047c4.jpg.webp", "laptops/Lenovo-Yoga-Slim-7", 27, "Image"},
+		{"https://c.dns-shop.ru/thumb/st4/fit/0/0/817b8391b8332efec99cb572dc4aabc6/63add0435dc2ca1f4082d79c725ff635bf24115760a1825efa496a176cf2d807.jpg.webp", "laptops/Lenovo-IdeaPad-Gaming-3", 28, "Image"},
+		{"https://c.dns-shop.ru/thumb/st4/fit/wm/0/0/24960407824a70fd350b53853a4f1ac1/9eb549b1f29c510c7198a4c60b90552bf3bb880965c8b3abfca1e65d77502158.jpg.webp", "laptops/Lenovo-IdeaPad-Gaming-3", 28, "Image"},
+		{"https://c.dns-shop.ru/thumb/st1/fit/0/0/f9ef35fd9ec68a0601a890e5d7b0e3f1/a003d1c674eeb891feea71ae6e2aa305247a90817ce780a2b8601e2ffecce9e3.png.webp", "laptops/Lenovo-Legion-Slim-5", 29, "Image"},
+		{"https://c.dns-shop.ru/thumb/st1/fit/wm/0/0/b080a238b6102fcaebcddfbc0c4a8faf/0ee6a10b1fc35684de0b028f195d098f7dd18ff036234ec79f6940ce925eba0a.jpg.webp", "laptops/Lenovo-Legion-Slim-5", 29, "Image"},
+		{"https://cdn.citilink.ru/PvviYFG7xLrMc1Cg-iICyATPKKzDq79G4Cw5ddM-b5M/resizing_type:fit/gravity:sm/width:1200/height:1200/plain/product-images/4c734b8b-2ef5-413d-9f1a-cab6f65593e1.jpg", "laptops/Lenovo-ThinkPad-X1-Carbon", 30, "Image"},
+		{"https://cdn.citilink.ru/IgQMw6ci2q8NkyvQ4QyBgHamSC9AdRoH5rQi3QYSalU/resizing_type:fit/gravity:sm/width:1200/height:1200/plain/product-images/1210e825-ca43-4142-8aef-972270d89dcc.jpg", "laptops/Lenovo-ThinkPad-X1-Carbon", 30, "Image"},
+		{"https://microsoft-surface.ru/wp-content/uploads/2023/12/Surface-Laptop-Studio-2-Store-1200.png", "laptops/Microsoft-Surface-Laptop-Studio-2", 31, "Image"},
+		{"https://microsoft-surface.ru/wp-content/uploads/2023/12/Surface-Laptop-Studio-2-Store-3.png", "laptops/Microsoft-Surface-Laptop-Studio-2", 31, "Image"},
+		{"https://static.onlinetrade.ru/img/items/b/noutbuk_microsoft_surface_laptop_6_13.5_2.2k_ips_60hz_400nits_ultra_7_165h_32gb_lpddr5x_ssd_512gb_arc_graphics_win11pro_platinum_zjz_00026__3249886_1.jpg", "laptops/Microsoft-Surface-Laptop-6", 32, "Image"},
+		{"https://static.onlinetrade.ru/img/items/b/noutbuk_microsoft_surface_laptop_6_13.5_2.2k_ips_60hz_400nits_ultra_7_165h_32gb_lpddr5x_ssd_512gb_arc_graphics_win11pro_platinum_zjz_00026__3249886_5.jpg", "laptops/Microsoft-Surface-Laptop-6", 32, "Image"},
+		{"https://cdn.citilink.ru/kkq4UUlKVQib0-2V5XmdZsue_ACniIB6cgruX06rV-4/resizing_type:fit/gravity:sm/width:1200/height:1200/plain/product-images/1fd8acf5-1c44-4c7d-a0c8-2f998d65ed64.jpg", "laptops/MSI-Prestige-16", 33, "Image"},
+		{"https://cdn.citilink.ru/g3UdE4Ui0mkg7dL3S1OYwPaeTTFj92Pfujpx3eJ0z9Q/resizing_type:fit/gravity:sm/width:1200/height:1200/plain/product-images/1c78f760-55f8-4585-9efd-d7f048871b5a.jpg", "laptops/MSI-Prestige-16", 33, "Image"},
+		{"https://c.dns-shop.ru/thumb/st1/fit/0/0/d3f47e0e9458fb5c347874db77a306b6/f63ee020c5873fec66c00dfa2f47a7a60902fd443c001736826fad6a3d16b150.jpg.webp", "laptops/MSI-Stealth-17-Studio", 34, "Image"},
+		{"https://c.dns-shop.ru/thumb/st1/fit/wm/0/0/3f5142dcd60d2504af694ee6b97dfdee/ca07bcbef732933a6e2a6ae752564983178a83a4e01f5ad5082af1a24b1837a0.jpg.webp", "laptops/MSI-Stealth-17-Studio", 34, "Image"},
+		{"https://c.dns-shop.ru/thumb/st1/fit/0/0/8b2fa800deb6557c4b215ce0b121dc33/64cad8497f91c7b926d47580ba6e67c39534e707153591a1b161302c07634135.jpg.webp", "laptops/MSI-Katana-15", 35, "Image"},
+		{"https://c.dns-shop.ru/thumb/st4/fit/wm/0/0/7f9a8843d29232957e81e9f665a5fc37/b0729b24605d841a23aa7f829bdb4d5af6f9078d63e57c328bdc9b79823f3e20.jpg.webp", "laptops/MSI-Katana-15", 35, "Image"},
+		{"https://c.dns-shop.ru/thumb/st1/fit/0/0/2c7521d1a86370d26ddbee231015ff54/e15f3d8f62b6418efc287bd8221c21c4477f9b79564d57b9193e0225dc8eff16.jpg.webp", "laptops/MSI-Cyborg-14", 36, "Image"},
+		{"https://c.dns-shop.ru/thumb/st1/fit/wm/0/0/92b4ebcc14400e849f603aef35e7d122/ea5d898b4c4bad39b6e1d92f13869c6314a24e88e8dc14d809b6b1581a55f5e1.jpg.webp", "laptops/MSI-Cyborg-14", 36, "Image"},
+		{"https://n.cdn.cdek.shopping/images/shopping/34e1c9f001e446c9bdf7d6f8271deb46.jpg?v=1", "laptops/Alienware-m18", 37, "Image"},
+		{"https://n.cdn.cdek.shopping/images/shopping/ddf82cbbb2c94ddfa887e0e6412f0274.jpg?v=1", "laptops/Alienware-m18", 37, "Image"},
+		{"https://n.cdn.cdek.shopping/images/shopping/e4b7aac10c89442e9266a203e5c81881.jpg?v=1", "laptops/Alienware-x16", 38, "Image"},
+		{"https://n.cdn.cdek.shopping/images/shopping/3d188eacbed045f78ff1b4e2366d446e.jpg?v=1", "laptops/Alienware-x16", 38, "Image"},
+		{"https://optim.tildacdn.com/stor3637-3135-4666-b735-393465306166/-/format/webp/17462120.jpg.webp", "laptops/Alienware-m16", 39, "Image"},
+		{"https://optim.tildacdn.com/stor3061-6233-4639-b032-323939333236/-/format/webp/83179001.jpg.webp", "laptops/Alienware-m16", 39, "Image"},
+		{"https://n.cdn.cdek.shopping/images/shopping/2d8673f5f3aa4219976606f8ffbfcc05.jpg?v=1", "laptops/Alienware-x14", 40, "Image"},
+		{"https://n.cdn.cdek.shopping/images/shopping/c410e4f8a5f24ceeab09537c72321624.jpg?v=1", "laptops/Alienware-x14", 40, "Image"},
+		{"https://ir.ozone.ru/s3/multimedia-1-9/wc1000/7663191237.jpg", "laptops/Huawei-MateBook-X-Pro", 41, "Image"},
+		{"https://ir.ozone.ru/s3/multimedia-1-9/wc1000/7663191273.jpg", "laptops/Huawei-MateBook-X-Pro", 41, "Image"}}
 
-	// Пытаемся прочитать из файла, если он существует
-	if _, err := os.Stat("media_urls.txt"); err == nil {
-		mediaTasks, err = ReadMediaTasksFromFile("media_urls.txt")
+	for _, task := range dowloadTask {
+		id := laptopIDs[task.ProductID-1]
+
+		_, err := db.Exec("INSERT INTO Medias (url, type, product_id) VALUES ($1, $2, $3)",
+			task.URL, task.Type, id)
+
 		if err != nil {
-			log.Printf("Ошибка чтения файла с ссылками: %v", err)
-			// Fallback на дефолтные ссылки
-			mediaTasks = getDefaultMediaTasks(laptopIDs)
-		}
-	} else {
-		// Используем дефолтные ссылки если файла нет
-		mediaTasks = getDefaultMediaTasks(laptopIDs)
-	}
-
-	// Создаем загрузчик
-	downloader, err := NewBatchMediaDownloader(minioConfig, 5) // 5 одновременных загрузок
-	if err != nil {
-		log.Fatalf("Ошибка создания загрузчика: %v", err)
-	}
-
-	// Загружаем медиафайлы
-	ctx := context.Background()
-	results := downloader.DownloadAndUploadMedia(ctx, mediaTasks)
-
-	// Сохраняем информацию о медиа в базу
-	for i, result := range results {
-		task := mediaTasks[i]
-		if result.Success {
-			// Сохраняем MinIO URL в базу
-			path := fmt.Sprintf("%s/%s", minioConfig.Bucket, task.ObjectName)
-			minioURL := fmt.Sprintf("https://%s/%s", minioConfig.Endpoint, path)
-
-			id := laptopIDs[task.ProductID-1]
-
-			_, err := db.Exec("INSERT INTO Medias (url, type, product_id) VALUES ($1, $2, $3)",
-				path, task.Type, id)
-
-			if err != nil {
-				log.Printf("Ошибка сохранения медиа в базу: %v", err)
-			} else {
-				log.Printf("Успешно загружено: %s -> %s", task.URL, minioURL)
-			}
+			log.Printf("Ошибка сохранения медиа в базу: %v", err)
 		} else {
-			log.Printf("Ошибка загрузки %s: %v", task.URL, result.Error)
+			log.Printf("Успешно загружено")
 		}
 	}
 }
@@ -383,22 +199,22 @@ func InsertMedias(db *sql.DB, minioConfig MinIOConfig, laptopIDs []uint64) {
 func InsertKeyboards(db *sql.DB) []uint64 {
 	keyboards := []models.KeyboardChars{
 		{
-		Name:          "Red Square",
-		TypeKeyBoards: "Mechanic",
-		Switches:      "Yellow",
-		ReleaseYear:   2023,
+			Name:          "Red Square",
+			TypeKeyBoards: "Mechanic",
+			Switches:      "Yellow",
+			ReleaseYear:   2023,
 		},
 		{
-		Name:          "Red Dragon",
-		TypeKeyBoards: "Mechanic",
-		Switches:      "Blue",
-		ReleaseYear:   2020,
+			Name:          "Red Dragon",
+			TypeKeyBoards: "Mechanic",
+			Switches:      "Blue",
+			ReleaseYear:   2020,
 		},
 		{
-		Name:          "Razer",
-		TypeKeyBoards: "Mechanic",
-		Switches:      "Red",
-		ReleaseYear:   2017,
+			Name:          "Razer",
+			TypeKeyBoards: "Mechanic",
+			Switches:      "Red",
+			ReleaseYear:   2017,
 		},
 	}
 
@@ -420,17 +236,17 @@ func InsertKeyboards(db *sql.DB) []uint64 {
 	return idk
 }
 
-func InsertMouse(db *sql.DB) []uint64{
+func InsertMouse(db *sql.DB) []uint64 {
 	mouses := []models.MouseChars{
 		{
-			Name: "MCHOSE",
-			TypeMouses: "mouse",
-			Dpi: 26000,
+			Name:        "MCHOSE",
+			TypeMouses:  "mouse",
+			Dpi:         26000,
 			ReleaseYear: 2025,
 		},
 	}
 
-		idm := make([]uint64, 0, len(mouses))
+	idm := make([]uint64, 0, len(mouses))
 
 	for _, mouse := range mouses {
 		var (
@@ -558,7 +374,7 @@ func InsertGpus(db *sql.DB) []uint64 {
 	return idg
 }
 
-func InsertLaptops(db *sql.DB, minioConfig MinIOConfig) {
+func InsertLaptops(db *sql.DB) {
 	cpus := []models.CpuChars{
 		{
 			Name:         "i9-14900HX",
@@ -808,7 +624,7 @@ func InsertLaptops(db *sql.DB, minioConfig MinIOConfig) {
 		laptop_ids = append(laptop_ids, productId)
 	}
 
-	InsertMedias(db, minioConfig, laptop_ids)
+	InsertMedias(db, laptop_ids)
 }
 
 func InsertCategories(db *sql.DB) {
@@ -851,34 +667,18 @@ func Clear(db *sql.DB) {
 	}
 }
 
-func InsertAll(db *sql.DB, minioConfig MinIOConfig) {
+func InsertAll(db *sql.DB) {
 	InsertUsers(db)
-	InsertLaptops(db, minioConfig)
+	InsertLaptops(db)
 	InsertCategories(db)
 	InsertGpus(db)
-}
-
-func GetMinIOConfig(cfg *config.Config) MinIOConfig {
-	bucket := cfg.MinIOConn.Bucket
-
-	if bucket == "" {
-		bucket = "pccore"
-	}
-
-	return MinIOConfig{
-		Endpoint:  cfg.MinIOConn.Ep,
-		AccessKey: os.Getenv("MINIO_ACCESS"),
-		SecretKey: os.Getenv("MINIO_SECRET"),
-		Bucket:    bucket,
-		UseSSL:    cfg.MinIOConn.Secure,
-	}
 }
 
 func formatHelpMessage() string {
 	return fmt.Sprintf("Setup seeds with MinIO media download.\n\nUsage:\n\tgo run seeds.go [SEED TYPES]\n\nSeed Types:\n\t%s", strings.Join(SEED_TYPE_NAMES, "\n\t"))
 }
 
-func handleCliArgs(args []string, db *sql.DB, config MinIOConfig, seedTypes map[string]func(*sql.DB, MinIOConfig)) {
+func handleCliArgs(args []string, db *sql.DB, seedTypes map[string]func(*sql.DB)) {
 	if len(args) == 1 {
 		fmt.Println(formatHelpMessage())
 		return
@@ -890,23 +690,15 @@ func handleCliArgs(args []string, db *sql.DB, config MinIOConfig, seedTypes map[
 			fmt.Printf("Error: unknown parameter: %s\n", arg)
 			os.Exit(1)
 		}
-		fn(db, config)
+		fn(db)
 	}
 }
 
 func main() {
-	cfg, err := config.ParseConfig("cfg.yml")
-
-	if err != nil {
-		panic(err)
-	}
-
-	err = godotenv.Load()
+	err := godotenv.Load()
 	if err != nil {
 		log.Printf("Warning: .env file not found: %v", err)
 	}
-
-	minioConfig := GetMinIOConfig(cfg)
 
 	db, err := sql.Open("postgres", os.Getenv("PCCORE_POSTGRES_CONN"))
 	if err != nil {
@@ -914,17 +706,17 @@ func main() {
 	}
 	defer db.Close()
 
-	SEED_TYPES := map[string]func(*sql.DB, MinIOConfig){
-		SEED_TYPE_USER:     func(db *sql.DB, config MinIOConfig) { InsertUsers(db) },
+	SEED_TYPES := map[string]func(*sql.DB){
+		SEED_TYPE_USER:     func(db *sql.DB) { InsertUsers(db) },
 		SEED_TYPE_LAPTOP:   InsertLaptops,
-		SEED_TYPE_CATEGORY: func(db *sql.DB, config MinIOConfig) { InsertCategories(db) },
-		SEED_TYPE_MEDIA: func(db *sql.DB, config MinIOConfig) {
+		SEED_TYPE_CATEGORY: func(db *sql.DB) { InsertCategories(db) },
+		SEED_TYPE_MEDIA: func(db *sql.DB) {
 
 		},
 		SEED_ALL:      InsertAll,
-		CLEAR_ALL:     func(db *sql.DB, config MinIOConfig) { Clear(db) },
-		SEED_TYPE_GPU: func(d *sql.DB, mi MinIOConfig) { InsertGpus(db) },
+		CLEAR_ALL:     func(db *sql.DB) { Clear(db) },
+		SEED_TYPE_GPU: func(d *sql.DB) { InsertGpus(db) },
 	}
 
-	handleCliArgs(os.Args, db, minioConfig, SEED_TYPES)
+	handleCliArgs(os.Args, db, SEED_TYPES)
 }
